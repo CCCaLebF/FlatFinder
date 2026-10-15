@@ -1,0 +1,15 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "properties": {"PLN_AREA_N": "ANG MO KIO", "CA_IND": "N"},
+  "geometry": {"type": "Polygon", "coordinates": [[[103.80, 1.36], [103.86, 1.36], [103.86, 1.40], [103.80, 1.40], [103.80, 1.36]],
+                                                   [[103.80, 1.36], [103.80, 1.38], [103.83, 1.38], [103.83, 1.36], [103.80, 1.36]]]}},
+ {"type": "Feature", "properties": {"PLN_AREA_N": "KALLANG", "CA_IND": "N"},
+  "geometry": {"type": "Polygon", "coordinates": [[[103.85, 1.30], [103.87, 1.30], [103.87, 1.32], [103.85, 1.32], [103.85, 1.30]]]}},
+ {"type": "Feature", "properties": {"PLN_AREA_N": "DOWNTOWN CORE", "CA_IND": "Y"},
+  "geometry": {"type": "Polygon", "coordinates": [[[103.84, 1.27], [103.86, 1.27], [103.86, 1.29], [103.84, 1.29], [103.84, 1.27]]]}},
+ {"type": "Feature", "properties": {"PLN_AREA_N": "OUTRAM", "CA_IND": "Y"},
+  "geometry": {"type": "MultiPolygon", "coordinates": [[[[103.83, 1.27], [103.84, 1.27], [103.84, 1.29], [103.83, 1.29], [103.83, 1.27]]]]}},
+ {"type": "Feature", "properties": {"PLN_AREA_N": "ROCHOR", "CA_IND": "Y"},
+  "geometry": {"type": "Polygon", "coordinates": [[[103.85, 1.29], [103.86, 1.29], [103.86, 1.31], [103.85, 1.31], [103.85, 1.29]]]}},
+ {"type": "Feature", "properties": {"PLN_AREA_N": "TUAS", "CA_IND": "N"},
+  "geometry": {"type": "Polygon", "coordinates": [[[103.60, 1.28], [103.65, 1.28], [103.65, 1.33], [103.60, 1.33], [103.60, 1.28]]]}}
+]}

@@ -1,0 +1,24 @@
+{% comment %}
+BookmarkUI toggle (UC-05). A real form, so it works without JS; bookmarks.js sends it with
+fetch() instead and updates every icon for the flat plus the Saved (n) counter.
+Variables: flat_id, saved (bool), style ("icon" | "remove").
+{% endcomment %}
+<form method="post" action="{% url 'core:api_toggle_bookmark' flat_id %}" data-bookmark-form="{{ flat_id }}" class="relative z-10">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  {% if style == "remove" %}
+    <button type="submit" class="flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+            aria-label="Remove from saved flats" title="Remove from saved flats">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      Remove
+    </button>
+  {% else %}
+    <button type="submit" data-bookmark-button aria-pressed="{{ saved|yesno:'true,false' }}"
+            aria-label="{{ saved|yesno:'Remove from saved flats,Save this flat' }}" title="{{ saved|yesno:'Saved — click to remove,Save this flat' }}"
+            class="group/bm grid h-9 w-9 place-items-center rounded-full text-slate-400 hover:bg-brand-50 hover:text-brand-600 aria-pressed:text-brand-600">
+      <svg class="h-5 w-5 fill-none group-aria-pressed/bm:fill-current" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linejoin="round" d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/>
+      </svg>
+    </button>
+  {% endif %}
+</form>

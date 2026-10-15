@@ -1,0 +1,6 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "properties": {"NAME": "SUNSHINE PLAYHOUSE", "ADDRESSPOSTALCODE": "560123", "ADDRESSSTREETNAME": "123, ANG MO KIO AVENUE 3, #01 - 10, SINGAPORE 560123", "ADDRESSBUILDINGNAME": "None"},
+  "geometry": {"type": "Point", "coordinates": [103.8452, 1.3691]}},
+ {"type": "Feature", "properties": {"NAME": "None", "ADDRESSPOSTALCODE": "None", "ADDRESSSTREETNAME": "None"},
+  "geometry": {"type": "Point", "coordinates": [103.8452, 1.3691]}}
+]}

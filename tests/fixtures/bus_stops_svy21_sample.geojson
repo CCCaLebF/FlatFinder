@@ -1,0 +1,8 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "properties": {"BUS_STOP_NUM": "11111", "BUS_ROOF_NUM": "B01"},
+  "geometry": {"type": "Point", "coordinates": [24332.82477688, 32135.91866726]}},
+ {"type": "Feature", "properties": {"BUS_STOP_NUM": "54621", "BUS_ROOF_NUM": "B13"},
+  "geometry": {"type": "Point", "coordinates": [103.83773069959184, 1.3659533099952357]}},
+ {"type": "Feature", "properties": {"BUS_STOP_NUM": "54621", "BUS_ROOF_NUM": "B13"},
+  "geometry": {"type": "Point", "coordinates": [103.83773069959184, 1.3659533099952357]}}
+]}

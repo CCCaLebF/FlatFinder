@@ -1,0 +1,2 @@
+# Shell scripts run inside Linux containers; a CRLF entrypoint fails there.
+*.sh text eol=lf

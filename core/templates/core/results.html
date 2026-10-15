@@ -1,0 +1,42 @@
+{% extends "core/base.html" %}
+{% load static humanize flatfinder %}
+
+{% block title %}Results · FlatFinder{% endblock %}
+
+{% block body %}
+  {% include "core/partials/sidebar.html" %}
+  <main class="min-w-0 flex-1 overflow-y-auto">
+    <div class="mx-auto max-w-4xl px-6 py-5">
+      {% if result is None %}
+        {% include "core/partials/no_results.html" with invalid=True %}
+      {% elif result.isEmpty %}
+        {% include "core/partials/no_results.html" %}
+      {% else %}
+        <div class="mb-4 flex items-center justify-between gap-4">
+          <h1 class="text-lg font-semibold text-slate-800">
+            {{ result.count|intcomma }} flat{{ result.count|pluralize:" matches,s match" }}
+          </h1>
+          {% comment %} UC-10 sort control: keeps the search, returns to page 1. {% endcomment %}
+          <form method="get" action="" class="flex items-center gap-2 text-sm" data-sort-form>
+            {% hidden_query_inputs exclude="sort,page" %}
+            <label for="sort" class="text-slate-500">Sort by</label>
+            <select id="sort" name="sort" class="rounded-lg border border-slate-300 bg-white py-1.5 pl-2 pr-8 text-slate-700 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+              {% for value, label in sort_options %}
+                <option value="{{ value }}" {% if value == current_sort %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <noscript><button type="submit" class="rounded-lg border border-slate-300 px-2 py-1.5">Apply</button></noscript>
+          </form>
+        </div>
+        <ol class="flex flex-col gap-3" start="{{ page.start_index }}">
+          {% for card in cards %}
+            <li>{% include "core/partials/flat_card.html" with flat=card.flat fit=card.fit bookmark_style="icon" %}</li>
+          {% endfor %}
+        </ol>
+        {% include "core/partials/pagination.html" %}
+      {% endif %}
+    </div>
+  </main>
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'core/js/search.js' %}"></script>{% endblock %}

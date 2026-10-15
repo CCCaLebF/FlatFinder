@@ -1,0 +1,61 @@
+{% comment %}
+SearchUI sidebar (UC-01, UC-08). Every control must fit without scrolling at 1366×768 (NFR 3.2).
+Context: `sidebar` from SearchForm.sidebar_state(), optional `form_errors`.
+{% endcomment %}
+<aside class="w-[26rem] shrink-0 overflow-y-auto border-r border-slate-200 bg-white">
+  <form method="get" action="{% url 'core:results' %}" id="search-form" class="flex flex-col gap-3 px-4 py-3 text-sm">
+    {% if view_mode %}<input type="hidden" name="view" value="{{ view_mode }}">{% endif %}
+    {% for key, value in sidebar.anchor.items %}{% if value %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
+
+    {% if form_errors %}
+      <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+        {% for message in form_errors %}<p>{{ message }}</p>{% endfor %}
+      </div>
+    {% endif %}
+
+    <fieldset>
+      <legend class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Budget (SGD)</legend>
+      <div class="grid grid-cols-2 gap-2">
+        <input type="number" name="min_budget" value="{{ sidebar.min_budget }}" min="0" step="10000" placeholder="No minimum"
+               aria-label="Minimum budget" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+        <input type="number" name="max_budget" value="{{ sidebar.max_budget }}" min="0" step="10000" placeholder="No maximum"
+               aria-label="Maximum budget" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Flat types <span class="font-normal normal-case text-slate-400">(none = all)</span></legend>
+      <div class="flex flex-wrap gap-1.5">
+        {% for type in sidebar.flat_types %}
+          <label class="cursor-pointer">
+            <input type="checkbox" name="flat_type" value="{{ type.value }}" class="peer sr-only" {% if type.checked %}checked{% endif %}>
+            <span class="inline-block rounded-full border border-slate-300 px-2.5 py-0.5 text-xs text-slate-600 peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-brand-400">{{ type.label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <fieldset class="flex flex-col gap-1">
+      <legend class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Minimum remaining lease</legend>
+      {% include "core/partials/slider_row.html" with label="Lease" name="min_lease" flag="lease_any" value=sidebar.lease.value off=sidebar.lease.off min=sidebar.lease.min max=sidebar.lease.max step=1 unit=" yrs" off_label="Any" %}
+    </fieldset>
+
+    <fieldset class="flex flex-col gap-1">
+      <legend class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Max. walking distance to</legend>
+      {% for walk in sidebar.walks %}
+        {% include "core/partials/slider_row.html" with label=walk.label name=walk.name flag=walk.flag value=walk.value off=walk.off min=sidebar.walk_range.min max=sidebar.walk_range.max step=sidebar.walk_range.step unit=" m" off_label="No limit" %}
+      {% endfor %}
+    </fieldset>
+
+    <fieldset class="flex flex-col gap-1">
+      <legend class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">How important is each? <span class="font-normal normal-case text-slate-400">(1–10)</span></legend>
+      {% for weight in sidebar.weights %}
+        {% include "core/partials/slider_row.html" with label=weight.label name=weight.name flag=weight.flag value=weight.value off=weight.off min=sidebar.weight_range.min max=sidebar.weight_range.max step=1 unit="" off_label="Ignore" %}
+      {% endfor %}
+    </fieldset>
+
+    <button type="submit" class="mt-1 rounded-lg bg-brand-600 px-4 py-2.5 font-semibold text-white shadow-sm hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2">
+      Find Matching Flats
+    </button>
+  </form>
+</aside>

@@ -1,0 +1,33 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block body %}
+  {% include "core/partials/sidebar.html" %}
+  <main class="min-w-0 flex-1 overflow-y-auto">
+    {% comment %} Map View on the Start page arrives in phase 6. {% endcomment %}
+    <section class="mx-auto max-w-2xl px-8 py-16">
+      <h1 class="text-3xl font-bold text-brand-800">Find an HDB resale flat that fits your life</h1>
+      <p class="mt-4 text-slate-600">
+        Set your budget, the flat types you'd consider and the minimum remaining lease you'll accept.
+        Then tell FlatFinder how much each nearby amenity matters to you, from 1 to 10.
+      </p>
+      <ol class="mt-8 grid gap-4 sm:grid-cols-3">
+        <li class="rounded-xl border border-slate-200 bg-white p-4">
+          <span class="text-sm font-semibold text-brand-700">1. Set your limits</span>
+          <p class="mt-1 text-sm text-slate-600">Leave anything blank and it won't restrict your search.</p>
+        </li>
+        <li class="rounded-xl border border-slate-200 bg-white p-4">
+          <span class="text-sm font-semibold text-brand-700">2. Weigh what matters</span>
+          <p class="mt-1 text-sm text-slate-600">Bus stops, MRT stations, child care, hawker centres and CHAS clinics.</p>
+        </li>
+        <li class="rounded-xl border border-slate-200 bg-white p-4">
+          <span class="text-sm font-semibold text-brand-700">3. Compare by Fit Score</span>
+          <p class="mt-1 text-sm text-slate-600">Flats are ranked 0–100 by how well they match.</p>
+        </li>
+      </ol>
+      <p class="mt-8 text-xs text-slate-400">Based on HDB resale transactions from the last 12 months (data.gov.sg).</p>
+    </section>
+  </main>
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'core/js/search.js' %}"></script>{% endblock %}

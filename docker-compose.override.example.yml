@@ -1,0 +1,5 @@
+# Opt-in: copy to docker-compose.override.yml to reach Postgres from a DB client on the host.
+services:
+  db:
+    ports:
+      - "5432:5432"

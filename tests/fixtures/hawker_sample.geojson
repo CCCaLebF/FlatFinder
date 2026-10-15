@@ -1,0 +1,6 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "properties": {"NAME": "Ang Mo Kio 628 Market", "STATUS": "Existing", "ADDRESSPOSTALCODE": "560628", "ADDRESSBLOCKHOUSENUMBER": "628", "ADDRESSSTREETNAME": "Ang Mo Kio Avenue 4", "ADDRESS_MYENV": "None"},
+  "geometry": {"type": "Point", "coordinates": [103.8395, 1.3807]}},
+ {"type": "Feature", "properties": {"NAME": "Future Hawker Centre", "STATUS": "Under Construction", "ADDRESSPOSTALCODE": "None", "ADDRESS_MYENV": "None"},
+  "geometry": {"type": "Point", "coordinates": [103.90, 1.40]}}
+]}

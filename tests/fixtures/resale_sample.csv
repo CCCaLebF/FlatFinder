@@ -1,0 +1,6 @@
+month,town,flat_type,block,street_name,storey_range,floor_area_sqm,flat_model,lease_commence_date,remaining_lease,resale_price
+2025-10,ANG MO KIO,3 ROOM,101,ANG MO KIO AVE 3,01 TO 03,67,New Generation,1978,51 years 02 months,400000
+2025-11,ANG MO KIO,4 ROOM,123,ang mo kio  ave 3,07 TO 09,92,New Generation,1980,53 years 10 months,520000
+2026-10,KALLANG/WHAMPOA,4 ROOM,55,JLN BAHAGIA,10 TO 12,93,Model A,2015,87 years 11 months,780000
+2026-07,CENTRAL AREA,5 ROOM,1G,CANTONMENT RD,40 TO 42,105,Type S2,2011,83 years 06 months,1500000.00
+2026-01,ANG MO KIO,EXECUTIVE,456,ANG MO KIO AVE 10,04 TO 06,142,Apartment,1985,57 years,880000

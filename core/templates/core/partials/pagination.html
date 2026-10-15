@@ -1,0 +1,15 @@
+{% load flatfinder humanize %}
+{% if page.paginator.num_pages > 1 %}
+<nav class="mt-6 flex items-center justify-between text-sm" aria-label="Pagination">
+  <p class="text-slate-500">Showing {{ page.start_index|intcomma }}–{{ page.end_index|intcomma }} of {{ page.paginator.count|intcomma }}</p>
+  <div class="flex items-center gap-1">
+    {% if page.has_previous %}
+      <a href="{% url_replace page=page.previous_page_number %}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 hover:border-brand-500 hover:text-brand-700">Previous</a>
+    {% endif %}
+    <span class="px-3 py-1.5 text-slate-600">Page {{ page.number }} of {{ page.paginator.num_pages|intcomma }}</span>
+    {% if page.has_next %}
+      <a href="{% url_replace page=page.next_page_number %}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 hover:border-brand-500 hover:text-brand-700">Next</a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}

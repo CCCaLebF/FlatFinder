@@ -1,0 +1,10 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "properties": {"STATION_NA": "ANG MO KIO MRT STATION", "EXIT_CODE": "Exit A"},
+  "geometry": {"type": "Point", "coordinates": [103.8495, 1.3700]}},
+ {"type": "Feature", "properties": {"STATION_NA": "ANG MO KIO MRT STATION", "EXIT_CODE": "Exit A"},
+  "geometry": {"type": "Point", "coordinates": [103.8495, 1.3700]}},
+ {"type": "Feature", "properties": {"STATION_NA": "ANG MO KIO MRT STATION", "EXIT_CODE": "Exit A"},
+  "geometry": {"type": "Point", "coordinates": [103.8501, 1.3703]}},
+ {"type": "Feature", "properties": {"STATION_NA": "CC9", "EXIT_CODE": "E"},
+  "geometry": {"type": "Point", "coordinates": [103.89323439978084, 1.318287499415408]}}
+]}
