@@ -60,6 +60,26 @@ def percent(value):
     return "—" if value is None else f"{round(value * 100)}%"
 
 
+ACRONYMS = {"MRT", "LRT", "CHAS", "HDB", "NTUC", "PCF", "MOE", "YMCA", "YWCA", "PAP", "SG", "UK", "USA",
+             "PTE", "LTD", "LLP", "CC", "RC", "II", "III", "IV"}
+
+
+@register.filter
+def display_name(value):
+    """
+    Names from data.gov.sg are often ALL CAPS. Re-case those, keeping acronyms such as
+    MRT and CHAS; leave names that already have mixed case alone.
+    """
+    text = str(value)
+    if text != text.upper():
+        return text
+    words = []
+    for word in text.split():
+        core = word.strip("().,&'-")
+        words.append(word if core in ACRONYMS or any(ch.isdigit() for ch in core) else word.capitalize())
+    return " ".join(words)
+
+
 @register.filter
 def street_title(value):
     """'ANG MO KIO AVE 3' -> 'Ang Mo Kio Ave 3' (keeps 'ST.' style abbreviations readable)."""

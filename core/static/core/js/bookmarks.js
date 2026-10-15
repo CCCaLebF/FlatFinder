@@ -47,6 +47,8 @@
         var counter = document.getElementById("saved-count");
         if (counter) counter.textContent = data.count;
         if (!data.saved) removeFromSavedPage(form);
+        // MapUI redraws its saved-flat pins (UC-03.AC.1).
+        document.dispatchEvent(new CustomEvent("flatfinder:bookmark-changed", { detail: { flatId: flatId, saved: data.saved } }));
       })
       .catch(function () {
         form.submit();  // fall back to the plain form post

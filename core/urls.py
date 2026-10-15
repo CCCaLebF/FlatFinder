@@ -15,5 +15,6 @@ urlpatterns = [
     path("api/flats/in-bounds", map.flats_in_bounds_api, name="api_flats_in_bounds"),
     path("api/flats/<int:flat_id>/amenities", map.flat_amenities_api, name="api_flat_amenities"),
     path("api/walking-distance", map.walking_distance_api, name="api_walking_distance"),
+    path("api/bookmarks", map.bookmarks_api, name="api_bookmarks"),
     path("api/bookmarks/<int:flat_id>/toggle", bookmarks.toggle_bookmark_api, name="api_toggle_bookmark"),
 ]

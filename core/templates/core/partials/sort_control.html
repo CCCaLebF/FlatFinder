@@ -1,0 +1,12 @@
+{% load flatfinder %}
+{% comment %} UC-10 sort control: keeps the search, returns to page 1. {% endcomment %}
+<form method="get" action="" class="flex items-center gap-2 text-sm" data-sort-form>
+  {% hidden_query_inputs exclude="sort,page" %}
+  <label for="sort" class="shrink-0 text-slate-500">Sort by</label>
+  <select id="sort" name="sort" class="min-w-0 rounded-lg border border-slate-300 bg-white py-1.5 pl-2 pr-8 text-slate-700 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+    {% for value, label in sort_options %}
+      <option value="{{ value }}" {% if value == current_sort %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <noscript><button type="submit" class="rounded-lg border border-slate-300 px-2 py-1.5">Apply</button></noscript>
+</form>

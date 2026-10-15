@@ -18,5 +18,7 @@ def flatfinder_context(request):
             "tileUrl": settings.MAP_TILE_URL,
             "attribution": settings.MAP_TILE_ATTRIBUTION,
             "pinMinZoom": settings.MAP_PIN_MIN_ZOOM,
+            "minZoom": settings.MAP_MIN_ZOOM,
+            "maxZoom": settings.MAP_MAX_ZOOM,
         },
     }

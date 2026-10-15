@@ -1,0 +1,9 @@
+{% comment %} UC-14 empty state. Hidden while there are saved flats; bookmarks.js reveals it after the last removal. {% endcomment %}
+<section class="{% if entries %}hidden{% endif %} mx-auto {% if compact %}mt-4 p-6{% else %}mt-12 p-8{% endif %} max-w-md rounded-xl border border-slate-200 bg-white text-center" data-saved-empty role="status">
+  <div class="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-600">
+    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linejoin="round" d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>
+  </div>
+  <h2 class="mt-4 text-lg font-semibold text-slate-800">No saved flats yet</h2>
+  <p class="mt-2 text-sm text-slate-600">Use the bookmark icon on any flat to save it here.</p>
+  <a href="{{ back_url }}" class="mt-5 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Browse flats</a>
+</section>

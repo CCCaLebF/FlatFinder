@@ -1,0 +1,63 @@
+/*
+ * MapUI styles. map.js only attaches these class names, so the map's look can be
+ * changed here without touching the JavaScript.
+ */
+
+:root {
+  --ff-brand: #0d9488;
+  --ff-brand-dark: #0f766e;
+  --ff-saved: #e11d48;
+  --ff-approx: #d97706;
+  /* One colour per amenity category (UC-12 layers and legend). */
+  --ff-bus_stop: #2563eb;
+  --ff-mrt_station: #dc2626;
+  --ff-child_care_centre: #9333ea;
+  --ff-hawker_centre: #ea580c;
+  --ff-chas_clinic: #16a34a;
+}
+
+.ff-map { background: #e5e7eb; }
+.ff-map .leaflet-popup-content { margin: 10px 12px; font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
+
+/* --- Area counts (FR 2.1.1) ------------------------------------------------- */
+.ff-area {
+  display: grid; place-items: center; border-radius: 9999px;
+  background: rgba(13, 148, 136, 0.88); color: #fff; font: 600 12px/1.1 ui-sans-serif, system-ui, sans-serif;
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); text-align: center;
+}
+.ff-area small { display: block; font-weight: 500; font-size: 9px; opacity: 0.9; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ff-area:hover { background: var(--ff-brand-dark); }
+
+/* --- Flat pins (FR 2.1.2) ----------------------------------------------------- */
+.ff-pin {
+  position: relative; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+  background: var(--ff-brand); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+.ff-pin span {
+  position: absolute; inset: 0; display: grid; place-items: center; transform: rotate(45deg);
+  color: #fff; font: 700 10px/1 ui-sans-serif, system-ui, sans-serif;
+}
+.ff-pin--approx { background: var(--ff-approx); border-style: dashed; }
+.ff-pin--saved { background: var(--ff-saved); }
+.ff-pin--focus { outline: 3px solid #fde047; }
+
+/* --- Amenity pins (UC-11 / UC-12) ------------------------------------------------ */
+.ff-amenity {
+  width: 14px; height: 14px; border-radius: 9999px; border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+.ff-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; }
+.ff-cat-bus_stop { background: var(--ff-bus_stop); }
+.ff-cat-mrt_station { background: var(--ff-mrt_station); }
+.ff-cat-child_care_centre { background: var(--ff-child_care_centre); }
+.ff-cat-hawker_centre { background: var(--ff-hawker_centre); }
+.ff-cat-chas_clinic { background: var(--ff-chas_clinic); }
+
+/* --- Popups ------------------------------------------------------------------------ */
+.ff-popup h3 { font-weight: 600; margin: 0 0 2px; }
+.ff-popup p { margin: 0; color: #64748b; }
+.ff-popup ul { margin: 6px 0 0; padding: 0; list-style: none; max-height: 220px; overflow-y: auto; }
+.ff-popup li { padding: 4px 0; border-top: 1px solid #f1f5f9; }
+.ff-popup a { color: var(--ff-brand-dark); font-weight: 600; }
+.ff-popup .ff-fit { float: right; color: var(--ff-brand-dark); font-weight: 700; }
+.ff-popup .ff-note { margin-top: 6px; font-size: 11px; color: #b45309; }

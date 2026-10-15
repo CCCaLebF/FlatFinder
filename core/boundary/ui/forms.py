@@ -41,6 +41,11 @@ def sort_param(order: SortOrder) -> str:
     return f"{order.field}-{order.direction}"
 
 
+def has_search(params) -> bool:
+    """True if the URL carries any search criterion (not just from/view/page/sort)."""
+    return any(name in params for name in SearchForm().fields)
+
+
 # Slider positions shown when the user hasn't set a value yet.
 DEFAULTS = {
     "max_walk_bus": 400,

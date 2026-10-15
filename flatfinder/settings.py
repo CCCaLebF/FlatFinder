@@ -100,6 +100,7 @@ DEFAULT_ANCHOR_WEIGHT = 5
 RESULTS_PER_PAGE = 20            # decision 12
 MAP_PIN_MIN_ZOOM = 14            # area counts below, flat pins from here up (decision 12)
 MAP_PIN_LIMIT = 500
+MAP_MIN_ZOOM, MAP_MAX_ZOOM = 11, 19  # the range OneMap's basemap tiles cover Singapore at
 
 # MapGateway (PLAN §5): base-map tiles and attribution, passed to MapUI via the template.
 MAP_TILE_URL = "https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png"

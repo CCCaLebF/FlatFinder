@@ -1,10 +1,16 @@
 {% extends "core/base.html" %}
 {% load static %}
 
+{% block html_attrs %}data-map-capable="1"{% endblock %}
+
 {% block body %}
   {% include "core/partials/sidebar.html" %}
+  {% if view_mode == "map" %}
+  <main class="relative min-w-0 flex-1">
+    {% include "core/partials/map_panel.html" with mode="browse" origin="start" %}
+  </main>
+  {% else %}
   <main class="min-w-0 flex-1 overflow-y-auto">
-    {% comment %} Map View on the Start page arrives in phase 6. {% endcomment %}
     <section class="mx-auto max-w-2xl px-8 py-16">
       <h1 class="text-3xl font-bold text-brand-800">Find an HDB resale flat that fits your life</h1>
       <p class="mt-4 text-slate-600">
@@ -28,6 +34,7 @@
       <p class="mt-8 text-xs text-slate-400">Based on HDB resale transactions from the last 12 months (data.gov.sg).</p>
     </section>
   </main>
+  {% endif %}
 {% endblock %}
 
 {% block scripts %}<script src="{% static 'core/js/search.js' %}"></script>{% endblock %}

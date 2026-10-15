@@ -1,5 +1,5 @@
 {% load static flatfinder %}<!doctype html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full" {% block html_attrs %}{% endblock %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -26,7 +26,10 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="{% static 'core/css/map.css' %}">
   {{ map_config|json_script:"map-config" }}
+  {# MapState runs first: it may switch to the remembered view mode before the page paints. #}
+  <script src="{% static 'core/js/mapstate.js' %}"></script>
   {% block head %}{% endblock %}
 </head>
 <body class="flex h-full flex-col bg-slate-50 text-slate-800">
@@ -34,8 +37,8 @@
   <div class="flex min-h-0 flex-1">
     {% block body %}{% endblock %}
   </div>
-  <script src="{% static 'core/js/mapstate.js' %}"></script>
   <script src="{% static 'core/js/bookmarks.js' %}"></script>
+  <script src="{% static 'core/js/map.js' %}"></script>{# does nothing on pages without #map #}
   {% block scripts %}{% endblock %}
 </body>
 </html>

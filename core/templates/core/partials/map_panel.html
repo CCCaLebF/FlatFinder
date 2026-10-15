@@ -1,0 +1,17 @@
+{% comment %}
+MapUI container (UC-03). map.js finds #map and draws according to data-map-mode.
+Variables: mode ("browse" | "flat" | "saved"), origin ("start" | "results" | "saved"), flat_id (flat mode).
+{% endcomment %}
+<div class="relative h-full min-h-[24rem] w-full">
+  <div id="map" class="ff-map absolute inset-0" data-map-mode="{{ mode }}" data-origin="{{ origin }}"
+       {% if flat_id %}data-flat-id="{{ flat_id }}"{% endif %} role="region" aria-label="Map"></div>
+  <p data-map-status role="status"
+     class="hidden absolute bottom-6 left-3 z-[500] max-w-[80%] rounded-lg bg-white/95 px-3 py-1.5 text-xs text-slate-700 shadow"></p>
+  {% if mode == "browse" %}
+    <div class="absolute right-3 top-3 z-[500] rounded-lg bg-white/95 px-3 py-2 text-xs text-slate-600 shadow">
+      <p class="flex items-center gap-1.5"><span class="ff-swatch" style="background:var(--ff-brand)"></span>Matching flats</p>
+      <p class="flex items-center gap-1.5"><span class="ff-swatch" style="background:var(--ff-approx)"></span>Approximate (town centre)</p>
+      <p class="flex items-center gap-1.5"><span class="ff-swatch" style="background:var(--ff-saved)"></span>Saved flats</p>
+    </div>
+  {% endif %}
+</div>

@@ -1,6 +1,6 @@
 {% load flatfinder humanize %}
 {% if page.paginator.num_pages > 1 %}
-<nav class="mt-6 flex items-center justify-between text-sm" aria-label="Pagination">
+<nav class="mt-6 flex flex-wrap items-center justify-between gap-2 text-sm" aria-label="Pagination">
   <p class="text-slate-500">Showing {{ page.start_index|intcomma }}–{{ page.end_index|intcomma }} of {{ page.paginator.count|intcomma }}</p>
   <div class="flex items-center gap-1">
     {% if page.has_previous %}

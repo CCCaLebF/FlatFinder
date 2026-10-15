@@ -34,7 +34,7 @@ def test_start_page_renders(client):
 
 @pytest.mark.django_db
 def test_unbuilt_routes_return_501(client):
-    assert client.get(reverse("core:flat_details", args=[1])).status_code == 501
+    assert client.get(reverse("core:api_walking_distance")).status_code == 501
 
 
 @pytest.mark.django_db

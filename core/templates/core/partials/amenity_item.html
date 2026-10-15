@@ -1,0 +1,8 @@
+{% load humanize flatfinder %}
+<li class="flex items-baseline justify-between gap-3 border-b border-slate-50 py-1" data-amenity-id="{{ item.id }}">
+  <span class="min-w-0">
+    <span class="block truncate text-slate-700" title="{{ item.name|display_name }}">{{ item.name|display_name }}</span>
+    {% if item.detail %}<span class="block truncate text-xs text-slate-400" title="{{ item.detail }}">{{ item.detail }}</span>{% endif %}
+  </span>
+  <span class="shrink-0 tabular-nums text-slate-500">{{ item.distance_m|intcomma }} m</span>
+</li>

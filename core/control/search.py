@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from django.conf import settings
+from django.db.models import Max, Min
 
 from core.control.distance import EARTH_RADIUS_M
 from core.entity import CATEGORIES, FitScore, ResaleFlat, SearchQuery, SearchResult, SortOrder
@@ -84,6 +85,17 @@ class SearchController:
                            else (0 if empty else leases.min())),
         )
 
+    def bounds_for(self, query: SearchQuery) -> ScoreBounds:
+        """
+        The ScoreBounds rank_flats would use for this query, from a SQL min/max over the
+        filtered set. Lets one flat (UC-02) be scored exactly as it is in the results list.
+        """
+        stats = self.filter_flats(query).aggregate(
+            min_price=Min("resale_price"), max_price=Max("resale_price"), min_lease=Min("remaining_lease"))
+        if stats["min_price"] is None:
+            return self.compute_bounds(query, [], [])
+        return self.compute_bounds(query, [stats["min_price"], stats["max_price"]], [stats["min_lease"]])
+
     def calculate_fit_score(self, flat: ResaleFlat, query: SearchQuery, bounds: ScoreBounds) -> FitScore:
         """UC-09 / FR 2.2.2: the FitScore of one flat, given the price/lease bounds."""
         proximity = getattr(flat, "proximity", None)
@@ -99,10 +111,12 @@ class SearchController:
         )
         return self._fit_score_at(scores, 0)
 
-    def rank_flats(self, qs, query: SearchQuery) -> SearchResult:
+    def rank_flats(self, qs, query: SearchQuery, bounds: ScoreBounds = None) -> SearchResult:
         """
         UC-09 / FR 2.2.3.2: score every filtered flat and order by Fit Score, descending.
         One query pulls the rows and their FlatProximity values; numpy does the scoring.
+        Pass `bounds` to score a subset (e.g. the map's visible area) on the full
+        filtered set's thresholds, so scores match the results list.
         """
         rows = list(qs.values_list(*_SCORE_COLUMNS))
         if not rows:
@@ -117,7 +131,7 @@ class SearchController:
         lngs = np.array(columns[5], dtype=float)
         distances = {c.key: np.array(columns[6 + i], dtype=float) for i, c in enumerate(CATEGORIES)}
 
-        bounds = self.compute_bounds(query, prices, leases)
+        bounds = bounds or self.compute_bounds(query, prices, leases)
         scores = self._score_arrays(query, bounds, prices, leases, lats, lngs, distances)
 
         result = SearchResult(query=query, bounds=bounds)
