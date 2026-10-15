@@ -20,7 +20,7 @@ The app is built with Django 5.2, PostgreSQL (or SQLite), Tailwind and Leaflet, 
 You need **Docker Desktop**. You don't need to install Python or PostgreSQL.
 
 ```powershell
-git clone <repo-url>
+git clone https://github.com/CCCaLebF/FlatFinder.git
 cd FlatFinder
 copy .env.example .env        # macOS/Linux: cp .env.example .env
 ```
@@ -34,8 +34,8 @@ Edit `.env`:
 | Task | Command |
 |---|---|
 | Start everything | `docker compose up --build` → open http://localhost:8000 |
-| Import the data (§3) | `docker compose exec web python manage.py load_all --approximate` |
-| Load the coordinates CSV | `docker compose exec web python manage.py import_flat_coordinates data/raw/<file>.csv` then `docker compose exec web python manage.py compute_proximity` |
+| Import the data (§3), with real flat coordinates | `docker compose exec web python manage.py load_all --coords data/flat_coordinates.csv` |
+| Reload only the coordinates (§4) | `docker compose exec web python manage.py import_flat_coordinates data/flat_coordinates.csv` then `docker compose exec web python manage.py compute_proximity` |
 | Run the tests | `docker compose exec web pytest` |
 | Open a Django shell | `docker compose exec web python manage.py shell` |
 | Pick up `.env` changes | `docker compose up -d --force-recreate web` |
@@ -57,7 +57,7 @@ python -m venv .venv
 pip install -r requirements.txt
 copy .env.example .env          # leave DATABASE_URL empty to use SQLite (db.sqlite3)
 python manage.py migrate
-python manage.py load_all --approximate
+python manage.py load_all --coords data/flat_coordinates.csv
 python manage.py runserver      # http://127.0.0.1:8000
 pytest
 ```
@@ -85,17 +85,34 @@ python manage.py download_datasets --force    # download again
 | 6 | `compute_proximity` | Works out each flat's straight-line distance to the nearest place in each category (`FlatProximity`). |
 
 `load_all` options:
-- `--coords <csv>`: run step 5 with a coordinates CSV
-- `--approximate`: run step 5 with the town-centre fallback (development only)
+- `--coords <csv>`: run step 5 with a coordinates CSV. Use `data/flat_coordinates.csv`, which is in the repo.
+- `--approximate`: run step 5 with the town-centre fallback (development only, when the CSV isn't available)
 - `--no-download`: don't fetch missing files
 
 **After re-running `import_flats`, run `compute_proximity` again.** Re-importing creates new flat rows (locations are kept), which clears the proximity table.
 
 ## 4. Flat coordinates
 
-The resale dataset has **no coordinates**, and the app deliberately doesn't geocode flats. The team will supply them as a CSV.
+The resale dataset has **no coordinates**, and the app deliberately doesn't geocode flats. They're loaded from a CSV, `data/flat_coordinates.csv`, which is committed to the repo and was produced offline by `geocode_flat_addresses`. `load_all --coords data/flat_coordinates.csv` (§1, §2) loads it, so a normal setup never needs the geocoding tool.
 
-**CSV format:** a header row `block,street_name,latitude,longitude`, with WGS84 decimal degrees.
+**Load the coordinates:**
+```
+python manage.py import_flat_coordinates data/flat_coordinates.csv
+python manage.py compute_proximity
+```
+In Docker, prefix both with `docker compose exec web`.
+
+**Produce or extend the CSV** (only needed if you don't have the file, or after `import_flats` brings in new addresses):
+```
+python manage.py geocode_flat_addresses [--out data/flat_coordinates.csv] [--rate 1.0] [--limit N] [--retry-unmatched]
+```
+- **What it does:** looks up every distinct block and street name on the OneMap search API (no token needed). A result is accepted only if its block number matches and its road matches the street name with HDB abbreviations written out (`AVE` → `AVENUE`, `C'WEALTH` → `COMMONWEALTH`, …). It never writes to the database.
+- **Outputs:** matched rows go to `data/flat_coordinates.csv`. Addresses it can't match go to `data/flat_coordinates_unmatched.csv`, with a reason and up to three candidates. Fix those by hand by adding rows to the main CSV.
+- **Speed:** one request at a time, at most `--rate` per second. About 2¼ hours for the ~8,000 addresses at 1/s. If OneMap returns 429, it backs off (10 s, 30 s, 60 s, 120 s) and halves the rate.
+- **Resuming:** every row is saved as it's written. If the run stops, run the same command again: addresses already in either file are skipped, so a later run only looks up new addresses. `--retry-unmatched` tries the unmatched file again.
+- **Check by hand:** rows whose `match_method` ends in `far_from_town` are more than 6 km from their town's centre.
+
+**CSV format:** a header row `block,street_name,latitude,longitude`, with WGS84 decimal degrees. Extra columns are ignored.
 
 ```csv
 block,street_name,latitude,longitude
@@ -108,7 +125,7 @@ block,street_name,latitude,longitude
 - **Report:** the command reports how many flats matched, how many CSV rows matched nothing, and how many flats still have no coordinates.
 - **After loading:** run `compute_proximity`.
 
-**Development fallback:** `assign_approximate_coords` places every flat without coordinates at its town's centre, with no random offsets. The UI labels these flats "Approximate location (town centre)". Until the real CSV is loaded, every flat in a town therefore has the same distances.
+**Development fallback:** `assign_approximate_coords` places every flat without coordinates at its town's centre, with no random offsets. The UI labels these flats "Approximate location (town centre)". Every flat in a town then has the same distances, so use it only when the CSV isn't available. Loading the CSV afterwards replaces these placeholders.
 
 Flats without coordinates still appear in list results, with proximity scores of 0. They don't appear on the map, and a walking-distance limit filters them out.
 

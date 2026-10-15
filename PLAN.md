@@ -314,13 +314,13 @@ Finish each phase before starting the next. Each phase ends with passing tests a
 - **Decision 3:** how the walking-distance sliders work. Today they're a provisional straight-line hard filter.
 - **Update the SRS** to match: the 1–10 scale in FR 1.1.4, Child Care Centres everywhere, CHAS Clinics in the UC-01/09/12 lists, UC-11 querying the database (so UC-06 no longer extends UC-11), and the 12-month data window.
 - **Update the class diagram** with the approved changes in §8.
-- **Produce the coordinates CSV** (`block,street_name,latitude,longitude`), then run `import_flat_coordinates` and `compute_proximity`.
+- ~~**Produce the coordinates CSV**~~ Done 16 Oct 2026; see §10.4.
 
 ---
 
 ## 10. Build log and status (as of 15 Oct 2026)
 
-This section records what was built against this plan, what was found along the way, and what is still open. All eight phases in §7 are done. The tests pass on SQLite (outside Docker) and on PostgreSQL (inside Docker): **160 tests**. More detail is in `README.md` (setup, commands, design changes) and `docs/CROSS_CHECK.md` (comparison with the SRS and class diagram).
+This section records what was built against this plan, what was found along the way, and what is still open. All eight phases in §7 are done. The tests pass on SQLite (outside Docker) and on PostgreSQL (inside Docker): **176 tests**. More detail is in `README.md` (setup, commands, design changes) and `docs/CROSS_CHECK.md` (comparison with the SRS and class diagram).
 
 ### 10.1 What each phase delivered
 
@@ -360,6 +360,7 @@ The user approved all of these. Where they differ from the class diagram, they'r
   - `search.js` and `errors.js`
   - `ScoreBounds`, `NearbyAmenity`, `OneMapTokenProvider` and `OneMapError`
   - `ONEMAP_BASE_URL` and `MAP_TILE_URL` can be overridden from the environment, to rehearse UC-06 failures
+- **Flat coordinates CSV** (16 Oct 2026). `data/flat_coordinates.csv` was produced offline with the new `geocode_flat_addresses` command (`docs/GEOCODING_PLAN.md`), which queries OneMap search one address at a time and writes a CSV only. Loading still goes through `import_flat_coordinates`, so decision 6 holds: the running app never geocodes. The abbreviation table gained `ST.` → SAINT (`ST. GEORGE'S RD/LANE`); plain `ST` is always STREET. The CSV is not committed yet; the team decides whether it belongs in the repo.
 
 ### 10.3 Findings
 
@@ -374,8 +375,8 @@ The user approved all of these. Where they differ from the class diagram, they'r
 **Environment:**
 - **`$` in `.env`.** Docker Compose reads `$name` in `.env` values as a variable and silently changes the value. This broke `ONEMAP_PASSWORD` inside Docker until the value was wrapped in **single quotes**. `.env.example` and the README now warn about it.
 - **Other risky characters.** Values containing `#` or spaces should also be quoted. `POSTGRES_PASSWORD` should avoid `@`, `:` and `/`, because it is placed inside `DATABASE_URL`.
-- **Two databases.** The Docker database has **no flat coordinates** (it was loaded without `--approximate`), and walking distance and the details page's Map View need them. Run `docker compose exec web python manage.py assign_approximate_coords` and then `compute_proximity` there. The local SQLite database already has town-centre placeholder coordinates.
-- **Placeholder coordinates.** Until the real coordinates CSV is loaded, every flat in a town has identical distances. So proximity scores don't tell flats within a town apart, and the map shows one amber pin per town.
+- **Two databases.** Local SQLite and Docker's PostgreSQL are loaded separately. Both now have the real coordinates (16 Oct 2026). A fresh database needs `import_flat_coordinates data/flat_coordinates.csv` and `compute_proximity`.
+- **Placeholder coordinates** (before 16 Oct 2026). With town-centre placeholders, every flat in a town had identical distances, so proximity scores didn't tell flats within a town apart, and the map showed one amber pin per town.
 
 **Bugs found and fixed:**
 - **Bookmark order** on the Saved page could flip, because Windows timestamps sometimes tie.
@@ -399,26 +400,13 @@ The user approved all of these. Where they differ from the class diagram, they'r
 
 ### 10.4 Still open
 
-#### Known limitation: no flat has real coordinates yet (top priority)
+#### Flat coordinates: done (16 Oct 2026)
 
-The resale dataset has no coordinates, and the app deliberately doesn't geocode flats (decision 6). Until the team's coordinates CSV is loaded:
-- **Local SQLite:** every flat sits at its **town centre**. The town-centre fallback has been applied, and these flats are labelled "Approximate location (town centre)".
-- **Docker:** flats have **no location at all**, because that database was loaded without `--approximate`.
-
-Every location-based feature is affected:
-
-| Area | Effect today |
-|---|---|
-| Fit Score (FR 2.2.2, decision 4) | Every flat in a town gets the same proximity sub-scores and the same search-bar anchor score. Within a town, flats are ranked only by price and lease. In Docker, all proximity scores are 0. |
-| Walking-distance sliders (FR 1.1.3, decision 3) | They filter whole towns in or out. In Docker, setting a limit removes every flat. |
-| Nearest amenities and walking distance (UC-11, UC-04) | Measured from the town centre, not the block. In Docker they aren't available. |
-| Map (FR 2.1.2, FR 2.2.1) | One amber "99+" pin per town instead of one pin per block, so single-flat price tags never appear. In Docker, no flat pins appear at all; the town counts still work. |
-| Details page Map View (UC-02, UC-03) | Centred on the town centre. In Docker it shows "Location not available". |
-
-Nothing in the code needs to change. Once the CSV is loaded, every feature above uses the real locations automatically.
-
-- [ ] **Top priority: produce the coordinates CSV**, with the header `block,street_name,latitude,longitude` in WGS84 decimal degrees, one row per block (about 8,000 unique block/street pairs in the current 12-month window). Then run `import_flat_coordinates <csv>` and `compute_proximity`, both locally and in Docker. The command reports any addresses that didn't match.
-- [ ] Revisit **decision 3** (walk sliders) only after real coordinates are loaded. Its effect can't be judged on town-centre placeholders.
+- [x] **Coordinates CSV produced and loaded.** `geocode_flat_addresses` matched **all 8,080 block/street pairs (100%)** in the 12-month window: 8,079 `exact`, 1 `fuzzy` (`4C ST. GEORGE'S LANE`, where OneMap keeps "ST."), 0 unmatched, 0 `far_from_town`. The run took 2 h 15 min at 1 request/s with no 429s.
+  - **Checks:** no two addresses share a coordinate; every block is within 4.6 km of its town centre (median 1.3 km); 7,813 postcodes end in the block number, 258 are `NIL` in OneMap, and the 9 others are blocks with irregular postcodes (e.g. Pinnacle@Duxton) whose block and road matched exactly.
+  - **Loaded** locally and in Docker: 24,353 flats at 8,080 addresses, 0 without coordinates, then `compute_proximity`.
+  - **Seen in the browser:** the map shows one pin per block with price tags, and flats in the same town now differ (Bishan's 419 flats have 176 different nearest-MRT distances, 75–1,139 m).
+- [ ] Revisit **decision 3** (walk sliders) now that real coordinates are loaded.
 
 **Needs a decision from the team** (details in `docs/CROSS_CHECK.md` §2):
 - [ ] **Decision 3:** how the walking-distance sliders should work. Today they're a provisional straight-line hard filter, in `SearchController.apply_walk_limits`, marked `OPEN DECISION (FR 1.1.3)`.
@@ -428,7 +416,8 @@ Nothing in the code needs to change. Once the CSV is loaded, every feature above
 - [ ] **OneMap hardening (optional):** send the token on search requests too, and retry once on a 429 before showing the banner.
 
 **Team tasks:**
-- [ ] **Produce the coordinates CSV.** See the top-priority item above.
+- [x] **Produce the coordinates CSV.** Done; see the top of §10.4.
+- [ ] **Decide whether to commit `data/flat_coordinates.csv`** (about 850 KB). Committed, teammates load it directly; otherwise each person re-runs `geocode_flat_addresses` (~2¼ h).
 - [ ] **Update the class diagram,** using the checklist in `docs/CROSS_CHECK.md` §3.
 - [ ] **Update the SRS,** using `docs/CROSS_CHECK.md` §4 and the §9 items above:
   - 1–10 weights in FR 1.1.4
@@ -442,4 +431,4 @@ Nothing in the code needs to change. Once the CSV is loaded, every feature above
 
 **Housekeeping:**
 - [ ] Commit and push the phase 8 changes. They were uncommitted when this log was written; the last commit was `367ca3b`, phase 7.
-- [ ] Before a demo from Docker, give the Docker database placeholder coordinates (see "Two databases" in §10.3), or load the real CSV.
+- [x] Before a demo from Docker, load the real CSV. Done 16 Oct 2026.

@@ -103,6 +103,14 @@ class OneMapSearchGateway:
             raise OneMapError(SEARCH_PATH, "bad-response", "OneMap search result has no coordinates")
         return lat, lng, _label(best)
 
+    def search_addresses(self, text: str) -> list[dict]:
+        """Raw results (page 1) for an address search; [] when nothing matches."""
+        body = _call("GET", SEARCH_PATH, params={
+            "searchVal": text, "returnGeom": "Y", "getAddrDetails": "Y", "pageNum": 1})
+        if not body.get("found"):
+            return []
+        return list(body.get("results") or [])
+
 
 class OneMapRoutingGateway:
     """«Boundary» OneMapRoutingGateway — walking routes (UC-04, FR 1.2.1)."""
