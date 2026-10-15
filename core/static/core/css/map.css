@@ -61,3 +61,10 @@
 .ff-popup a { color: var(--ff-brand-dark); font-weight: 600; }
 .ff-popup .ff-fit { float: right; color: var(--ff-brand-dark); font-weight: 700; }
 .ff-popup .ff-note { margin-top: 6px; font-size: 11px; color: #b45309; }
+.ff-popup .ff-walk { margin-top: 6px; color: #0f172a; font-weight: 600; }
+
+/* --- Search-bar location (UC-07) ------------------------------------------------------- */
+.ff-anchor {
+  width: 22px; height: 22px; border-radius: 9999px; background: #1e293b;
+  border: 3px solid #fde047; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}

@@ -26,10 +26,37 @@
     minZoom: cfg.minZoom, maxZoom: cfg.maxZoom,
     maxBounds: SINGAPORE.pad(0.15), maxBoundsViscosity: 0.8,
   });
-  L.tileLayer(cfg.tileUrl, {
+  var tiles = L.tileLayer(cfg.tileUrl, {
     attribution: cfg.attribution, minZoom: cfg.minZoom, maxZoom: cfg.maxZoom, detectRetina: true,
   }).addTo(map);
   FF.map = map;
+
+  // --- UC-06 / UC-13: base-map tiles from OneMap ----------------------------------------
+  // A view is saved to MapState only once its tiles have loaded without errors, so MapState
+  // always holds the last *successfully rendered* map (FR 1.2.1.2). If tiles fail, show the
+  // banner and go back to that view once (its tiles may still be in the browser cache);
+  // with no saved view, the blank map stays with the banner (UC-13.EX.1).
+  var tileErrors = 0;
+  var restoring = false;
+  var rememberView = el.dataset.mapMode === "browse";
+  tiles.on("loading", function () { tileErrors = 0; });
+  tiles.on("tileerror", function () { tileErrors += 1; });
+  tiles.on("load", function () {
+    if (tileErrors === 0) {
+      restoring = false;
+      if (rememberView) {
+        var c = map.getCenter();
+        FF.MapState.save({ centre: [c.lat, c.lng], zoom: map.getZoom() });
+      }
+      return;
+    }
+    if (FF.showError) FF.showError("OneMap service currently unavailable. The map may not display correctly.");
+    var last = FF.MapState.lastView();
+    if (!restoring && last && rememberView) {
+      restoring = true;
+      map.setView(last.centre, last.zoom);
+    }
+  });
 
   // --- Small helpers --------------------------------------------------------------------
 
@@ -179,10 +206,7 @@
         params.set("east", b.getEast().toFixed(6));
         done = getJSON("/api/flats/in-bounds?" + params, signal).then(drawPins);
       }
-      done.then(function () {
-        var c = map.getCenter();
-        FF.MapState.save({ centre: [c.lat, c.lng], zoom: map.getZoom() });
-      }).catch(function (err) {
+      done.catch(function (err) {
         if (err.name !== "AbortError") setStatus("Couldn't load flats for the map. Try moving the map again.");
       });
     }
@@ -199,6 +223,19 @@
             .addTo(savedLayer);
         });
       }).catch(function () { /* saved pins are extra; the rest of the map still works */ });
+    }
+
+    // UC-07: the search-bar location, if one is set.
+    var anchorParams = new URLSearchParams(window.location.search);
+    var anchorLat = parseFloat(anchorParams.get("anchor_lat"));
+    var anchorLng = parseFloat(anchorParams.get("anchor_lng"));
+    if (!isNaN(anchorLat) && !isNaN(anchorLng)) {
+      L.marker([anchorLat, anchorLng], {
+        icon: L.divIcon({ className: "", iconSize: [22, 22], html: '<div class="ff-anchor" aria-hidden="true"></div>' }),
+        title: "Search location", zIndexOffset: 800,
+      }).bindPopup(h("div", { className: "ff-popup" },
+        h("h3", {}, "Search location"),
+        h("p", {}, displayName(anchorParams.get("anchor_label") || "Selected location")))).addTo(map);
     }
 
     map.on("moveend", function () { clearTimeout(timer); timer = setTimeout(load, 200); });
@@ -245,11 +282,11 @@
             h("h3", {}, displayName(item.name)),
             h("p", {}, cat.label.replace(/s$/, "") + (item.detail ? " · " + item.detail : "")),
             h("p", {}, "About " + item.distanceM.toLocaleString("en-SG") + " m away (straight line)"));
-          // Phase 7 (UC-04) reads these to request the walking distance.
-          popup.dataset.amenity = cat.key;
-          popup.dataset.lat = item.lat;
-          popup.dataset.lng = item.lng;
-          return L.marker([item.lat, item.lng], { icon: icon, title: displayName(item.name) }).bindPopup(popup);
+          var walk = h("p", { className: "ff-walk" }, "Walking distance: select to calculate");
+          popup.appendChild(walk);
+          var marker = L.marker([item.lat, item.lng], { icon: icon, title: displayName(item.name) }).bindPopup(popup);
+          marker.on("popupopen", function () { showWalkingDistance(walk, item, data.flat); });
+          return marker;
         }));
         if (visible.indexOf(cat.key) >= 0) layers[cat.key].addTo(map);
       });
@@ -272,6 +309,39 @@
     }).catch(function () {
       setStatus("Couldn't load nearby amenities for the map.");
     });
+  }
+
+  /**
+   * UC-04 Calculate Walking Distance: asked for once per pin, when its popup first opens.
+   * A OneMap failure shows the UC-06 banner; the rest of the map keeps working.
+   */
+  function showWalkingDistance(line, item, flat) {
+    if (line.dataset.state === "done" || line.dataset.state === "loading") return;
+    line.dataset.state = "loading";
+    line.textContent = "Walking distance: calculating…";
+    var params = new URLSearchParams({ flat_id: flat.id, lat: item.lat, lng: item.lng });
+    fetch("/api/walking-distance?" + params, { headers: { Accept: "application/json" }, credentials: "same-origin" })
+      .then(function (response) {
+        return response.json().then(function (body) { return { ok: response.ok, status: response.status, body: body }; });
+      })
+      .then(function (res) {
+        if (!res.ok) {
+          line.dataset.state = "failed";
+          line.textContent = "Walking distance unavailable.";
+          if (res.status === 502 && FF.showError) FF.showError(res.body.error);
+          return;
+        }
+        line.dataset.state = "done";
+        var text = "Walk: " + res.body.metres.toLocaleString("en-SG") + " m";
+        if (res.body.minutes) text += " · about " + res.body.minutes + " min";
+        if (res.body.fromTownCentre) text += " (from the town centre)";
+        line.textContent = text;
+      })
+      .catch(function () {
+        line.dataset.state = "failed";
+        line.textContent = "Walking distance unavailable.";
+        if (FF.showError) FF.showError();
+      });
   }
 
   // --- Saved: the saved flats --------------------------------------------------------------

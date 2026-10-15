@@ -5,7 +5,7 @@ Context: `sidebar` from SearchForm.sidebar_state(), optional `form_errors`.
 <aside class="w-[26rem] shrink-0 overflow-y-auto border-r border-slate-200 bg-white">
   <form method="get" action="{% url 'core:results' %}" id="search-form" class="flex flex-col gap-3 px-4 py-3 text-sm">
     {% if view_mode %}<input type="hidden" name="view" value="{{ view_mode }}">{% endif %}
-    {% for key, value in sidebar.anchor.items %}{% if value %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
+    {% for key, value in sidebar.anchor.hidden.items %}{% if value %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
 
     {% if form_errors %}
       <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
@@ -52,6 +52,10 @@ Context: `sidebar` from SearchForm.sidebar_state(), optional `form_errors`.
       {% for weight in sidebar.weights %}
         {% include "core/partials/slider_row.html" with label=weight.label name=weight.name flag=weight.flag value=weight.value off=weight.off min=sidebar.weight_range.min max=sidebar.weight_range.max step=1 unit="" off_label="Ignore" %}
       {% endfor %}
+      {% if sidebar.anchor.active %}
+        {# UC-07 / decision 4: the search-bar location's weight, shown only once a location is set. #}
+        {% include "core/partials/slider_row.html" with label="Near location" name="w_anchor" value=sidebar.anchor.weight min=sidebar.weight_range.min max=sidebar.weight_range.max step=1 unit="" no_off=True title=sidebar.anchor.label %}
+      {% endif %}
     </fieldset>
 
     <button type="submit" class="mt-1 rounded-lg bg-brand-600 px-4 py-2.5 font-semibold text-white shadow-sm hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2">

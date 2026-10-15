@@ -12,15 +12,16 @@
     var off = row.querySelector("[data-off]");
 
     function render() {
+      var isOff = Boolean(off && off.checked);  // the anchor slider has no "off" checkbox
       output.textContent = range.value + (range.dataset.unit || "");
-      range.disabled = off.checked;
-      range.classList.toggle("opacity-40", off.checked);
-      output.classList.toggle("opacity-40", off.checked);
-      row.classList.toggle("is-off", off.checked);
+      range.disabled = isOff;
+      range.classList.toggle("opacity-40", isOff);
+      output.classList.toggle("opacity-40", isOff);
+      row.classList.toggle("is-off", isOff);
     }
 
     range.addEventListener("input", render);
-    off.addEventListener("change", render);
+    if (off) off.addEventListener("change", render);
     render();
   });
 

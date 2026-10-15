@@ -79,8 +79,10 @@ def test_results_page_sort_control(client, three_flats):
     assert order == sorted(order)
     assert '<option value="price-desc" selected>' in content
     # The sort form carries the search but not sort/page.
-    assert '<input type="hidden" name="max_budget" value="800000">' in content
-    assert 'type="hidden" name="page"' not in content and 'type="hidden" name="sort"' not in content
+    sort_form = content[content.index("data-sort-form"):]
+    sort_form = sort_form[:sort_form.index("</form>")]
+    assert '<input type="hidden" name="max_budget" value="800000">' in sort_form
+    assert 'name="page"' not in sort_form and 'type="hidden" name="sort"' not in sort_form
 
 
 @pytest.mark.django_db

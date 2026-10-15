@@ -3,16 +3,19 @@
 (UC-03, UC-04, UC-11, UC-12). Rendering happens in the browser.
 """
 from django.conf import settings
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET
 
+from core.boundary.gateways.onemap import OneMapError
 from core.control.amenity import AmenityController
 from core.control.bookmark import BookmarkController
+from core.control.distance import StraightLineDistance, WalkingDistance
+from core.control.errors import ErrorHandler
 from core.control.map import MapController, flats_as_pins
 from core.entity import CATEGORIES, ResaleFlat
 
-from . import not_implemented
 from .forms import SearchForm, has_search
 
 
@@ -80,6 +83,41 @@ def bookmarks_api(request):
     return JsonResponse({"count": len(flats), "flats": flats_as_pins(flats[i] for i in ids if i in flats)})
 
 
+WALK_MAX_STRAIGHT_LINE_M = 1500  # amenities are within 1 km; a little slack, but no open proxy
+WALK_CACHE_SECONDS = 24 * 3600
+
+
+@require_GET
 def walking_distance_api(request):
-    """GET /api/walking-distance?flat_id=&lat=&lng= -> {metres, minutes} or {error} 502 (UC-04)."""
-    return not_implemented(7)
+    """
+    GET /api/walking-distance?flat_id=&lat=&lng= -> {metres, minutes} (UC-04, FR 1.2.1),
+    or {error} with HTTP 502 when OneMap fails (UC-04.EX.1 -> UC-06).
+
+    Only routes to points near the flat, so the endpoint can't be used to spend our
+    OneMap quota on arbitrary routes. Results are cached for a day.
+    """
+    try:
+        flat_id = int(request.GET["flat_id"])
+        target = (float(request.GET["lat"]), float(request.GET["lng"]))
+    except (KeyError, ValueError):
+        return JsonResponse({"error": "flat_id, lat and lng are required numbers."}, status=400)
+    flat = get_object_or_404(ResaleFlat, pk=flat_id)
+    if not flat.has_coords:
+        return JsonResponse({"error": "This flat has no location yet."}, status=400)
+    origin = (flat.latitude, flat.longitude)
+    if StraightLineDistance().distance_m(origin, target) > WALK_MAX_STRAIGHT_LINE_M:
+        return JsonResponse({"error": "That point is too far from the flat."}, status=400)
+
+    key = "walk:%.6f,%.6f:%.6f,%.6f" % (*origin, *target)
+    route = cache.get(key)
+    if route is None:
+        try:
+            route = WalkingDistance().route(origin, target)
+        except OneMapError as exc:
+            return ErrorHandler().to_response(exc)
+        cache.set(key, route, WALK_CACHE_SECONDS)
+    return JsonResponse({
+        "metres": round(route["metres"]),
+        "minutes": max(1, round(route["seconds"] / 60)) if route["seconds"] else None,
+        "fromTownCentre": flat.coords_approximate,
+    })

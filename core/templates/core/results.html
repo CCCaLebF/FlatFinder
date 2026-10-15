@@ -20,6 +20,7 @@
     {# Map View: a side list of this page's results next to the map (PLAN §6). #}
     <section class="flex w-[21rem] shrink-0 flex-col border-r border-slate-200 bg-slate-50" aria-label="Results list">
       <div class="flex flex-col gap-2 border-b border-slate-200 bg-white px-3 py-3">
+        <div>{% include "core/partials/search_bar.html" %}</div>
         <h1 class="font-semibold text-slate-800">{{ result.count|intcomma }} flat{{ result.count|pluralize:" matches,s match" }}</h1>
         {% include "core/partials/sort_control.html" %}
       </div>
@@ -36,6 +37,7 @@
   {% else %}
     <main class="min-w-0 flex-1 overflow-y-auto">
       <div class="mx-auto max-w-4xl px-6 py-5">
+        <div class="mb-4">{% include "core/partials/search_bar.html" %}</div>
         <div class="mb-4 flex items-center justify-between gap-4">
           <h1 class="text-lg font-semibold text-slate-800">
             {{ result.count|intcomma }} flat{{ result.count|pluralize:" matches,s match" }}

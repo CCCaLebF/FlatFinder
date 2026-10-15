@@ -64,7 +64,14 @@ class WalkingDistance(DistanceStrategy):
     """
 
     def __init__(self, gateway=None):
+        if gateway is None:
+            from core.boundary.gateways.onemap import OneMapRoutingGateway
+            gateway = OneMapRoutingGateway()
         self.gateway = gateway
 
     def distance_m(self, origin, target) -> float:
-        raise NotImplementedError("Phase 7")
+        return self.gateway.walking_distance_m(origin, target)
+
+    def route(self, origin, target) -> dict:
+        """{"metres", "seconds"}: the distance plus OneMap's walking time."""
+        return self.gateway.walking_route(origin, target)

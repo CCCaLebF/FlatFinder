@@ -103,7 +103,9 @@ MAP_PIN_LIMIT = 500
 MAP_MIN_ZOOM, MAP_MAX_ZOOM = 11, 19  # the range OneMap's basemap tiles cover Singapore at
 
 # MapGateway (PLAN §5): base-map tiles and attribution, passed to MapUI via the template.
-MAP_TILE_URL = "https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png"
+# Both OneMap URLs can be overridden from the environment, e.g. to rehearse UC-06
+# (API failure) by pointing them at an unreachable address.
+MAP_TILE_URL = os.environ.get("MAP_TILE_URL", "https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png")
 MAP_TILE_ATTRIBUTION = (
     '<img src="https://www.onemap.gov.sg/web-assets/images/logo/om_logo.png" '
     'style="height:20px;width:20px;display:inline"/>&nbsp;'
@@ -112,7 +114,7 @@ MAP_TILE_ATTRIBUTION = (
 )
 
 # OneMap gateways (server-side only; the token never reaches the browser).
-ONEMAP_BASE_URL = "https://www.onemap.gov.sg"
+ONEMAP_BASE_URL = os.environ.get("ONEMAP_BASE_URL", "https://www.onemap.gov.sg")
 ONEMAP_EMAIL = os.environ.get("ONEMAP_EMAIL", "")
 ONEMAP_PASSWORD = os.environ.get("ONEMAP_PASSWORD", "")
 ONEMAP_TIMEOUT_S = 5

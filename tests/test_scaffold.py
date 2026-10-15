@@ -33,11 +33,6 @@ def test_start_page_renders(client):
 
 
 @pytest.mark.django_db
-def test_unbuilt_routes_return_501(client):
-    assert client.get(reverse("core:api_walking_distance")).status_code == 501
-
-
-@pytest.mark.django_db
 def test_flat_coordinates_are_nullable_and_proximity_links():
     flat = create_flat()
     assert flat.latitude is None and not flat.has_coords and not flat.coords_approximate

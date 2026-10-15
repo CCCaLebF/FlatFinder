@@ -2,15 +2,20 @@
 One slider with an "off" checkbox. Off = criterion blank / unconstrained (FR 1.1.6).
 The slider isn't rendered `disabled`: search.js disables it, and without JS the server
 ignores a slider whose checkbox is ticked, so unticking still works.
-Variables: label, name, flag, value, off, min, max, step, unit, off_label.
+Variables: label, name, flag, value, off, min, max, step, unit, off_label,
+no_off (omit the checkbox), title (tooltip on the label).
 {% endcomment %}
 <div class="grid grid-cols-[8.25rem_1fr_3rem_4.5rem] items-center gap-2 {% if off %}is-off{% endif %}" data-slider>
-  <label for="id_{{ name }}" class="truncate text-slate-700">{{ label }}</label>
+  <label for="id_{{ name }}" class="truncate text-slate-700" {% if title %}title="{{ title }}"{% endif %}>{{ label }}</label>
   <input type="range" id="id_{{ name }}" name="{{ name }}" value="{{ value }}" min="{{ min }}" max="{{ max }}" step="{{ step }}"
          class="w-full accent-brand-600 {% if off %}opacity-40{% endif %}" data-unit="{{ unit }}">
   <output for="id_{{ name }}" class="text-right text-xs tabular-nums text-slate-600 {% if off %}opacity-40{% endif %}">{{ value }}{{ unit }}</output>
-  <label class="flex cursor-pointer items-center gap-1 text-xs text-slate-500" title="{{ off_label }}">
-    <input type="checkbox" name="{{ flag }}" value="1" class="h-3.5 w-3.5 accent-brand-600" data-off {% if off %}checked{% endif %}>
-    {{ off_label }}
-  </label>
+  {% if no_off %}
+    <span></span>
+  {% else %}
+    <label class="flex cursor-pointer items-center gap-1 text-xs text-slate-500" title="{{ off_label }}">
+      <input type="checkbox" name="{{ flag }}" value="1" class="h-3.5 w-3.5 accent-brand-600" data-off {% if off %}checked{% endif %}>
+      {{ off_label }}
+    </label>
+  {% endif %}
 </div>

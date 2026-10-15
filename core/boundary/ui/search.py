@@ -3,11 +3,15 @@
 and the No Results state (UC-01, UC-07, UC-08, UC-09, UC-10; NFR 2.2, NFR 3.2).
 """
 from django.conf import settings
+from django.contrib import messages
 from django.core.paginator import Paginator
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import reverse
 
+from core.boundary.gateways.onemap import OneMapError
+from core.control.errors import ErrorHandler
 from core.control.search import SearchController
-from core.entity import CATEGORIES, ResaleFlat
+from core.entity import CATEGORIES, ResaleFlat, SearchQuery
 
 from .forms import SORT_OPTIONS, SearchForm, parse_sort_order, sort_param
 
@@ -31,6 +35,8 @@ def start(request):
 
 def results(request):
     """Results Page (dialog map): ranked, sorted, paginated matches (20 per page), or No Results."""
+    if "q" in request.GET:
+        return apply_search_bar(request)
     remember_browsing_page(request)
     form = SearchForm(request.GET)
     context = {"sidebar": None, "form_errors": None, "result": None}
@@ -63,6 +69,37 @@ def results(request):
         current_sort=sort_param(order),
     )
     return render(request, "core/results.html", context)
+
+
+def apply_search_bar(request):
+    """
+    UC-07 Search via Search Bar: geocode `q` through OneMap and make it the proximity
+    anchor (decision 4). Every outcome redirects to a URL without `q`, so paging and
+    sorting never geocode again:
+      - match:     the URL gains anchor_lat / anchor_lng / anchor_label (and w_anchor)
+      - no match:  "No matching location found" (UC-07.EX.2)
+      - failure:   the OneMap banner (UC-07.EX.1 -> UC-06); results still load
+    """
+    params = request.GET.copy()
+    text = (params.pop("q", [""])[0] or "").strip()[:120]
+    params.pop("page", None)
+    if text:
+        form = SearchForm(params)
+        query = form.to_query() if form.is_valid() else SearchQuery()
+        try:
+            found = SearchController().set_proximity_anchor(query, text)
+        except OneMapError as exc:
+            messages.error(request, ErrorHandler().handle(exc))
+        else:
+            if found:
+                params["anchor_lat"] = f"{query.anchorLat:.6f}"
+                params["anchor_lng"] = f"{query.anchorLng:.6f}"
+                params["anchor_label"] = query.anchorLabel
+                params.setdefault("w_anchor", str(query.anchorWeight))
+            else:
+                messages.warning(request, f'No matching location found for "{text}". Try a postal code or a place name.')
+    encoded = params.urlencode()
+    return redirect(reverse("core:results") + (f"?{encoded}" if encoded else ""))
 
 
 FIELD_LABELS = {

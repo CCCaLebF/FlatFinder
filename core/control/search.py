@@ -161,12 +161,20 @@ class SearchController:
 
     # --- UC-07 Anchor ----------------------------------------------------------------
 
-    def set_proximity_anchor(self, query: SearchQuery, text: str) -> bool:
+    def set_proximity_anchor(self, query: SearchQuery, text: str, gateway=None) -> bool:
         """
         UC-07: geocode a postal code or place name with OneMapSearchGateway and set it
         as the query's anchor. Returns False when there is no match (UC-07.EX.2).
+        Raises OneMapError if OneMap fails (UC-07.EX.1 -> UC-06).
         """
-        raise NotImplementedError("Phase 7")
+        if gateway is None:
+            from core.boundary.gateways.onemap import OneMapSearchGateway
+            gateway = OneMapSearchGateway()
+        found = gateway.geocode(text.strip())
+        if found is None:
+            return False
+        query.setAnchor(*found)
+        return True
 
     # --- The Fit Score formula (PLAN §4), vectorised ----------------------------------
 

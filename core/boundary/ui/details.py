@@ -10,6 +10,7 @@ from django.urls import reverse
 from core.control.amenity import AmenityController
 from core.control.search import SearchController
 from core.entity import CATEGORIES, ResaleFlat
+from core.templatetags.flatfinder import display_name
 
 from .forms import SearchForm, has_search
 
@@ -78,7 +79,7 @@ def breakdown_rows(fit, query) -> list:
         rows.append({"label": category.label, "weight": getattr(query, category.weight_field),
                      "score": getattr(fit, category.score_field), "fixed": False})
     if query.hasAnchor:
-        rows.append({"label": f"Near {query.anchorLabel}", "weight": query.anchorWeight,
+        rows.append({"label": f"Near {display_name(query.anchorLabel)}", "weight": query.anchorWeight,
                      "score": fit.anchorScore, "fixed": False})
 
     total_weight = sum(r["weight"] for r in rows if r["weight"] is not None)

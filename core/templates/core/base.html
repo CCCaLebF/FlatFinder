@@ -34,9 +34,11 @@
 </head>
 <body class="flex h-full flex-col bg-slate-50 text-slate-800">
   {% include "core/partials/header.html" %}
+  {% include "core/partials/messages.html" %}
   <div class="flex min-h-0 flex-1">
     {% block body %}{% endblock %}
   </div>
+  <script src="{% static 'core/js/errors.js' %}"></script>
   <script src="{% static 'core/js/bookmarks.js' %}"></script>
   <script src="{% static 'core/js/map.js' %}"></script>{# does nothing on pages without #map #}
   {% block scripts %}{% endblock %}

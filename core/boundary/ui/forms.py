@@ -162,5 +162,11 @@ class SearchForm(forms.Form):
                 for c in CATEGORIES
             ],
             "weight_range": {"min": settings.WEIGHT_MIN, "max": settings.WEIGHT_MAX},
-            "anchor": {key: raw.get(key, "") for key in ("anchor_lat", "anchor_lng", "anchor_label", "w_anchor")},
+            # UC-07 anchor: carried as hidden inputs; its weight slider only appears once set (decision 4).
+            "anchor": {
+                "hidden": {key: raw.get(key, "") for key in ("anchor_lat", "anchor_lng", "anchor_label")},
+                "active": bool(raw.get("anchor_lat") and raw.get("anchor_lng")),
+                "label": raw.get("anchor_label", ""),
+                "weight": number("w_anchor", settings.DEFAULT_ANCHOR_WEIGHT),
+            },
         }

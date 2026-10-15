@@ -49,6 +49,18 @@ def lease_years(value):
 
 
 @register.filter
+def error_messages(messages):
+    """The text of error-level messages (the UC-06 banner)."""
+    return [str(m) for m in messages if m.level_tag == "error"]
+
+
+@register.filter
+def notice_messages(messages):
+    """The text of every other message (notices such as UC-07.EX.2)."""
+    return [str(m) for m in messages if m.level_tag != "error"]
+
+
+@register.filter
 def is_in(value, collection):
     """{{ flat.id|is_in:bookmarked_ids }} — membership test usable inside {% include with %}."""
     return value in (collection or ())
