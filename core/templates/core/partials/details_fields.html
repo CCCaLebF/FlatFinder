@@ -1,0 +1,17 @@
+{% load humanize flatfinder %}
+{% comment %} The FR 2.2.3.1.1–2.2.3.1.8 fields (the Fit Score, 2.2.3.1.9, is beside them). Variables: flat, columns (2 or 3). {% endcomment %}
+<dl class="grid {% if columns == 2 %}grid-cols-2{% else %}grid-cols-2 sm:grid-cols-3{% endif %} gap-x-5 gap-y-3 text-sm">
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Street</dt><dd class="font-semibold text-slate-800">{{ flat.street_name|street_title }}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Block</dt><dd class="font-semibold text-slate-800">{{ flat.block }}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Flat type</dt><dd class="font-semibold text-slate-800">{{ flat.flat_type|street_title }}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Floor area</dt><dd class="font-semibold text-slate-800">{{ flat.floor_area_sqm|floatformat:"-1" }} m²</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Storey range</dt><dd class="font-semibold text-slate-800">{{ flat.storey_range|lower }}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Resale price</dt><dd class="font-bold text-brand-700">S${{ flat.resale_price|floatformat:0|intcomma }}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Lease commenced</dt><dd class="font-semibold text-slate-800">{{ flat.lease_commence_date }}</dd></div>
+  <div>
+    <dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Remaining lease</dt>
+    <dd class="font-semibold text-slate-800">{{ flat.remaining_lease|lease_years }}</dd>
+    {% if flat.remaining_lease_raw %}<dd class="text-xs text-slate-400">{{ flat.remaining_lease_raw }} at sale</dd>{% endif %}
+  </div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sold</dt><dd class="font-semibold text-slate-800">{{ flat.month|date:"F Y" }}</dd></div>
+</dl>

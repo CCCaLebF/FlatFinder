@@ -38,6 +38,19 @@ class StraightLineDistance(DistanceStrategy):
              + math.cos(lat1) * math.cos(lat2) * math.sin((lng2 - lng1) / 2) ** 2)
         return 2 * EARTH_RADIUS_M * math.asin(math.sqrt(a))
 
+    def distances_m(self, lats, lngs, target):
+        """
+        Distance from many points (numpy arrays of lat and lng) to one `(lat, lng)` target,
+        e.g. every flat to the search-bar anchor (UC-07). NaN where a point has no coordinates.
+        """
+        import numpy as np
+
+        lat1, lng1 = np.radians(lats), np.radians(lngs)
+        lat2, lng2 = math.radians(target[0]), math.radians(target[1])
+        a = (np.sin((lat2 - lat1) / 2) ** 2
+             + np.cos(lat1) * math.cos(lat2) * np.sin((lng2 - lng1) / 2) ** 2)
+        return 2 * EARTH_RADIUS_M * np.arcsin(np.sqrt(a))
+
     def nearest_m(self, origins, targets):
         """
         Distance from each origin to its nearest target, for many points at once

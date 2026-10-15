@@ -1,15 +1,24 @@
 {% load flatfinder humanize %}
+{% comment %} Numbered pages, as in the Results Page mockup. 20 results per page (decision 12). {% endcomment %}
 {% if page.paginator.num_pages > 1 %}
-<nav class="mt-6 flex flex-wrap items-center justify-between gap-2 text-sm" aria-label="Pagination">
-  <p class="text-slate-500">Showing {{ page.start_index|intcomma }}–{{ page.end_index|intcomma }} of {{ page.paginator.count|intcomma }}</p>
-  <div class="flex items-center gap-1">
+<nav class="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm" aria-label="Pagination">
+  <p class="text-xs text-slate-500">Showing {{ page.start_index|intcomma }}–{{ page.end_index|intcomma }} of {{ page.paginator.count|intcomma }}</p>
+  <ul class="flex flex-wrap items-center gap-1">
     {% if page.has_previous %}
-      <a href="{% url_replace page=page.previous_page_number %}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 hover:border-brand-500 hover:text-brand-700">Previous</a>
+      <li><a href="{% url_replace page=page.previous_page_number %}" class="grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-brand-400 hover:text-brand-700" aria-label="Previous page">‹</a></li>
     {% endif %}
-    <span class="px-3 py-1.5 text-slate-600">Page {{ page.number }} of {{ page.paginator.num_pages|intcomma }}</span>
+    {% for number in page_range %}
+      {% if number == page.paginator.ELLIPSIS %}
+        <li class="px-1 text-slate-400" aria-hidden="true">…</li>
+      {% elif number == page.number %}
+        <li><span class="grid h-8 min-w-8 place-items-center rounded-md bg-brand-600 px-2 font-semibold text-white" aria-current="page">{{ number }}</span></li>
+      {% else %}
+        <li><a href="{% url_replace page=number %}" class="grid h-8 min-w-8 place-items-center rounded-md border border-slate-200 bg-white px-2 text-slate-600 hover:border-brand-400 hover:text-brand-700">{{ number }}</a></li>
+      {% endif %}
+    {% endfor %}
     {% if page.has_next %}
-      <a href="{% url_replace page=page.next_page_number %}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 hover:border-brand-500 hover:text-brand-700">Next</a>
+      <li><a href="{% url_replace page=page.next_page_number %}" class="grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-brand-400 hover:text-brand-700" aria-label="Next page">›</a></li>
     {% endif %}
-  </div>
+  </ul>
 </nav>
 {% endif %}

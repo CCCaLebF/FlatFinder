@@ -210,7 +210,7 @@ def test_map_js_contracts():
     assert "cfg.pinMinZoom" in source                                 # FR 2.1.1 / 2.1.2 switch
     assert "/api/flats/area-counts?" in source and "/api/flats/in-bounds?" in source
     assert "/api/bookmarks" in source                                  # UC-03.AC.1
-    assert "map.removeLayer(layers[key])" in source                    # UC-12: hide without re-fetching
+    assert "map.removeLayer(layers[type])" in source                   # UC-12: hide without re-fetching
     assert "MapState.save" in source                                   # UC-13
     assert "innerHTML" not in source                                   # server text is never parsed as HTML
 

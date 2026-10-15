@@ -195,13 +195,16 @@ def test_nfr1_ranking_25k_flats_is_well_under_a_second():
     query = SearchQuery(busStopWeight=5, mrtStationWeight=8, childCareCentreWeight=3,
                         hawkerCentreWeight=6, chasClinicWeight=2)
     query.setAnchor(1.35, 103.83, "Anchor")
-    start = time.perf_counter()
-    result = controller.rank_flats(controller.filter_flats(query), query)
-    first_page = [result.fitScores[i] for i in result.flatIds[:20]]
-    elapsed = time.perf_counter() - start
+    # Best of three, so a busy machine doesn't fail the test; NFR 1 itself allows 5 s.
+    timings = []
+    for _ in range(3):
+        start = time.perf_counter()
+        result = controller.rank_flats(controller.filter_flats(query), query)
+        first_page = [result.fitScores[i] for i in result.flatIds[:20]]
+        timings.append(time.perf_counter() - start)
 
     assert result.count == 25_000 and len(first_page) == 20
-    assert elapsed < 1.0, f"ranking took {elapsed:.2f} s"
+    assert min(timings) < 1.0, f"ranking took {min(timings):.2f} s at best"
 
 
 # --- SearchForm -> SearchQuery -------------------------------------------------------

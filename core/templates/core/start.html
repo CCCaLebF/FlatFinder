@@ -10,27 +10,21 @@
     {% include "core/partials/map_panel.html" with mode="browse" origin="start" %}
   </main>
   {% else %}
-  <main class="min-w-0 flex-1 overflow-y-auto">
-    <section class="mx-auto max-w-2xl px-8 py-16">
-      <h1 class="text-3xl font-bold text-brand-800">Find an HDB resale flat that fits your life</h1>
-      <p class="mt-4 text-slate-600">
-        Set your budget, the flat types you'd consider and the minimum remaining lease you'll accept.
-        Then tell FlatFinder how much each nearby amenity matters to you, from 1 to 10.
+  <main class="grid min-w-0 flex-1 place-items-center overflow-y-auto bg-slate-100/60 px-8">
+    {# Intro panel, laid out like the Start Page (List View) mockup. #}
+    <section class="max-w-lg py-12 text-center">
+      <span class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-brand-600 text-white shadow-md">
+        <svg class="h-9 w-9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.2 3 10v10.2a.8.8 0 0 0 .8.8H9v-6h6v6h5.2a.8.8 0 0 0 .8-.8V10z"/></svg>
+      </span>
+      <h1 class="mt-5 text-3xl font-bold text-slate-900">FlatFinder</h1>
+      <p class="mt-2 text-slate-600">
+        Find an HDB resale flat that fits your budget and your life. Rank recent resale flats by how
+        close they are to the bus stops, MRT stations, child care, hawker centres and CHAS clinics you care about.
       </p>
-      <ol class="mt-8 grid gap-4 sm:grid-cols-3">
-        <li class="rounded-xl border border-slate-200 bg-white p-4">
-          <span class="text-sm font-semibold text-brand-700">1. Set your limits</span>
-          <p class="mt-1 text-sm text-slate-600">Leave anything blank and it won't restrict your search.</p>
-        </li>
-        <li class="rounded-xl border border-slate-200 bg-white p-4">
-          <span class="text-sm font-semibold text-brand-700">2. Weigh what matters</span>
-          <p class="mt-1 text-sm text-slate-600">Bus stops, MRT stations, child care, hawker centres and CHAS clinics.</p>
-        </li>
-        <li class="rounded-xl border border-slate-200 bg-white p-4">
-          <span class="text-sm font-semibold text-brand-700">3. Compare by Fit Score</span>
-          <p class="mt-1 text-sm text-slate-600">Flats are ranked 0–100 by how well they match.</p>
-        </li>
-      </ol>
+      <p class="mx-auto mt-6 inline-flex items-start gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-left text-xs text-slate-600 shadow-sm">
+        <svg class="mt-px h-4 w-4 shrink-0 text-brand-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <span>Set your limits and priority weights on the left, then select <strong class="font-semibold text-slate-800">Find Matching Flats</strong>. Anything left blank won't restrict your search.</span>
+      </p>
       <p class="mt-8 text-xs text-slate-400">Based on HDB resale transactions from the last 12 months (data.gov.sg).</p>
     </section>
   </main>

@@ -51,7 +51,7 @@ def results(request):
     result = controller.sort_results(result, order)  # UC-10
 
     page = Paginator(result.flatIds, settings.RESULTS_PER_PAGE).get_page(request.GET.get("page"))
-    flats = ResaleFlat.objects.in_bulk(list(page.object_list))
+    flats = ResaleFlat.objects.select_related("proximity").in_bulk(list(page.object_list))
     cards = [{"flat": flats[fid], "fit": result.fitScores[fid]} for fid in page.object_list]
 
     details_params = request.GET.copy()
@@ -63,6 +63,7 @@ def results(request):
         result=result,
         query=query,
         page=page,
+        page_range=page.paginator.get_elided_page_range(page.number, on_each_side=1, on_ends=1),
         cards=cards,
         details_query=details_params.urlencode(),
         sort_options=SORT_OPTIONS,

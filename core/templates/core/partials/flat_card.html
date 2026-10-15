@@ -1,43 +1,49 @@
 {% load humanize flatfinder %}
 {% comment %}
-One flat card with the FR 2.2.3.1 fields.
-Variables: flat (ResaleFlat), fit (FitScore, optional), details_query, bookmark_style ("icon" | "remove"),
-saved_on (datetime, optional — shown on the Saved page).
+One flat card with the FR 2.2.3.1 fields, styled after the Results Page (List View) mockup.
+Variables: flat (ResaleFlat, ideally with proximity loaded), fit (FitScore, optional),
+details_query, bookmark_style ("icon" | "remove"), saved_on (datetime, optional).
 {% endcomment %}
-<article class="group relative flex gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-300 hover:shadow" data-flat-card="{{ flat.id }}">
-  <div class="min-w-0 flex-1">
-    <h2 class="font-semibold text-slate-800">
-      <a href="{% url 'core:flat_details' flat.id %}?{{ details_query }}" class="after:absolute after:inset-0 focus:outline-none">
-        Blk {{ flat.block }} {{ flat.street_name|street_title }}
-      </a>
-    </h2>
-    <p class="mt-0.5 text-sm text-slate-500">
-      {{ flat.town|street_title }} · {{ flat.flat_type|street_title }} · {{ flat.floor_area_sqm|floatformat:"-1" }} m² · Storey {{ flat.storey_range|lower }}
-    </p>
-    <dl class="mt-3 grid grid-cols-3 gap-x-4 text-xs">
-      <div><dt class="text-slate-400">Remaining lease</dt><dd class="font-medium text-slate-700" title="At sale: {{ flat.remaining_lease_raw }}">{{ flat.remaining_lease|lease_years }}</dd></div>
-      <div><dt class="text-slate-400">Lease commenced</dt><dd class="font-medium text-slate-700">{{ flat.lease_commence_date }}</dd></div>
-      <div><dt class="text-slate-400">Sold</dt><dd class="font-medium text-slate-700">{{ flat.month|date:"M Y" }}</dd></div>
-    </dl>
-    <div class="mt-2 flex flex-wrap gap-2 text-[11px]">
-      {% if flat.coords_approximate %}
-        <span class="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">Approximate location (town centre)</span>
-      {% elif not flat.has_coords %}
-        <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-500">Location not available</span>
-      {% endif %}
-      {% if saved_on %}<span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-500">Saved {{ saved_on|naturaltime }}</span>{% endif %}
+<article class="group relative flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-300 hover:shadow-md" data-flat-card="{{ flat.id }}">
+  <div class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h2 class="font-semibold text-slate-900">
+        <a href="{% url 'core:flat_details' flat.id %}?{{ details_query }}" class="after:absolute after:inset-0 focus:outline-none">
+          Blk {{ flat.block }} {{ flat.street_name|street_title }}
+        </a>
+      </h2>
+      <p class="mt-0.5 text-xs text-slate-500">{{ flat.town|street_title }} · {{ flat.flat_type|street_title }} · {{ flat.flat_model }}</p>
     </div>
-  </div>
-  <div class="flex shrink-0 flex-col items-end justify-between gap-2">
-    <div class="flex items-center gap-2">
-      <p class="text-lg font-bold text-slate-800">S${{ flat.resale_price|floatformat:0|intcomma }}</p>
+    <div class="flex shrink-0 items-center gap-1">
+      {% if fit %}
+        <p class="grid h-12 w-12 place-items-center rounded-full border-2 border-brand-300 bg-brand-50 text-center leading-none text-brand-700" title="Fit Score (0–100)">
+          <span><span class="block text-sm font-bold tabular-nums">{{ fit.total|floatformat:1 }}</span><span class="block text-[9px] font-semibold uppercase tracking-wide">Fit</span></span>
+        </p>
+      {% endif %}
       {% include "core/partials/bookmark_button.html" with flat_id=flat.id saved=flat.id|is_in:bookmarked_ids style=bookmark_style %}
     </div>
-    {% if fit %}
-      <p class="rounded-lg bg-brand-50 px-2.5 py-1 text-right" title="Fit Score">
-        <span class="block text-[10px] font-medium uppercase tracking-wide text-brand-700">Fit Score</span>
-        <span class="text-xl font-bold tabular-nums text-brand-700">{{ fit.total|floatformat:1 }}</span>
-      </p>
+  </div>
+
+  <dl class="mt-3 grid grid-cols-3 gap-x-3 gap-y-2 border-t border-slate-100 pt-3">
+    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Resale price</dt><dd class="font-bold text-brand-700">S${{ flat.resale_price|floatformat:0|intcomma }}</dd></div>
+    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Floor area</dt><dd class="text-sm font-semibold text-slate-800">{{ flat.floor_area_sqm|floatformat:"-1" }} m²</dd></div>
+    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Storey</dt><dd class="text-sm font-semibold text-slate-800">{{ flat.storey_range|lower }}</dd></div>
+    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Remaining lease</dt><dd class="text-sm font-semibold text-slate-800" title="At sale: {{ flat.remaining_lease_raw }}">{{ flat.remaining_lease|lease_years }}</dd></div>
+    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Lease commenced</dt><dd class="text-sm font-semibold text-slate-800">{{ flat.lease_commence_date }}</dd></div>
+    <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sold</dt><dd class="text-sm font-semibold text-slate-800">{{ flat.month|date:"M Y" }}</dd></div>
+  </dl>
+
+  <div class="mt-auto flex flex-wrap gap-1.5 pt-3 text-[11px]">
+    {% for chip in flat|proximity_chips %}
+      <span class="inline-flex items-center gap-1 rounded-md bg-slate-50 px-1.5 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200" title="Nearest, straight-line distance">
+        <span class="ff-swatch ff-cat-{{ chip.key }}" style="width:7px;height:7px" aria-hidden="true"></span>{{ chip.label }} {{ chip.metres|intcomma }} m
+      </span>
+    {% endfor %}
+    {% if flat.coords_approximate %}
+      <span class="rounded-md bg-amber-50 px-1.5 py-0.5 text-amber-700 ring-1 ring-inset ring-amber-200">Approximate location (town centre)</span>
+    {% elif not flat.has_coords %}
+      <span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-slate-500">Location not available</span>
     {% endif %}
+    {% if saved_on %}<span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-slate-500">Saved {{ saved_on|naturaltime }}</span>{% endif %}
   </div>
 </article>

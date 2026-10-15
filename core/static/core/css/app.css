@@ -1,0 +1,33 @@
+/*
+ * App-wide styles Tailwind classes can't express. Colours match the brand palette in
+ * base.html (brand-600 = #287462).
+ */
+
+/* --- Sliders, as in the SRS mockups: thin track filled up to a white thumb ------------- */
+.ff-range {
+  --fill: 50%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+.ff-range:focus { outline: none; }
+.ff-range::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 9999px;
+  background: linear-gradient(to right, #287462 var(--fill), #e2e8f0 var(--fill));
+}
+.ff-range::-moz-range-track { height: 4px; border-radius: 9999px; background: #e2e8f0; }
+.ff-range::-moz-range-progress { height: 4px; border-radius: 9999px; background: #287462; }
+.ff-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; margin-top: -5px; border-radius: 9999px;
+  background: #fff; border: 2px solid #287462; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.ff-range::-moz-range-thumb {
+  width: 12px; height: 12px; border-radius: 9999px;
+  background: #fff; border: 2px solid #287462;
+}
+.ff-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #b4e0d1; }
+.ff-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px #b4e0d1; }
+.ff-range:disabled { cursor: default; }

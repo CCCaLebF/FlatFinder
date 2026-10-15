@@ -1,5 +1,5 @@
 """Phase 5: UC-02 View Flat Details and UC-11 Find Nearest Amenity."""
-import re
+
 from decimal import Decimal
 
 import pytest
@@ -129,10 +129,11 @@ def test_fit_score_breakdown_adds_up(client, located_flat, make_flat):
 def test_details_score_equals_the_card_score(client, located_flat, make_flat):
     make_flat(resale_price=Decimal("380000"), remaining_lease=90)
     query = "w_mrt_station=8&w_bus_stop=3&min_budget=300000"
-    card_page = client.get(f"{reverse('core:results')}?{query}").content.decode()
-    card = card_page[card_page.index(f'data-flat-card="{located_flat.id}"'):]
-    card_total = re.search(r'text-xl font-bold tabular-nums text-brand-700">([\d.]+)<', card).group(1)
-    assert client.get(details_url(located_flat, f"from=results&{query}")).context["fit"].total == float(card_total)
+    results = client.get(f"{reverse('core:results')}?{query}")
+    card = next(c for c in results.context["cards"] if c["flat"].id == located_flat.id)
+    shown = f'{card["fit"].total:.1f}'
+    assert shown in results.content.decode()
+    assert client.get(details_url(located_flat, f"from=results&{query}")).context["fit"].total == card["fit"].total
 
 
 @pytest.mark.django_db

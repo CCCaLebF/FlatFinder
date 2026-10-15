@@ -5,7 +5,7 @@ import numpy as np
 from django.conf import settings
 from django.db.models import Max, Min
 
-from core.control.distance import EARTH_RADIUS_M
+from core.control.distance import StraightLineDistance
 from core.entity import CATEGORIES, FitScore, ResaleFlat, SearchQuery, SearchResult, SortOrder
 
 # Columns pulled for scoring, in one query joined to FlatProximity (PLAN §4, NFR 1).
@@ -39,8 +39,12 @@ class SearchController:
     - UC-07 Search via Search Bar (proximity anchor, decision 4)
 
     Filtering is separate from scoring (PLAN §4): hard filters run in SQL, then the
-    remaining rows are scored together with numpy.
+    remaining rows are scored together with numpy. Uses StraightLineDistance for the
+    search-bar anchor; amenity distances come pre-computed from FlatProximity.
     """
+
+    def __init__(self, distance: StraightLineDistance = None):
+        self.distance = distance or StraightLineDistance()
 
     # --- UC-08 Filter --------------------------------------------------------------
 
@@ -202,7 +206,7 @@ class SearchController:
             weights[key] = weight
 
         if query.hasAnchor:
-            anchor_d = _haversine_m(lats, lngs, query.anchorLat, query.anchorLng)
+            anchor_d = self.distance.distances_m(lats, lngs, (query.anchorLat, query.anchorLng))
             scores["anchor"] = _proximity(anchor_d, settings.ANCHOR_RADIUS_M)
             weights["anchor"] = query.anchorWeight or settings.DEFAULT_ANCHOR_WEIGHT
 
@@ -253,10 +257,3 @@ def _ratio(numerator, denominator):
 def _proximity(distance_m, radius_m):
     """max(0, 1 − d / radius); NaN (no coordinates / no node) scores 0."""
     return np.nan_to_num(np.clip(1 - distance_m / radius_m, 0, 1), nan=0.0)
-
-
-def _haversine_m(lats, lngs, lat0, lng0):
-    lat1, lng1 = np.radians(lats), np.radians(lngs)
-    lat2, lng2 = np.radians(lat0), np.radians(lng0)
-    a = np.sin((lat2 - lat1) / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin((lng2 - lng1) / 2) ** 2
-    return 2 * EARTH_RADIUS_M * np.arcsin(np.sqrt(a))

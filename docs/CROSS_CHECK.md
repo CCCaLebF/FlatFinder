@@ -1,6 +1,6 @@
 # FlatFinder: Cross-check of code, SRS and class diagram
 
-**Date:** 15 Oct 2026. **Code state:** build phases 1–7 done (phase 8, polish and README, still to come).
+**Date:** 15 Oct 2026, updated after phase 8. **Code state:** all 8 build phases done; C1, C2, C6 and C7 fixed.
 
 **Compared against:**
 - the SRS, `2006-SCSC-F4/Lab3/Lab2Updated.pdf`: all FRs, NFRs and UC-01 to UC-14
@@ -24,11 +24,11 @@ Tick items off as they're resolved.
 
 ## 1. Code gaps against the SRS (to fix in code)
 
-- [ ] **C1: the side panel in Map View leaves out required fields.**
+- [x] **C1: the side panel in Map View leaves out required fields.** *Fixed in phase 8.*
   - **Requirement:** FR 2.2.3 says recommended flats are listed on a side panel. FR 2.2.3.1 says each one is shown "in the same format", with all of FR 2.2.3.1.1–2.2.3.1.9.
   - **Problem:** the Results page's Map View side list uses compact cards, and they leave out **storey range**, **lease commence date** and **remaining lease**.
   - **Fix:** add the three fields to `partials/flat_card_compact.html`.
-- [ ] **C2: the details page's Map View hides the flat's details.**
+- [x] **C2: the details page's Map View hides the flat's details.** *Fixed in phase 8.*
   - **Requirement:** UC-02's postconditions are (1) a details panel on the side panel, **and** (2) the map centred on the flat with its amenities plotted.
   - **Problem:** in Map View, the map replaces the "Flat details" section, so the user never sees both together.
   - **Fix:** keep a condensed details panel next to the map, above the Fit Score breakdown.
@@ -118,8 +118,8 @@ In the BCE layering, control classes shouldn't display anything; that's the boun
 
 ### 3.5 Code changes that make the code match the diagram more closely
 
-- [ ] **C6:** `SearchController` calculates the search-location (anchor) distance with its own haversine function. Route it through `StraightLineDistance` instead, to match the diagram's `SearchController <<use>> StraightLineDistance` and remove the duplicate formula.
-- [ ] **C7:** rename the functions in `static/core/js/map.js` to the diagram's `MapUI` method names, so each one is easy to find:
+- [x] **C6:** *Fixed in phase 8.* `SearchController` calculates the search-location (anchor) distance with its own haversine function. Route it through `StraightLineDistance` instead, to match the diagram's `SearchController <<use>> StraightLineDistance` and remove the duplicate formula.
+- [x] **C7:** *Fixed in phase 8.* rename the functions in `static/core/js/map.js` to the diagram's `MapUI` method names, so each one is easy to find:
   - `displayMap`, `displayAreaCounts`, `displayFlatPins`, `displayBookmarkPins`, `displayAmenityPins`
   - `selectFlatPin`, `selectAmenityPin`, `displayWalkingDistance`, `toggleLayer`
   - `displayErrorMessage`, `displayBlankMap`
@@ -167,8 +167,8 @@ In the BCE layering, control classes shouldn't display anything; that's the boun
 | FR 2.1.2 Flats when zoomed in | ✅ | Pins from zoom 14 |
 | FR 2.2.1 Flats as pins | ✅ | |
 | FR 2.2.2 / 2.2.2.1 Fit Score, weighted | ✅ | `PLAN.md` §4 formula |
-| FR 2.2.3 Side panel | ⚠️ C1 | Map View side list is missing fields |
-| FR 2.2.3.1.1–2.2.3.1.9 Flat fields | ⚠️ C1, C3 | List View complete |
+| FR 2.2.3 Side panel | ✅ (C1 fixed) | Map View side list has every field |
+| FR 2.2.3.1.1–2.2.3.1.9 Flat fields | ⚠️ C3 | Every view has them; no Fit Score without a search |
 | FR 2.2.3.2 Default order | ✅ | Fit Score, highest first |
 | FR 2.2.3.3 Re-sort | ✅ | "Sort by" dropdown |
 | FR 2.2.4.1 / 2.2.4.2 Bookmarks | ✅ | Bookmark icon, Saved page and counter |
@@ -178,13 +178,13 @@ In the BCE layering, control classes shouldn't display anything; that's the boun
 | NFR 2.1: error message when OneMap fails | ✅ | The app doesn't call data.gov.sg while running; datasets are imported in advance |
 | NFR 2.2: no-results prompt | ✅ | "Adjust your requirements" |
 | NFR 3.1: first-time users finish in 2 minutes | ⬜ | Needs user testing, not code |
-| NFR 3.2: controls fit without scrolling at 1366×768 | ✅ | Recheck in phase 8 |
+| NFR 3.2: controls fit without scrolling at 1366×768 | ✅ | Checked in phase 8: form ends at 580 px, even with the location slider |
 | NFR 4: no personal information | ✅ | No accounts; the OneMap login stays on the server |
 
 | Use case | Status | Notes |
 |---|---|---|
 | UC-01 Search | ✅ | |
-| UC-02 View Flat Details | ⚠️ C2, C3 | Both entry points work |
+| UC-02 View Flat Details | ⚠️ C3 (C2 fixed) | Map View shows the details panel beside the map |
 | UC-03 Display Map (incl. AC.1 saved-flat pins) | ✅ | |
 | UC-04 Walking Distance | ✅ | Cached; only to points within 1.5 km of the flat |
 | UC-05 Bookmark | ✅ | From the results, details and Saved pages |

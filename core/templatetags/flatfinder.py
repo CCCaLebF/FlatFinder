@@ -2,6 +2,7 @@
 import math
 
 from django import template
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -64,6 +65,26 @@ def notice_messages(messages):
 def is_in(value, collection):
     """{{ flat.id|is_in:bookmarked_ids }} — membership test usable inside {% include with %}."""
     return value in (collection or ())
+
+
+@register.filter
+def proximity_chips(flat):
+    """
+    Nearest straight-line distance per category for a result card: [{key, label, metres}].
+    Empty when the flat has no coordinates or no FlatProximity row yet.
+    """
+    from core.entity import CATEGORIES
+
+    try:
+        proximity = flat.proximity
+    except ObjectDoesNotExist:
+        return []
+    chips = []
+    for category in CATEGORIES:
+        metres = getattr(proximity, category.proximity_field)
+        if metres is not None:
+            chips.append({"key": category.key, "label": category.short_label, "metres": round(metres)})
+    return chips
 
 
 @register.filter

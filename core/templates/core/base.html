@@ -4,17 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}FlatFinder{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script>
     // The palette lives here: templates use `brand-*` and `accent-*`, never raw colour names,
-    // so restyling the whole app means changing these values only.
+    // so restyling the whole app means changing these values only. The matching map colours
+    // are the --ff-* variables at the top of static/core/css/map.css.
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] },
           colors: {
+            // Deep teal-green from the SRS mockups.
             brand: {
-              50: "#f0fdfa", 100: "#ccfbf1", 200: "#99f6e4", 300: "#5eead4", 400: "#2dd4bf",
-              500: "#14b8a6", 600: "#0d9488", 700: "#0f766e", 800: "#115e59", 900: "#134e4a",
+              50: "#eff8f5", 100: "#d9f0e8", 200: "#b4e0d1", 300: "#84c9b3", 400: "#55ab92",
+              500: "#368f77", 600: "#287462", 700: "#225e50", 800: "#1e4c42", 900: "#1a3f37",
             },
             accent: { 400: "#4ade80", 500: "#22c55e", 600: "#16a34a" },
           },
@@ -26,13 +32,14 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="{% static 'core/css/app.css' %}">
   <link rel="stylesheet" href="{% static 'core/css/map.css' %}">
   {{ map_config|json_script:"map-config" }}
   {# MapState runs first: it may switch to the remembered view mode before the page paints. #}
   <script src="{% static 'core/js/mapstate.js' %}"></script>
   {% block head %}{% endblock %}
 </head>
-<body class="flex h-full flex-col bg-slate-50 text-slate-800">
+<body class="flex h-full flex-col bg-slate-50 font-sans text-slate-800 antialiased">
   {% include "core/partials/header.html" %}
   {% include "core/partials/messages.html" %}
   <div class="flex min-h-0 flex-1">

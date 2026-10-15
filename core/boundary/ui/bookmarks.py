@@ -18,7 +18,7 @@ def saved(request):
     """Saved Flats page, or the "No saved flats yet" empty state (UC-14, FR 2.2.4.2)."""
     controller = BookmarkController()
     bookmarks = controller.get_bookmarks(request.session)
-    flats = ResaleFlat.objects.in_bulk([b.flat_id for b in bookmarks])
+    flats = ResaleFlat.objects.select_related("proximity").in_bulk([b.flat_id for b in bookmarks])
     controller.forget(request.session, [b.flat_id for b in bookmarks if b.flat_id not in flats])
     entries = [{"flat": flats[b.flat_id], "bookmark": b} for b in bookmarks if b.flat_id in flats]
 

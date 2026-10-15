@@ -41,6 +41,24 @@ def sort_param(order: SortOrder) -> str:
     return f"{order.field}-{order.direction}"
 
 
+def _short_sgd(value) -> str:
+    """520000 -> 'S$520k', 1250000 -> 'S$1.25m'."""
+    if value >= 1_000_000:
+        return f"S${value / 1_000_000:.2f}".rstrip("0").rstrip(".") + "m"
+    return f"S${value / 1000:.0f}k"
+
+
+def budget_summary(low, high) -> str:
+    """The budget shown beside the sidebar heading."""
+    if low is None and high is None:
+        return "Any budget"
+    if low is None:
+        return f"Up to {_short_sgd(high)}"
+    if high is None:
+        return f"From {_short_sgd(low)}"
+    return f"{_short_sgd(low)} – {_short_sgd(high)}"
+
+
 def has_search(params) -> bool:
     """True if the URL carries any search criterion (not just from/view/page/sort)."""
     return any(name in params for name in SearchForm().fields)
@@ -139,6 +157,7 @@ class SearchForm(forms.Form):
         return {
             "min_budget": raw.get("min_budget", ""),
             "max_budget": raw.get("max_budget", ""),
+            "budget_summary": budget_summary(data.get("min_budget"), data.get("max_budget")),
             "flat_types": [
                 {"value": t, "label": t.title(), "checked": t in (raw.getlist("flat_type") if raw else [])}
                 for t in FLAT_TYPES
@@ -156,7 +175,7 @@ class SearchForm(forms.Form):
             ],
             "walk_range": {"min": WALK_MIN_M, "max": WALK_MAX_M, "step": WALK_STEP_M},
             "weights": [
-                {"name": f"w_{c.key}", "flag": f"ignore_{c.key}", "label": c.label,
+                {"name": f"w_{c.key}", "flag": f"ignore_{c.key}", "label": c.label, "key": c.key,
                  "value": number(f"w_{c.key}", DEFAULTS["weight"]),
                  "off": is_off(f"ignore_{c.key}", f"w_{c.key}", False)}
                 for c in CATEGORIES

@@ -315,3 +315,131 @@ Finish each phase before starting the next. Each phase ends with passing tests a
 - **Update the SRS** to match: the 1–10 scale in FR 1.1.4, Child Care Centres everywhere, CHAS Clinics in the UC-01/09/12 lists, UC-11 querying the database (so UC-06 no longer extends UC-11), and the 12-month data window.
 - **Update the class diagram** with the approved changes in §8.
 - **Produce the coordinates CSV** (`block,street_name,latitude,longitude`), then run `import_flat_coordinates` and `compute_proximity`.
+
+---
+
+## 10. Build log and status (as of 15 Oct 2026)
+
+This section records what was built against this plan, what was found along the way, and what is still open. All eight phases in §7 are done. The tests pass on SQLite (outside Docker) and on PostgreSQL (inside Docker): **160 tests**. More detail is in `README.md` (setup, commands, design changes) and `docs/CROSS_CHECK.md` (comparison with the SRS and class diagram).
+
+### 10.1 What each phase delivered
+
+| Phase | Delivered |
+|---|---|
+| 1. Scaffold | Django project with the `core` app in entity / control / boundary layers. Settings use `DATABASE_URL`, falling back to SQLite. Docker setup: Python 3.12 image, PostgreSQL 16, an entrypoint that waits for the database and migrates, and `.gitattributes` forcing LF line endings for shell scripts. Models, dataclasses and placeholder controllers, each with a docstring naming its diagram class and UC/FR numbers. |
+| 2. Data import | `download_datasets` uses the data.gov.sg API and retries when rate-limited. The six `DataLoader` steps run one at a time or through `load_all`, and every step is safe to re-run. The full import on the real files takes about 15 s and loads 24,353 flats, 26 towns, 5,205 bus stops, 613 MRT/LRT exits at 187 stations, 1,925 child care centres, 123 hawker centres and 1,193 CHAS clinics. The KD-tree distances match a brute-force haversine check. |
+| 3. Search, filter, rank | `SearchForm` turns GET parameters into a `SearchQuery`. Hard filters run in SQL; the §4 Fit Score is computed with numpy in one place, which `calculate_fit_score` also uses. Each sidebar slider has an off checkbox: "Ignore", "No limit" or "Any". Start and Results pages, 20 per page, a No Results state. Ranking all 24k flats takes about 0.23 s, covered by a timing test. |
+| 4. Sort and bookmarks | A "Sort by" dropdown. Session bookmarks, toggled through a CSRF-protected JSON API that also works without JavaScript. A live Saved (n) counter. A Saved page with remove buttons, an empty state, and Back to the last Start or Results page. |
+| 5. Details and amenities | A details page with every FR 2.2.3.1 field. Its Fit Score breakdown matches the result card; a test checks this. Nearest amenities within 1 km come from an indexed bounding-box query plus haversine, with MRT exits collapsed to one entry per station. Back follows the `from` guard. |
+| 6. Map | `map.js` draws town counts below zoom 14 and flat pins (grouped by location) from zoom 14, plus saved-flat pins (UC-03.AC.1) and amenity layers that toggle without re-fetching (UC-12). The List/Map toggle works on every page and the choice is remembered. `MapState` lives in `localStorage`. Map View also exists on the Details and Saved pages. |
+| 7. OneMap features | Gateways with a 5 s timeout and `OneMapError`. A token helper that caches the token, refreshes it an hour before expiry and retries once on 401; the token never reaches the browser. Walking distance appears in amenity popups, is cached for a day, and only routes to points within 1.5 km of the flat. Search-bar anchor with an "×" chip and its own weight slider. Dismissible OneMap error banner. Tile failures restore the last good map view (UC-13). |
+| 8. Polish | The mockups' look: teal palette, Inter font, mint chips, slim sliders, a two-column card grid with Fit badges and distance chips, numbered pages, price-tag pins, and the details page's map layout. NFR 3.2 checked at 1366×768: the sidebar form ends at 580 px, with no scrolling. `README.md` written, Docker first. |
+
+### 10.2 Decisions made while building
+
+The user approved all of these. Where they differ from the class diagram, they're also listed in `README.md` §8.
+
+- **MRT exits.**
+  - The 17 exits named by station code (CC9, DT18, …) are mapped to station names through an explicit dictionary.
+  - Exit codes such as "E" and "1" become "Exit E" and "Exit 1".
+  - LRT stations count as MRT Stations.
+  - There is no unique constraint on (name, exit): some exits share a label but sit at different points (migration `0002`).
+- **Bus stops** have no names in the dataset, so they show as "Bus Stop 54621".
+- **CHAS clinics** include the 140 dental clinics.
+- **Hawker centres** marked "Under Construction" (6) are skipped.
+- **`CENTRAL AREA`'s centre** is calculated from Downtown Core, Outram and Rochor. The full URA Central Area would put it on reclaimed land with no HDB flats.
+- **Remaining lease** assumes the lease starts on 1 January, because the dataset only gives the year. The dataset's own text is kept for display.
+- **Re-running `import_flats`** keeps flat coordinates but clears `FlatProximity`, so `compute_proximity` must run again; the command says so.
+- **Walk limits** (provisional, decision 3): while a limit is set, flats without coordinates are excluded, because their distance is unknown.
+- **Sessions** end when the browser closes, matching UC-05's "session only".
+- **No search, no score.** A flat opened without a search shows "Start a search" instead of a Fit Score. This is open item C3.
+- **Additions beyond the plan:**
+  - `GET /api/bookmarks` (needed to draw saved flats on the map)
+  - Map View on the Saved page
+  - browsing maps reopen at the last position
+  - `search.js` and `errors.js`
+  - `ScoreBounds`, `NearbyAmenity`, `OneMapTokenProvider` and `OneMapError`
+  - `ONEMAP_BASE_URL` and `MAP_TILE_URL` can be overridden from the environment, to rehearse UC-06 failures
+
+### 10.3 Findings
+
+**OneMap, checked against the live API:**
+- **Tiles:** `maps/tiles/Default/{z}/{x}/{y}.png` loads **without a token** at zoom 10–19.
+- **Search:** `/api/common/elastic/search` needs **no token**. It returns `found: 0` when nothing matches.
+- **Routing:** `/api/public/routingsvc/route?routeType=walk` **needs a token**, sent as the raw `Authorization` header; without one it returns 401. `route_summary` holds `total_distance` (metres) and `total_time` (seconds).
+- **Tokens** come from `POST /api/auth/post/getToken` using the account email and password, and last **3 days**. There are no long-lived API keys, which is why `.env` holds the account details rather than a token.
+- **Rate limit:** a quick burst of about four calls returned **HTTP 429**. The limit reset within a minute, which suggests a short burst limit, but it isn't confirmed: the docs page loads with JavaScript and the rule couldn't be read. The app shows a 429 as the normal UC-06 banner. **What users see:** opening several amenity pins (walking distances) or running several searches in quick succession can briefly bring up the "OneMap service currently unavailable" banner. It clears after a short wait, and the rest of the app keeps working. Walking distances already fetched are cached for a day, so reopening a pin doesn't call OneMap again. For a demo, pause a moment between OneMap actions, or do the optional hardening in §10.4.
+- **Attribution:** the docs confirm the tile URL but not the exact attribution wording. The app uses the standard OneMap logo, "© contributors" and Singapore Land Authority.
+
+**Environment:**
+- **`$` in `.env`.** Docker Compose reads `$name` in `.env` values as a variable and silently changes the value. This broke `ONEMAP_PASSWORD` inside Docker until the value was wrapped in **single quotes**. `.env.example` and the README now warn about it.
+- **Other risky characters.** Values containing `#` or spaces should also be quoted. `POSTGRES_PASSWORD` should avoid `@`, `:` and `/`, because it is placed inside `DATABASE_URL`.
+- **Two databases.** The Docker database has **no flat coordinates** (it was loaded without `--approximate`), and walking distance and the details page's Map View need them. Run `docker compose exec web python manage.py assign_approximate_coords` and then `compute_proximity` there. The local SQLite database already has town-centre placeholder coordinates.
+- **Placeholder coordinates.** Until the real coordinates CSV is loaded, every flat in a town has identical distances. So proximity scores don't tell flats within a town apart, and the map shows one amber pin per town.
+
+**Bugs found and fixed:**
+- **Bookmark order** on the Saved page could flip, because Windows timestamps sometimes tie.
+- **Off sliders** were rendered `disabled`, so without JavaScript they couldn't be switched back on.
+- **Unclear errors:** the weight-error message didn't say which slider it came from, and the budget error repeated its own label.
+- **Wording:** the results heading said "1 flat match"; the invalid-search message referred to "highlighted values" that weren't highlighted.
+- **Map popup lists** were built incorrectly in `map.js`.
+- **Template comment:** a two-line `{# #}` comment was printed on the details page; Django only allows one-line `{# #}` comments.
+- **Sidebar fit (NFR 3.2):** the form originally ended at 638 px, too close to the limit of a 1366×768 screen.
+- **Flaky timing test:** the NFR 1 test failed once on a busy machine. It now takes the best of three runs, still under 1 s.
+
+**Comparison with the SRS and class diagram.** The full checklist is in `docs/CROSS_CHECK.md`.
+- **Every FR and use case is implemented.** C1 (Map View side panel missing fields) and C2 (details Map View hiding the details panel) were fixed in phase 8.
+- **The class diagram doesn't yet include the changes approved in §8.**
+- **The diagram contradicts the live OneMap API in three places:**
+  - it gives `MapGateway` and `OneMapSearchGateway` a token, but neither needs one
+  - it leaves `OneMapRoutingGateway` empty, though it's the only one that does
+- **Two control classes are given display work** that belongs to boundary classes: `ErrorHandler` and `AmenityController`.
+- **`MapState` is drawn as server-side,** but it lives in the browser.
+- **For traceability,** `map.js` was renamed to the diagram's `MapUI` method names (C7), and the search anchor now uses `StraightLineDistance` (C6).
+
+### 10.4 Still open
+
+#### Known limitation: no flat has real coordinates yet (top priority)
+
+The resale dataset has no coordinates, and the app deliberately doesn't geocode flats (decision 6). Until the team's coordinates CSV is loaded:
+- **Local SQLite:** every flat sits at its **town centre**. The town-centre fallback has been applied, and these flats are labelled "Approximate location (town centre)".
+- **Docker:** flats have **no location at all**, because that database was loaded without `--approximate`.
+
+Every location-based feature is affected:
+
+| Area | Effect today |
+|---|---|
+| Fit Score (FR 2.2.2, decision 4) | Every flat in a town gets the same proximity sub-scores and the same search-bar anchor score. Within a town, flats are ranked only by price and lease. In Docker, all proximity scores are 0. |
+| Walking-distance sliders (FR 1.1.3, decision 3) | They filter whole towns in or out. In Docker, setting a limit removes every flat. |
+| Nearest amenities and walking distance (UC-11, UC-04) | Measured from the town centre, not the block. In Docker they aren't available. |
+| Map (FR 2.1.2, FR 2.2.1) | One amber "99+" pin per town instead of one pin per block, so single-flat price tags never appear. In Docker, no flat pins appear at all; the town counts still work. |
+| Details page Map View (UC-02, UC-03) | Centred on the town centre. In Docker it shows "Location not available". |
+
+Nothing in the code needs to change. Once the CSV is loaded, every feature above uses the real locations automatically.
+
+- [ ] **Top priority: produce the coordinates CSV**, with the header `block,street_name,latitude,longitude` in WGS84 decimal degrees, one row per block (about 8,000 unique block/street pairs in the current 12-month window). Then run `import_flat_coordinates <csv>` and `compute_proximity`, both locally and in Docker. The command reports any addresses that didn't match.
+- [ ] Revisit **decision 3** (walk sliders) only after real coordinates are loaded. Its effect can't be judged on town-centre placeholders.
+
+**Needs a decision from the team** (details in `docs/CROSS_CHECK.md` §2):
+- [ ] **Decision 3:** how the walking-distance sliders should work. Today they're a provisional straight-line hard filter, in `SearchController.apply_walk_limits`, marked `OPEN DECISION (FR 1.1.3)`.
+- [ ] **C3:** the Fit Score with no search. Show a baseline price-and-lease score (recommended, meets FR 2.2.3.1.9), or keep "Start a search".
+- [ ] **C4:** budget input. A two-handle range slider (as the mockup and UC-08 suggest), or keep the number boxes and change the SRS.
+- [ ] **C5:** draw town borders on the map, as the SRS dataset reference describes, or drop that sentence from the SRS.
+- [ ] **OneMap hardening (optional):** send the token on search requests too, and retry once on a 429 before showing the banner.
+
+**Team tasks:**
+- [ ] **Produce the coordinates CSV.** See the top-priority item above.
+- [ ] **Update the class diagram,** using the checklist in `docs/CROSS_CHECK.md` §3.
+- [ ] **Update the SRS,** using `docs/CROSS_CHECK.md` §4 and the §9 items above:
+  - 1–10 weights in FR 1.1.4
+  - "Child Care Centres" everywhere "schools" / "pre-schools" appears
+  - CHAS Clinics in the UC-01 and UC-09 weight lists
+  - UC-11 reads from the database (UC-11.EX.1 no longer applies)
+  - the 12-month data window
+  - the garbled FR 1.1.x numbering
+  - wrong FR references in UC-09 and the dataset links
+- [ ] **NFR 3.1** (first-time users finish within 2 minutes) needs user testing; code can't verify it.
+
+**Housekeeping:**
+- [ ] Commit and push the phase 8 changes. They were uncommitted when this log was written; the last commit was `367ca3b`, phase 7.
+- [ ] Before a demo from Docker, give the Docker database placeholder coordinates (see "Two databases" in §10.3), or load the real CSV.

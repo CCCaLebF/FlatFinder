@@ -3,13 +3,17 @@ One slider with an "off" checkbox. Off = criterion blank / unconstrained (FR 1.1
 The slider isn't rendered `disabled`: search.js disables it, and without JS the server
 ignores a slider whose checkbox is ticked, so unticking still works.
 Variables: label, name, flag, value, off, min, max, step, unit, off_label,
-no_off (omit the checkbox), title (tooltip on the label).
+no_off (omit the checkbox), title (tooltip on the label), swatch (category key: a coloured dot).
 {% endcomment %}
-<div class="grid grid-cols-[8.25rem_1fr_3rem_4.5rem] items-center gap-2 {% if off %}is-off{% endif %}" data-slider>
-  <label for="id_{{ name }}" class="truncate text-slate-700" {% if title %}title="{{ title }}"{% endif %}>{{ label }}</label>
+<div class="grid grid-cols-[9.5rem_1fr_3rem_4.25rem] items-center gap-2 {% if off %}is-off{% endif %}" data-slider>
+  <label for="id_{{ name }}" class="flex min-w-0 items-center gap-1.5 text-slate-700" {% if title %}title="{{ title }}"{% endif %}>
+    {% if swatch == "anchor" %}<span class="ff-swatch shrink-0 ring-2 ring-yellow-300" style="background:#1e293b" aria-hidden="true"></span>
+    {% elif swatch %}<span class="ff-swatch ff-cat-{{ swatch }} shrink-0" aria-hidden="true"></span>{% endif %}
+    <span class="truncate">{{ label }}</span>
+  </label>
   <input type="range" id="id_{{ name }}" name="{{ name }}" value="{{ value }}" min="{{ min }}" max="{{ max }}" step="{{ step }}"
-         class="w-full accent-brand-600 {% if off %}opacity-40{% endif %}" data-unit="{{ unit }}">
-  <output for="id_{{ name }}" class="text-right text-xs tabular-nums text-slate-600 {% if off %}opacity-40{% endif %}">{{ value }}{{ unit }}</output>
+         class="ff-range w-full {% if off %}opacity-40{% endif %}" data-unit="{{ unit }}">
+  <output for="id_{{ name }}" class="text-right text-xs font-semibold tabular-nums text-brand-700 {% if off %}opacity-40{% endif %}">{{ value }}{{ unit }}</output>
   {% if no_off %}
     <span></span>
   {% else %}
