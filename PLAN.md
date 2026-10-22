@@ -59,7 +59,7 @@ The amenity categories are, everywhere: **Bus Stops, MRT Stations, Child Care Ce
 | `HawkerCentre` | Hawker Centres (GeoJSON) | `d_4a086da0a5553be1d89383cd90d07ecd` |
 | `ChasClinic` | CHAS Clinics (excludes polyclinics and hospitals) | `d_548c33ea2d99e29ec63a7cc9edcccedc` |
 
-- Put the raw files in `data/raw/`, which is git-ignored. If downloading by script, data.gov.sg's public download API is `GET https://api-open.data.gov.sg/v1/public/api/datasets/{id}/poll-download`, which returns a temporary file URL. Check this against the live docs before relying on it. If you can't download the files, ask the user to put them in `data/raw/`.
+- Put the raw files in `database/data/raw/`, which is git-ignored. If downloading by script, data.gov.sg's public download API is `GET https://api-open.data.gov.sg/v1/public/api/datasets/{id}/poll-download`, which returns a temporary file URL. Check this against the live docs before relying on it. If you can't download the files, ask the user to put them in `database/data/raw/`.
 - **Inspect each file before writing its parser.** Known quirks to check for:
   - Older data.gov.sg GeoJSON files keep their attributes in an HTML table inside a `Description` property. Parse the name and postal code out of it.
   - The LTA bus stop and MRT exit files may use **SVY21 (EPSG:3414)** rather than WGS84. If so, convert with `pyproj`.
@@ -134,7 +134,7 @@ total = round(100 × Σ(w_i × s_i) / Σ w_i, 1)
 
 ## 5. Mapping the class diagram to code
 
-Organise the code by the diagram's stereotypes. There's one Django app, `core`, with these layers:
+Organise the repository into `frontend/`, `backend/` and `database/`. The backend is one Django app, `core`, whose folders follow the diagram's stereotypes:
 
 ```
 FlatFinder/
@@ -142,26 +142,29 @@ FlatFinder/
   requirements.txt            # Django 5.x, psycopg[binary], requests, numpy, scipy, pyproj, python-dotenv,
                               # dj-database-url, pytest, pytest-django, responses
   .env.example                # DATABASE_URL, ONEMAP_EMAIL, ONEMAP_PASSWORD (never commit .env)
-  .gitignore                  # .env, data/raw/, __pycache__, *.sqlite3, .venv/
+  .gitignore                  # .env, database/data/raw/, __pycache__, *.sqlite3, .venv/
   Dockerfile                  # see §6a
   docker-compose.yml          # services: web, db
-  .dockerignore               # .env, .venv/, data/raw/, __pycache__, *.sqlite3, .git/
+  .dockerignore               # .env, .venv/, database/data/raw/, __pycache__, *.sqlite3, .git/
   docker/entrypoint.sh        # wait for db, run migrations, then exec the command
-  flatfinder/                 # settings.py, urls.py
-  core/
-    entity/                   # Django models + plain dataclasses
-    control/                  # services (controllers), distance strategies, error handler
-    boundary/
-      ui/                     # views (one module per UI class), forms
-      gateways/               # OneMap gateways
-    management/commands/      # DataLoader commands
-    templates/core/           # base.html, start.html, results.html, details.html, saved.html, partials/
-    static/core/js/           # map.js (MapUI), bookmarks.js (BookmarkUI), mapstate.js (MapState)
+  backend/
+    config/                   # Django project: settings.py, urls.py, wsgi.py
+    core/                     # the Django app (label "core")
+      models/                 # «entity»: Django models + plain dataclasses
+      services/               # «control»: controllers, distance strategies, error handler
+      views/                  # «boundary» UI: one module per UI class, forms
+      integrations/           # «boundary» gateways: OneMap
+      management/commands/    # DataLoader commands
+  frontend/
+    templates/                # base.html, start.html, results.html, details.html, saved.html, partials/
+    static/js/                # map.js (MapUI), bookmarks.js (BookmarkUI), mapstate.js (MapState)
+  database/
+    migrations/               # via MIGRATION_MODULES
+    data/raw/
   tests/
-  data/raw/
 ```
 
-`core/models.py` re-exports the classes in `core/entity/` so Django can find them.
+`backend/core/models/__init__.py` re-exports every model so Django can find them.
 
 | Diagram class | Code | Notes |
 |---|---|---|
@@ -176,21 +179,21 @@ FlatFinder/
 | `Bookmark` | dataclass, stored in the session | Fields: `session_id`, `flat_id`, `timestamp`. |
 | `MapState` | client-side JS (`mapstate.js`) in `localStorage` | Holds `centre`, `zoom`, `visibleLayers` and `viewMode`. Implements UC-13. |
 | **Control** | | |
-| `SearchController` | `control/search.py` | `filter_flats(query)`, `apply_walk_limits(qs, query)`, `calculate_fit_score(flat, query, bounds)`, `rank_flats(...)`, `sort_results(result, order)`, `set_proximity_anchor(query, text)` (uses `OneMapSearchGateway`). |
-| `MapController` | `control/map.py` | `get_area_counts(query)` returns `[{town, lat, lng, count}]`. `get_pins_in_view(bounds, query, limit=500)`. **Has no rendering methods**; rendering is `MapUI`'s job. |
-| `AmenityController` | `control/amenity.py` | `find_nearest_amenities(flat, radius_m=1000)` returns the amenities grouped by category, sorted by distance. It uses a bounding-box query on the latitude/longitude indexes, then haversine. |
-| `BookmarkController` | `control/bookmark.py` | `toggle_bookmark(session, flat_id)`, `is_bookmarked(session, flat_id)`, `get_bookmarks(session)`. Use `session_id` as the spelling everywhere. |
-| `ErrorHandler` | `control/errors.py` | `log_error(endpoint, timestamp, code)` writes to Python `logging` (UC-06 step 2). `to_response(exc)` turns a `OneMapError` into JSON `{"error": "<user message>"}` with HTTP 502. |
-| `DistanceStrategy` *(new, an interface)* | `control/distance.py` | An ABC with `distance_m(origin, target) -> float`. |
+| `SearchController` | `services/search.py` | `filter_flats(query)`, `apply_walk_limits(qs, query)`, `calculate_fit_score(flat, query, bounds)`, `rank_flats(...)`, `sort_results(result, order)`, `set_proximity_anchor(query, text)` (uses `OneMapSearchGateway`). |
+| `MapController` | `services/map.py` | `get_area_counts(query)` returns `[{town, lat, lng, count}]`. `get_pins_in_view(bounds, query, limit=500)`. **Has no rendering methods**; rendering is `MapUI`'s job. |
+| `AmenityController` | `services/amenity.py` | `find_nearest_amenities(flat, radius_m=1000)` returns the amenities grouped by category, sorted by distance. It uses a bounding-box query on the latitude/longitude indexes, then haversine. |
+| `BookmarkController` | `services/bookmark.py` | `toggle_bookmark(session, flat_id)`, `is_bookmarked(session, flat_id)`, `get_bookmarks(session)`. Use `session_id` as the spelling everywhere. |
+| `ErrorHandler` | `services/errors.py` | `log_error(endpoint, timestamp, code)` writes to Python `logging` (UC-06 step 2). `to_response(exc)` turns a `OneMapError` into JSON `{"error": "<user message>"}` with HTTP 502. |
+| `DistanceStrategy` *(new, an interface)* | `services/distance.py` | An ABC with `distance_m(origin, target) -> float`. |
 | `StraightLineDistance` | the same module | Haversine. Used by `compute_proximity` and `AmenityController`. |
 | `WalkingDistance` | the same module | Calls `OneMapRoutingGateway`. Used only on demand (UC-04). |
 | `DataLoader` *(new)* | management commands in §3.4 | |
 | **Boundary: UI** | | |
-| `SearchUI` | `boundary/ui/search.py` + `start.html` / `results.html` | Sidebar form, results list, sort control, search bar, no-results state. |
-| `MapUI` | `static/core/js/map.js` + map partials | Leaflet map, area counts and pins, amenity layers, walking-distance popup, error banner, restoring the last map state. |
-| `FlatDetailsUI` | `boundary/ui/details.py` + `details.html` | Flat fields, Fit Score breakdown, nearby amenity list. Selecting an amenity happens on the map, through `MapUI`. |
-| `BookmarkUI` | `boundary/ui/bookmarks.py` + `saved.html` + `bookmarks.js` | Bookmark toggle icon, Saved counter, Saved Flats page with an empty state. |
-| **Boundary: gateways** | `boundary/gateways/onemap.py` | Each gateway raises `OneMapError` on a timeout or a non-2xx response. Use a 5 s timeout. |
+| `SearchUI` | `views/search.py` + `start.html` / `results.html` | Sidebar form, results list, sort control, search bar, no-results state. |
+| `MapUI` | `frontend/static/js/map.js` + map partials | Leaflet map, area counts and pins, amenity layers, walking-distance popup, error banner, restoring the last map state. |
+| `FlatDetailsUI` | `views/details.py` + `details.html` | Flat fields, Fit Score breakdown, nearby amenity list. Selecting an amenity happens on the map, through `MapUI`. |
+| `BookmarkUI` | `views/bookmarks.py` + `saved.html` + `bookmarks.js` | Bookmark toggle icon, Saved counter, Saved Flats page with an empty state. |
+| **Boundary: gateways** | `integrations/onemap.py` | Each gateway raises `OneMapError` on a timeout or a non-2xx response. Use a 5 s timeout. |
 | `MapGateway` | settings value and JS config | Base-map tile URL template. OneMap's basemap is expected to be `https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png`, and it needs OneMap's attribution. Check both. |
 | `OneMapSearchGateway` | class | `geocode(text) -> (lat, lng, label)` or `None`. |
 | `OneMapRoutingGateway` | class | `walking_distance_m(origin, destination) -> float`, using `routeType=walk`. |
@@ -243,7 +246,7 @@ The goal is that a teammate can clone the repo, copy `.env.example` to `.env`, r
   - Sets `DATABASE_URL=postgres://<user>:<password>@db:5432/<db>`, using the service name `db` as the host.
 - **Bind mounts on `web`:**
   - `./` to `/app`, so code changes reload live without rebuilding.
-  - `./data/raw` to `/app/data/raw`, so the datasets stay on the host and are never copied into the image.
+  - `./database/data/raw` to `/app/database/data/raw`, so the datasets stay on the host and are never copied into the image.
 
 **`docker/entrypoint.sh`:**
 - Waits for the database.
@@ -259,7 +262,7 @@ The goal is that a teammate can clone the repo, copy `.env.example` to `.env`, r
 |---|---|
 | Start everything | `docker compose up --build` |
 | Import the data (§3.4) | `docker compose exec web python manage.py load_all` |
-| Load the coordinates CSV | `docker compose exec web python manage.py import_flat_coordinates data/raw/<file>.csv` |
+| Load the coordinates CSV | `docker compose exec web python manage.py import_flat_coordinates database/data/raw/<file>.csv` |
 | Run the tests | `docker compose exec web pytest` |
 | Open a Django shell | `docker compose exec web python manage.py shell` |
 | Reset the database | `docker compose down -v`. This **deletes the imported data**; say so in the README. |
@@ -267,7 +270,7 @@ The goal is that a teammate can clone the repo, copy `.env.example` to `.env`, r
 **Rules:**
 - The app must still run **without Docker**, using a local venv and the SQLite fallback through `DATABASE_URL`. Docker is the recommended path, not the only one.
 - Tests must pass both inside the container (on Postgres) and outside it (on SQLite).
-- Never bake `.env`, credentials or `data/raw/` into the image. `.dockerignore` must exclude them.
+- Never bake `.env`, credentials or `database/data/raw/` into the image. `.dockerignore` must exclude them.
 - Pin exact image tags and package versions. Don't use `latest`.
 - The team develops on Windows, so check that the bind mount and live reload work with Docker Desktop on Windows. Make sure `entrypoint.sh` uses **LF line endings**, enforced with `.gitattributes`: `*.sh text eol=lf`. A CRLF entrypoint fails inside Linux containers.
 
@@ -360,7 +363,7 @@ The user approved all of these. Where they differ from the class diagram, they'r
   - `search.js` and `errors.js`
   - `ScoreBounds`, `NearbyAmenity`, `OneMapTokenProvider` and `OneMapError`
   - `ONEMAP_BASE_URL` and `MAP_TILE_URL` can be overridden from the environment, to rehearse UC-06 failures
-- **Flat coordinates CSV** (16 Oct 2026). `data/flat_coordinates.csv` was produced offline with the new `geocode_flat_addresses` command (`docs/GEOCODING_PLAN.md`), which queries OneMap search one address at a time and writes a CSV only. Loading still goes through `import_flat_coordinates`, so decision 6 holds: the running app never geocodes. The abbreviation table gained `ST.` → SAINT (`ST. GEORGE'S RD/LANE`); plain `ST` is always STREET. The CSV is not committed yet; the team decides whether it belongs in the repo.
+- **Flat coordinates CSV** (16 Oct 2026). `database/data/flat_coordinates.csv` was produced offline with the new `geocode_flat_addresses` command (`docs/GEOCODING_PLAN.md`), which queries OneMap search one address at a time and writes a CSV only. Loading still goes through `import_flat_coordinates`, so decision 6 holds: the running app never geocodes. The abbreviation table gained `ST.` → SAINT (`ST. GEORGE'S RD/LANE`); plain `ST` is always STREET. The CSV is not committed yet; the team decides whether it belongs in the repo.
 
 ### 10.3 Findings
 
@@ -375,7 +378,7 @@ The user approved all of these. Where they differ from the class diagram, they'r
 **Environment:**
 - **`$` in `.env`.** Docker Compose reads `$name` in `.env` values as a variable and silently changes the value. This broke `ONEMAP_PASSWORD` inside Docker until the value was wrapped in **single quotes**. `.env.example` and the README now warn about it.
 - **Other risky characters.** Values containing `#` or spaces should also be quoted. `POSTGRES_PASSWORD` should avoid `@`, `:` and `/`, because it is placed inside `DATABASE_URL`.
-- **Two databases.** Local SQLite and Docker's PostgreSQL are loaded separately. Both now have the real coordinates (16 Oct 2026). A fresh database needs `import_flat_coordinates data/flat_coordinates.csv` and `compute_proximity`.
+- **Two databases.** Local SQLite and Docker's PostgreSQL are loaded separately. Both now have the real coordinates (16 Oct 2026). A fresh database needs `import_flat_coordinates database/data/flat_coordinates.csv` and `compute_proximity`.
 - **Placeholder coordinates** (before 16 Oct 2026). With town-centre placeholders, every flat in a town had identical distances, so proximity scores didn't tell flats within a town apart, and the map showed one amber pin per town.
 
 **Bugs found and fixed:**
@@ -417,7 +420,7 @@ The user approved all of these. Where they differ from the class diagram, they'r
 
 **Team tasks:**
 - [x] **Produce the coordinates CSV.** Done; see the top of §10.4.
-- [ ] **Decide whether to commit `data/flat_coordinates.csv`** (about 850 KB). Committed, teammates load it directly; otherwise each person re-runs `geocode_flat_addresses` (~2¼ h).
+- [ ] **Decide whether to commit `database/data/flat_coordinates.csv`** (about 850 KB). Committed, teammates load it directly; otherwise each person re-runs `geocode_flat_addresses` (~2¼ h).
 - [ ] **Update the class diagram,** using the checklist in `docs/CROSS_CHECK.md` §3.
 - [ ] **Update the SRS,** using `docs/CROSS_CHECK.md` §4 and the §9 items above:
   - 1–10 weights in FR 1.1.4

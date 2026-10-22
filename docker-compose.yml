@@ -18,13 +18,13 @@ services:
     build: .
     env_file: .env
     environment:
-      DJANGO_SETTINGS_MODULE: flatfinder.settings
+      DJANGO_SETTINGS_MODULE: backend.config.settings
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:
       - "8000:8000"
     volumes:
       - ./:/app
-      - ./data/raw:/app/data/raw
+      - ./database/data/raw:/app/database/data/raw
     depends_on:
       db:
         condition: service_healthy

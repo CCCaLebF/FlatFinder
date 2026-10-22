@@ -6,8 +6,8 @@ import pytest
 from django.conf import settings
 from django.urls import reverse
 
-from core.control.distance import DistanceStrategy, StraightLineDistance
-from core.entity import (
+from backend.core.services.distance import DistanceStrategy, StraightLineDistance
+from backend.core.models import (
     CATEGORIES, Bookmark, BusStop, ChasClinic, ChildCareCentre, FlatProximity, HawkerCentre,
     MrtStation, ResaleFlat, SearchQuery, SearchResult, SortOrder, Town,
 )

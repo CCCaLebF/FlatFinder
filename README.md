@@ -34,8 +34,8 @@ Edit `.env`:
 | Task | Command |
 |---|---|
 | Start everything | `docker compose up --build` → open http://localhost:8000 |
-| Import the data (§3), with real flat coordinates | `docker compose exec web python manage.py load_all --coords data/flat_coordinates.csv` |
-| Reload only the coordinates (§4) | `docker compose exec web python manage.py import_flat_coordinates data/flat_coordinates.csv` then `docker compose exec web python manage.py compute_proximity` |
+| Import the data (§3), with real flat coordinates | `docker compose exec web python manage.py load_all --coords database/data/flat_coordinates.csv` |
+| Reload only the coordinates (§4) | `docker compose exec web python manage.py import_flat_coordinates database/data/flat_coordinates.csv` then `docker compose exec web python manage.py compute_proximity` |
 | Run the tests | `docker compose exec web pytest` |
 | Open a Django shell | `docker compose exec web python manage.py shell` |
 | Pick up `.env` changes | `docker compose up -d --force-recreate web` |
@@ -44,7 +44,7 @@ Edit `.env`:
 How the Docker setup works:
 - Database migrations run automatically when the `web` container starts. The data import doesn't, because it's slow, so run it yourself as shown above.
 - Code changes reload automatically: the project folder is mounted into the container.
-- The raw datasets stay on your machine in `data/raw/` and are never built into the image.
+- The raw datasets stay on your machine in `database/data/raw/` and are never built into the image.
 - The database is only reachable on your machine if you opt in: copy `docker-compose.override.example.yml` to `docker-compose.override.yml` to expose port 5432.
 
 ## 2. Run it without Docker
@@ -57,7 +57,7 @@ python -m venv .venv
 pip install -r requirements.txt
 copy .env.example .env          # leave DATABASE_URL empty to use SQLite (db.sqlite3)
 python manage.py migrate
-python manage.py load_all --coords data/flat_coordinates.csv
+python manage.py load_all --coords database/data/flat_coordinates.csv
 python manage.py runserver      # http://127.0.0.1:8000
 pytest
 ```
@@ -66,7 +66,7 @@ To use your own PostgreSQL instead of SQLite, set `DATABASE_URL=postgres://user:
 
 ## 3. Data import
 
-The raw files go in `data/raw/`, which git ignores. `load_all` downloads any that are missing from data.gov.sg. You can also download them on their own:
+The raw files go in `database/data/raw/`, which git ignores. `load_all` downloads any that are missing from data.gov.sg. You can also download them on their own:
 
 ```powershell
 python manage.py download_datasets            # all seven, skipping files already there
@@ -85,7 +85,7 @@ python manage.py download_datasets --force    # download again
 | 6 | `compute_proximity` | Works out each flat's straight-line distance to the nearest place in each category (`FlatProximity`). |
 
 `load_all` options:
-- `--coords <csv>`: run step 5 with a coordinates CSV. Use `data/flat_coordinates.csv`, which is in the repo.
+- `--coords <csv>`: run step 5 with a coordinates CSV. Use `database/data/flat_coordinates.csv`, which is in the repo.
 - `--approximate`: run step 5 with the town-centre fallback (development only, when the CSV isn't available)
 - `--no-download`: don't fetch missing files
 
@@ -93,21 +93,21 @@ python manage.py download_datasets --force    # download again
 
 ## 4. Flat coordinates
 
-The resale dataset has **no coordinates**, and the app deliberately doesn't geocode flats. They're loaded from a CSV, `data/flat_coordinates.csv`, which is committed to the repo and was produced offline by `geocode_flat_addresses`. `load_all --coords data/flat_coordinates.csv` (§1, §2) loads it, so a normal setup never needs the geocoding tool.
+The resale dataset has **no coordinates**, and the app deliberately doesn't geocode flats. They're loaded from a CSV, `database/data/flat_coordinates.csv`, which is committed to the repo and was produced offline by `geocode_flat_addresses`. `load_all --coords database/data/flat_coordinates.csv` (§1, §2) loads it, so a normal setup never needs the geocoding tool.
 
 **Load the coordinates:**
 ```
-python manage.py import_flat_coordinates data/flat_coordinates.csv
+python manage.py import_flat_coordinates database/data/flat_coordinates.csv
 python manage.py compute_proximity
 ```
 In Docker, prefix both with `docker compose exec web`.
 
 **Produce or extend the CSV** (only needed if you don't have the file, or after `import_flats` brings in new addresses):
 ```
-python manage.py geocode_flat_addresses [--out data/flat_coordinates.csv] [--rate 1.0] [--limit N] [--retry-unmatched]
+python manage.py geocode_flat_addresses [--out database/data/flat_coordinates.csv] [--rate 1.0] [--limit N] [--retry-unmatched]
 ```
 - **What it does:** looks up every distinct block and street name on the OneMap search API (no token needed). A result is accepted only if its block number matches and its road matches the street name with HDB abbreviations written out (`AVE` → `AVENUE`, `C'WEALTH` → `COMMONWEALTH`, …). It never writes to the database.
-- **Outputs:** matched rows go to `data/flat_coordinates.csv`. Addresses it can't match go to `data/flat_coordinates_unmatched.csv`, with a reason and up to three candidates. Fix those by hand by adding rows to the main CSV.
+- **Outputs:** matched rows go to `database/data/flat_coordinates.csv`. Addresses it can't match go to `database/data/flat_coordinates_unmatched.csv`, with a reason and up to three candidates. Fix those by hand by adding rows to the main CSV.
 - **Speed:** one request at a time, at most `--rate` per second. About 2¼ hours for the ~8,000 addresses at 1/s. If OneMap returns 429, it backs off (10 s, 30 s, 60 s, 120 s) and halves the rate.
 - **Resuming:** every row is saved as it's written. If the run stops, run the same command again: addresses already in either file are skipped, so a later run only looks up new addresses. `--retry-unmatched` tries the unmatched file again.
 - **Check by hand:** rows whose `match_method` ends in `far_from_town` are more than 6 km from their town's centre.
@@ -143,7 +143,7 @@ total     = round(100 × Σ(weight × score) / Σ weight, 1)
 
 - **Weights:** price and lease always have weight 5. Each amenity category uses the user's 1–10 weight, and a category marked **Ignore** is left out.
 - **Blank criteria:** a blank budget or minimum lease takes its value from the matching flats themselves (FR 1.1.6).
-- **Where it's set:** the constants are in `flatfinder/settings.py` (`FIT_SCORE_FIXED_WEIGHTS`, `ANCHOR_RADIUS_M`).
+- **Where it's set:** the constants are in `backend/config/settings.py` (`FIT_SCORE_FIXED_WEIGHTS`, `ANCHOR_RADIUS_M`).
 
 ## 6. Tests
 
@@ -164,23 +164,41 @@ $env:ONEMAP_BASE_URL="http://127.0.0.1:9"; $env:MAP_TILE_URL="http://127.0.0.1:9
 
 ## 7. Code layout (class diagram → code)
 
-The code follows the class diagram's Boundary / Control / Entity layers in one Django app, `core`:
+The repository is split into `frontend/`, `backend/` and `database/`. Inside the backend, the folders still map one-to-one onto the class diagram's Boundary / Control / Entity layers:
 
 ```
-core/
-  entity/        ResaleFlat, TransportNode→BusStop/MrtStation, Amenity→ChildCareCentre/HawkerCentre/ChasClinic,
-                 Town, FlatProximity (models); SearchQuery, SortOrder, FitScore, SearchResult, Bookmark (dataclasses)
-  control/       SearchController, MapController, AmenityController, BookmarkController, ErrorHandler,
-                 DistanceStrategy → StraightLineDistance / WalkingDistance
-  boundary/ui/   SearchUI (search.py, forms.py), FlatDetailsUI (details.py), BookmarkUI (bookmarks.py),
-                 MapUI server side (map.py: the JSON endpoints)
-  boundary/gateways/onemap.py   OneMapSearchGateway, OneMapRoutingGateway, token handling, OneMapError
-  management/commands/          DataLoader (the §3 commands)
-  templates/core/               pages + partials/ (one file per reusable piece: card, sidebar, slider…)
-  static/core/js/               map.js (MapUI), mapstate.js (MapState), bookmarks.js (BookmarkUI),
-                                search.js (SearchUI), errors.js (the UC-06 banner)
-  static/core/css/              app.css (sliders), map.css (map look: pins, colours, legend)
+backend/
+  config/              Django project: settings.py, urls.py, wsgi.py
+  core/                the Django app (app label "core")
+    models/            ResaleFlat, TransportNode→BusStop/MrtStation, Amenity→ChildCareCentre/HawkerCentre/ChasClinic,
+                       Town, FlatProximity (Django models); SearchQuery, SortOrder, FitScore, SearchResult, Bookmark (dataclasses)
+    services/          SearchController, MapController, AmenityController, BookmarkController, ErrorHandler,
+                       DistanceStrategy → StraightLineDistance / WalkingDistance
+    views/             SearchUI (search.py, forms.py), FlatDetailsUI (details.py), BookmarkUI (bookmarks.py),
+                       MapUI server side (map.py: the JSON endpoints)
+    integrations/      onemap.py: OneMapSearchGateway, OneMapRoutingGateway, token handling, OneMapError
+    management/        DataLoader (the §3 commands)
+    templatetags/, urls.py, apps.py
+frontend/
+  templates/           pages + partials/ (one file per reusable piece: card, sidebar, slider…)
+  static/js/           map.js (MapUI), mapstate.js (MapState), bookmarks.js (BookmarkUI),
+                       search.js (SearchUI), errors.js (the UC-06 banner)
+  static/css/          app.css (sliders), map.css (map look: pins, colours, legend)
+database/
+  migrations/          schema migrations (wired in with MIGRATION_MODULES)
+  data/                flat_coordinates.csv (committed); raw/ holds the data.gov.sg downloads (git-ignored)
+tests/
 ```
+
+| Folder | Diagram layer |
+|---|---|
+| `frontend/templates/`, `frontend/static/` | «boundary» UI, client side (and the `MapState` entity) |
+| `backend/core/views/` | «boundary» UI, server side |
+| `backend/core/integrations/` | «boundary» gateways |
+| `backend/core/services/` | «control» |
+| `backend/core/management/` | «control» «startup» DataLoader |
+| `backend/core/models/` | «entity» |
+| `database/` | PostgreSQL / SQLite schema and the data the DataLoader reads |
 
 **JSON endpoints:**
 
@@ -194,8 +212,8 @@ core/
 | `POST /api/bookmarks/<id>/toggle` | Saves or unsaves a flat |
 
 **Changing the look:**
-- **Colours:** the whole palette is one `tailwind.config` block in `templates/core/base.html` (`brand-*`), plus the matching `--ff-*` variables at the top of `static/core/css/map.css`.
-- **Page pieces:** the reusable parts are in `templates/core/partials/`.
+- **Colours:** the whole palette is one `tailwind.config` block in `frontend/templates/base.html` (`brand-*`), plus the matching `--ff-*` variables at the top of `frontend/static/css/map.css`.
+- **Page pieces:** the reusable parts are in `frontend/templates/partials/`.
 
 ## 8. Design changes (for updating the class diagram)
 

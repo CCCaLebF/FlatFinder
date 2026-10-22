@@ -7,9 +7,9 @@ import pytest
 from django.http import QueryDict
 from django.urls import reverse
 
-from core.boundary.ui.forms import SearchForm
-from core.control.search import ScoreBounds, SearchController
-from core.entity import FlatProximity, ResaleFlat, SearchQuery
+from backend.core.views.forms import SearchForm
+from backend.core.services.search import ScoreBounds, SearchController
+from backend.core.models import FlatProximity, ResaleFlat, SearchQuery
 
 from .conftest import build_flat
 

@@ -119,7 +119,7 @@ In the BCE layering, control classes shouldn't display anything; that's the boun
 ### 3.5 Code changes that make the code match the diagram more closely
 
 - [x] **C6:** *Fixed in phase 8.* `SearchController` calculates the search-location (anchor) distance with its own haversine function. Route it through `StraightLineDistance` instead, to match the diagram's `SearchController <<use>> StraightLineDistance` and remove the duplicate formula.
-- [x] **C7:** *Fixed in phase 8.* rename the functions in `static/core/js/map.js` to the diagram's `MapUI` method names, so each one is easy to find:
+- [x] **C7:** *Fixed in phase 8.* rename the functions in `frontend/static/js/map.js` to the diagram's `MapUI` method names, so each one is easy to find:
   - `displayMap`, `displayAreaCounts`, `displayFlatPins`, `displayBookmarkPins`, `displayAmenityPins`
   - `selectFlatPin`, `selectAmenityPin`, `displayWalkingDistance`, `toggleLayer`
   - `displayErrorMessage`, `displayBlankMap`

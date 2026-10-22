@@ -1,6 +1,6 @@
 .env
 .venv/
-data/raw/
+database/data/raw/
 __pycache__/
 *.py[cod]
 *.sqlite3

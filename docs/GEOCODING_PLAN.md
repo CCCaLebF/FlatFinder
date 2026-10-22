@@ -43,7 +43,7 @@ Decision 6 says **the app must not geocode**. The team supplies a CSV of coordin
 
 ### 3.1 Gateway method
 
-In `core/boundary/gateways/onemap.py`, add a method to `OneMapSearchGateway`:
+In `backend/core/integrations/onemap.py`, add a method to `OneMapSearchGateway`:
 
 ```python
 def search_addresses(self, text: str) -> list[dict]:
@@ -54,20 +54,20 @@ Build it on the existing `_call()`, so it gets the 5 s timeout and raises `OneMa
 
 ### 3.2 Management command `geocode_flat_addresses`
 
-Put it in `core/management/commands/geocode_flat_addresses.py`.
+Put it in `backend/core/management/commands/geocode_flat_addresses.py`.
 
 ```
-python manage.py geocode_flat_addresses [--out data/flat_coordinates.csv] [--rate 1.0]
+python manage.py geocode_flat_addresses [--out database/data/flat_coordinates.csv] [--rate 1.0]
                                         [--limit N] [--retry-unmatched]
 ```
 
 **Input:** the distinct `(block, street_name)` pairs from `ResaleFlat`, sorted for a stable order. Don't read the raw CSV.
 
-**Outputs.** Put them in `data/`, not `data/raw/`. `data/raw/` is git-ignored; `data/` is not, so the team can choose to commit the files.
-- **`data/flat_coordinates.csv`**, with columns:
+**Outputs.** Put them in `database/data/`, not `database/data/raw/`. `database/data/raw/` is git-ignored; `database/data/` is not, so the team can choose to commit the files.
+- **`database/data/flat_coordinates.csv`**, with columns:
   - `block,street_name,latitude,longitude`: exactly what `import_flat_coordinates` needs
   - `postal,onemap_road_name,match_method,query`: for checking by hand; `import_flat_coordinates` ignores extra columns
-- **`data/flat_coordinates_unmatched.csv`**, with columns `block,street_name,reason,candidates`. `candidates` holds up to 3 results, as `BLK_NO ROAD_NAME (POSTAL)` separated by ` | `.
+- **`database/data/flat_coordinates_unmatched.csv`**, with columns `block,street_name,reason,candidates`. `candidates` holds up to 3 results, as `BLK_NO ROAD_NAME (POSTAL)` separated by ` | `.
 
 **Matching, for each pair, in this order:**
 1. **Raw query:** `"{block} {street_name}"`, exactly as stored.
@@ -146,11 +146,11 @@ All existing tests must still pass on SQLite and in Docker (`pytest`, `docker co
 4. **Review:**
    - Give the user the summary and the unmatched file.
    - Try `--retry-unmatched` once.
-   - Leave the remaining misses for the user to fix by hand, by adding rows to `data/flat_coordinates.csv`.
+   - Leave the remaining misses for the user to fix by hand, by adding rows to `database/data/flat_coordinates.csv`.
    - Spot-check 10 random `exact` rows and every `far_from_town` row on the OneMap website.
 5. **Load**, locally and in Docker:
    ```
-   python manage.py import_flat_coordinates data/flat_coordinates.csv
+   python manage.py import_flat_coordinates database/data/flat_coordinates.csv
    python manage.py compute_proximity
    ```
    Confirm in the browser:
@@ -173,7 +173,7 @@ All existing tests must still pass on SQLite and in Docker (`pytest`, `docker co
 
 ## 7. Decisions for the user, before the full run
 
-1. **Commit the CSV?** If `data/flat_coordinates.csv` (about 400 KB) is committed, teammates load it directly and don't need to geocode. **Default: don't commit until the user says so.**
+1. **Commit the CSV?** If `database/data/flat_coordinates.csv` (about 400 KB) is committed, teammates load it directly and don't need to geocode. **Default: don't commit until the user says so.**
 2. **Check an official dataset first?** data.gov.sg's "HDB Existing Building" footprints might give block locations with no API calls, if they link to street names; this hasn't been checked. If the user wants that, spend at most 15 minutes on it, report back, and continue with this plan only if it doesn't work out. **Default: go straight to this plan.**
 3. **Geocode beyond the 12-month window?** Only needed if `import_flats` is later widened. **Default: current window only.** The tool's resume behaviour means a later run only looks up new addresses.
 
@@ -181,7 +181,7 @@ All existing tests must still pass on SQLite and in Docker (`pytest`, `docker co
 
 - [ ] The command and its tests are merged, and every test passes on SQLite and in Docker.
 - [ ] The pilot was reported to the user and approved.
-- [ ] `data/flat_coordinates.csv` covers at least 95% of pairs automatically, and the rest are listed in the unmatched file.
+- [ ] `database/data/flat_coordinates.csv` covers at least 95% of pairs automatically, and the rest are listed in the unmatched file.
 - [ ] Coordinates are loaded and `compute_proximity` has run, locally and in Docker.
 - [ ] Checked in the browser: one pin per block, and different distances within a town.
 - [ ] `PLAN.md` and `README.md` are updated.

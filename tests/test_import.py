@@ -10,11 +10,11 @@ import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
-from core.control.distance import StraightLineDistance
-from core.entity import (
+from backend.core.services.distance import StraightLineDistance
+from backend.core.models import (
     BusStop, ChasClinic, ChildCareCentre, FlatProximity, HawkerCentre, MrtStation, ResaleFlat, Town,
 )
-from core.management.parsers import (
+from backend.core.management.parsers import (
     area_weighted_centroid, months_back, parse_html_description, polygon_parts, remaining_lease_years,
     to_wgs84,
 )

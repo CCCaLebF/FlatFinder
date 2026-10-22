@@ -6,12 +6,12 @@ import pytest
 from django.http import QueryDict
 from django.urls import reverse
 
-from core.boundary.ui.forms import SearchForm
-from core.control.amenity import AmenityController
-from core.control.distance import StraightLineDistance
-from core.control.search import SearchController
-from core.entity import BusStop, ChasClinic, HawkerCentre, MrtStation, SearchQuery
-from core.templatetags.flatfinder import display_name
+from backend.core.views.forms import SearchForm
+from backend.core.services.amenity import AmenityController
+from backend.core.services.distance import StraightLineDistance
+from backend.core.services.search import SearchController
+from backend.core.models import BusStop, ChasClinic, HawkerCentre, MrtStation, SearchQuery
+from backend.core.templatetags.flatfinder import display_name
 
 FLAT_AT = (1.3700, 103.8500)
 METRE_LAT = 1 / 111_195  # degrees of latitude per metre

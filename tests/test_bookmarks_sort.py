@@ -6,10 +6,10 @@ from django.contrib.sessions.backends.db import SessionStore
 from django.test import Client
 from django.urls import reverse
 
-from core.boundary.ui.forms import SORT_OPTIONS, parse_sort_order
-from core.control.bookmark import BookmarkController
-from core.control.search import SearchController
-from core.entity import ResaleFlat, SearchQuery, SortOrder
+from backend.core.views.forms import SORT_OPTIONS, parse_sort_order
+from backend.core.services.bookmark import BookmarkController
+from backend.core.services.search import SearchController
+from backend.core.models import ResaleFlat, SearchQuery, SortOrder
 
 JSON = {"HTTP_ACCEPT": "application/json"}
 
@@ -226,7 +226,7 @@ def test_saved_back_uses_referrer_when_nothing_stored(client):
 def test_bookmarks_with_identical_timestamps_keep_newest_first(monkeypatch):
     from django.utils import timezone
     frozen = timezone.now()
-    monkeypatch.setattr("core.control.bookmark.timezone.now", lambda: frozen)
+    monkeypatch.setattr("backend.core.services.bookmark.timezone.now", lambda: frozen)
     session = SessionStore()
     controller = BookmarkController()
     for flat_id in (1, 2, 3):

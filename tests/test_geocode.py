@@ -11,10 +11,10 @@ import pytest
 import responses
 from django.core.management import call_command
 
-from core.boundary.gateways import onemap
-from core.boundary.gateways.onemap import OneMapSearchGateway
-from core.entity import ResaleFlat, Town
-from core.management.commands import geocode_flat_addresses as geo
+from backend.core.integrations import onemap
+from backend.core.integrations.onemap import OneMapSearchGateway
+from backend.core.models import ResaleFlat, Town
+from backend.core.management.commands import geocode_flat_addresses as geo
 from tests.conftest import build_flat
 
 SEARCH_URL = "https://www.onemap.gov.sg" + onemap.SEARCH_PATH

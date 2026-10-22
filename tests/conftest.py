@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from core.entity import FlatProximity, ResaleFlat
+from backend.core.models import FlatProximity, ResaleFlat
 
 
 def build_flat(proximity=None, **overrides):

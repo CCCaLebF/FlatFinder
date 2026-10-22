@@ -10,20 +10,20 @@ import requests
 import responses
 from django.urls import reverse
 
-from core.boundary.gateways import onemap
-from core.boundary.gateways.onemap import (
+from backend.core.integrations import onemap
+from backend.core.integrations.onemap import (
     OneMapError, OneMapRoutingGateway, OneMapSearchGateway, OneMapTokenProvider,
 )
-from core.control.distance import WalkingDistance
-from core.control.errors import ErrorHandler
-from core.control.search import SearchController
-from core.entity import SearchQuery
+from backend.core.services.distance import WalkingDistance
+from backend.core.services.errors import ErrorHandler
+from backend.core.services.search import SearchController
+from backend.core.models import SearchQuery
 
 BASE = "https://www.onemap.gov.sg"
 TOKEN_URL = BASE + onemap.TOKEN_PATH
 SEARCH_URL = BASE + onemap.SEARCH_PATH
 ROUTE_URL = BASE + onemap.ROUTE_PATH
-STATIC_JS = Path(__file__).resolve().parent.parent / "core" / "static" / "core" / "js"
+STATIC_JS = Path(__file__).resolve().parent.parent / "frontend" / "static" / "js"
 
 SEARCH_HIT = {"found": 1, "totalNumPages": 1, "pageNum": 1, "results": [{
     "SEARCHVAL": "BISHAN MRT STATION (NS17 / CC15)", "BLK_NO": "200", "ROAD_NAME": "BISHAN ROAD",
@@ -289,7 +289,7 @@ def test_search_bar_sets_anchor_and_redirects(client, make_flat):
     assert page.context["query"].hasAnchor
     assert "Ranking includes distance to" in content and "Bishan MRT Station (NS17 / CC15)" in content
     assert 'name="w_anchor"' in content  # its weight slider appears once set (decision 4)
-    from core.control.distance import StraightLineDistance
+    from backend.core.services.distance import StraightLineDistance
     metres = StraightLineDistance().distance_m((1.352, 103.849), (1.351, 103.8485))
     assert page.context["cards"][0]["fit"].anchorScore == pytest.approx(1 - metres / 3000, abs=0.001)
 

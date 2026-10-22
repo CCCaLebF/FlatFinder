@@ -1,6 +1,6 @@
 .env
-data/raw/*
-!data/raw/.gitkeep
+database/data/raw/*
+!database/data/raw/.gitkeep
 __pycache__/
 *.py[cod]
 *.sqlite3

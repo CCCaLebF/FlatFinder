@@ -6,12 +6,12 @@ import pytest
 from django.conf import settings
 from django.urls import reverse
 
-from core.control.map import MapController
-from core.control.search import SearchController
-from core.entity import BusStop, SearchQuery, Town
+from backend.core.services.map import MapController
+from backend.core.services.search import SearchController
+from backend.core.models import BusStop, SearchQuery, Town
 
 JSON = {"HTTP_ACCEPT": "application/json"}
-STATIC_JS = Path(__file__).resolve().parent.parent / "core" / "static" / "core" / "js"
+STATIC_JS = Path(__file__).resolve().parent.parent / "frontend" / "static" / "js"
 VIEW = {"south": 1.30, "west": 103.80, "north": 1.40, "east": 103.90}
 
 
