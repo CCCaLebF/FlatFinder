@@ -27,7 +27,11 @@ Variables: flat, fit (optional), details_query, bookmark_style.
     <span class="truncate text-slate-400">{{ flat.town|street_title }}{% if flat.coords_approximate %} · approx. location{% endif %}</span>
     {% if flat.has_coords %}
       <button type="button" class="shrink-0 font-semibold text-brand-700 hover:text-brand-800"
-              data-show-on-map data-lat="{{ flat.latitude|stringformat:'f' }}" data-lng="{{ flat.longitude|stringformat:'f' }}">Show on map</button>
+              data-show-on-map data-lat="{{ flat.latitude|stringformat:'f' }}" data-lng="{{ flat.longitude|stringformat:'f' }}"
+              data-flat-id="{{ flat.id }}" data-label="Blk {{ flat.block }} {{ flat.street_name|street_title }}"
+              data-summary="{{ flat.flat_type|street_title }} · storey {{ flat.storey_range|lower }}"
+              data-price="{{ flat.resale_price|floatformat:0 }}"{% if fit %} data-fit="{{ fit.total|floatformat:1 }}"{% endif %}
+              data-details-url="{% url 'core:flat_details' flat.id %}?{{ details_query }}">Show on map</button>
     {% else %}
       <span class="shrink-0 text-slate-400">No location</span>
     {% endif %}

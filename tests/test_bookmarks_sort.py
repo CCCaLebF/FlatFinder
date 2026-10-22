@@ -23,9 +23,9 @@ def toggle_url(flat_id):
 @pytest.fixture
 def three_flats(make_flat):
     return {
-        "small_cheap_old": make_flat(resale_price=Decimal("300000"), remaining_lease=55, floor_area_sqm=67),
-        "mid": make_flat(resale_price=Decimal("450000"), remaining_lease=90, floor_area_sqm=110),
-        "big_dear": make_flat(resale_price=Decimal("700000"), remaining_lease=75, floor_area_sqm=140),
+        "small_cheap_old": make_flat(block="1", resale_price=Decimal("300000"), remaining_lease=55, floor_area_sqm=67),
+        "mid": make_flat(block="2", resale_price=Decimal("450000"), remaining_lease=90, floor_area_sqm=110),
+        "big_dear": make_flat(block="3", resale_price=Decimal("700000"), remaining_lease=75, floor_area_sqm=140),
     }
 
 

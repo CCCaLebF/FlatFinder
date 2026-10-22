@@ -12,6 +12,7 @@ from backend.core.models import CATEGORIES, FitScore, ResaleFlat, SearchQuery, S
 _SCORE_COLUMNS = (
     ["id", "resale_price", "remaining_lease", "floor_area_sqm", "latitude", "longitude"]
     + [f"proximity__{c.proximity_field}" for c in CATEGORIES]
+    + ["block", "street_name"]  # for grouping by block (PLAN §11)
 )
 
 
@@ -35,7 +36,7 @@ class SearchController:
     - UC-08 Filter Search Results (budget FR 1.1.1, flat types FR 1.1.2, lease FR 1.1.5,
       walk limits FR 1.1.3)
     - UC-09 Rank Search Results (Fit Score FR 2.2.2, PLAN §4)
-    - UC-10 Sort Search Results (FR 2.2.3.3)
+    - UC-10 Sort Search Results (FR 2.2.3.3), then group the results by block (PLAN §11)
     - UC-07 Search via Search Bar (proximity anchor, decision 4)
 
     Filtering is separate from scoring (PLAN §4): hard filters run in SQL, then the
@@ -134,6 +135,7 @@ class SearchController:
         lats = np.array(columns[4], dtype=float)
         lngs = np.array(columns[5], dtype=float)
         distances = {c.key: np.array(columns[6 + i], dtype=float) for i, c in enumerate(CATEGORIES)}
+        addresses = [f"{block}|{street}" for block, street in zip(columns[-2], columns[-1])]
 
         bounds = bounds or self.compute_bounds(query, prices, leases)
         scores = self._score_arrays(query, bounds, prices, leases, lats, lngs, distances)
@@ -142,6 +144,7 @@ class SearchController:
         result.baseIds = ids
         result.sortKeys = {"price": prices, "remaining_lease": leases,
                            "floor_area": areas, "fit_score": scores["total"]}
+        result.blockKeys = np.unique(addresses, return_inverse=True)[1]
         result.fitScores = _FitScoreMap(ids, scores, self._fit_score_at)
         return self.sort_results(result, SortOrder())
 
@@ -151,7 +154,7 @@ class SearchController:
         """
         UC-10 / FR 2.2.3.3: reorder results by price, remaining lease, floor area or Fit
         Score. Only the display order changes. Ties fall back to Fit Score (descending),
-        then price (ascending), so the order is stable.
+        then price (ascending), so the order is stable. The block groups follow the new order.
         """
         result.sortOrder = order
         if result.baseIds is None or len(result.baseIds) == 0:
@@ -161,6 +164,25 @@ class SearchController:
         # np.lexsort sorts by the last key first.
         index = np.lexsort((keys["price"], -keys["fit_score"], primary))
         result.flatIds = [int(i) for i in result.baseIds[index]]
+        return self.group_by_block(result)
+
+    def group_by_block(self, result: SearchResult) -> SearchResult:
+        """
+        PLAN §11: group the sorted flats by block (same block and street) into
+        `result.blockGroups`. A block takes the place of its best-placed flat, and its flats
+        keep the display order, so the groups follow whatever sort is in force.
+        """
+        if result.blockKeys is None or not result.flatIds:
+            result.blockGroups = []
+            return result
+        shown = np.array(result.flatIds, dtype=np.int64)
+        by_id = np.argsort(result.baseIds)
+        keys = result.blockKeys[by_id[np.searchsorted(result.baseIds, shown, sorter=by_id)]]
+        # A stable sort by block keeps display order inside each block.
+        order = np.argsort(keys, kind="stable")
+        starts = np.flatnonzero(np.r_[True, keys[order][1:] != keys[order][:-1]])
+        groups = sorted(np.split(order, starts[1:]), key=lambda positions: positions[0])
+        result.blockGroups = [[int(fid) for fid in shown[positions]] for positions in groups]
         return result
 
     # --- UC-07 Anchor ----------------------------------------------------------------

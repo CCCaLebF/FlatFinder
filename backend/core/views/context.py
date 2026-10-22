@@ -20,5 +20,15 @@ def flatfinder_context(request):
             "pinMinZoom": settings.MAP_PIN_MIN_ZOOM,
             "minZoom": settings.MAP_MIN_ZOOM,
             "maxZoom": settings.MAP_MAX_ZOOM,
+            "fitBands": list(settings.MAP_FIT_COLOUR_BANDS),
         },
+        "fit_legend": fit_legend(settings.MAP_FIT_COLOUR_BANDS),
     }
+
+
+def fit_legend(bands) -> list:
+    """The map legend's Fit Score rows, best first: [{"band": 1, "label": "85+"}, ..., {"label": "under 45"}]."""
+    rows = [{"band": 1, "label": f"{bands[0]}+"}]
+    rows += [{"band": i + 2, "label": f"{low}–{high}"} for i, (high, low) in enumerate(zip(bands, bands[1:]))]
+    rows.append({"band": len(bands) + 1, "label": f"under {bands[-1]}"})
+    return rows

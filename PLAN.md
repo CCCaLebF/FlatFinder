@@ -180,7 +180,7 @@ FlatFinder/
 | `MapState` | client-side JS (`mapstate.js`) in `localStorage` | Holds `centre`, `zoom`, `visibleLayers` and `viewMode`. Implements UC-13. |
 | **Control** | | |
 | `SearchController` | `services/search.py` | `filter_flats(query)`, `apply_walk_limits(qs, query)`, `calculate_fit_score(flat, query, bounds)`, `rank_flats(...)`, `sort_results(result, order)`, `set_proximity_anchor(query, text)` (uses `OneMapSearchGateway`). |
-| `MapController` | `services/map.py` | `get_area_counts(query)` returns `[{town, lat, lng, count}]`. `get_pins_in_view(bounds, query, limit=500)`. **Has no rendering methods**; rendering is `MapUI`'s job. |
+| `MapController` | `services/map.py` | `get_area_counts(query)` returns `[{town, lat, lng, count}]`. `get_pins_in_view(bounds, query, limit=250)` (`MAP_PIN_LIMIT`; lowered from 500 on 22 Oct 2026 to keep zoom 14 smooth). **Has no rendering methods**; rendering is `MapUI`'s job. |
 | `AmenityController` | `services/amenity.py` | `find_nearest_amenities(flat, radius_m=1000)` returns the amenities grouped by category, sorted by distance. It uses a bounding-box query on the latitude/longitude indexes, then haversine. |
 | `BookmarkController` | `services/bookmark.py` | `toggle_bookmark(session, flat_id)`, `is_bookmarked(session, flat_id)`, `get_bookmarks(session)`. Use `session_id` as the spelling everywhere. |
 | `ErrorHandler` | `services/errors.py` | `log_error(endpoint, timestamp, code)` writes to Python `logging` (UC-06 step 2). `to_response(exc)` turns a `OneMapError` into JSON `{"error": "<user message>"}` with HTTP 502. |
@@ -316,7 +316,7 @@ Finish each phase before starting the next. Each phase ends with passing tests a
 
 - **Decision 3:** how the walking-distance sliders work. Today they're a provisional straight-line hard filter.
 - **Update the SRS** to match: the 1–10 scale in FR 1.1.4, Child Care Centres everywhere, CHAS Clinics in the UC-01/09/12 lists, UC-11 querying the database (so UC-06 no longer extends UC-11), and the 12-month data window.
-- **Update the class diagram** with the approved changes in §8.
+- **Update the class diagram** with the approved changes in §8, and the block-grouping changes in §11.3.
 - ~~**Produce the coordinates CSV**~~ Done 16 Oct 2026; see §10.4.
 
 ---
@@ -435,3 +435,80 @@ The user approved all of these. Where they differ from the class diagram, they'r
 **Housekeeping:**
 - [ ] Commit and push the phase 8 changes. They were uncommitted when this log was written; the last commit was `367ca3b`, phase 7.
 - [x] Before a demo from Docker, load the real CSV. Done 16 Oct 2026.
+
+---
+
+## 11. Group search results by block (planned and built 22 Oct 2026)
+
+### 11.1 Why
+
+Each `ResaleFlat` row is one resale **transaction**, so a block with several sales showed up as several near-identical cards (e.g. two Blk 436D Fernvale Rd cards: storey 16–18 at S$520,000 and storey 07–09 at S$525,000). The 12-month data has **24,353 sales in 8,080 blocks** (median 2 per block, at most 35). Every flat in a block shares its coordinates and nearest-amenity distances.
+
+### 11.2 Decisions (agreed with the user)
+
+| Question | Decision |
+|---|---|
+| Same block means | same `block` **and** `street_name` |
+| Clicking a block card | opens a **block results page** listing the block's matching flats |
+| Pagination | **20 blocks per page** (header: "24,353 flats in 8,080 blocks match …") |
+| Block with one matching flat | keeps today's **flat card**, which opens the details page |
+| Map View side list | grouped the same way; "Show on map" highlights the block and its popup links to the block page |
+| Block order | a block takes the position of its best-placed flat under the current sort; flats inside a block use the same sort |
+| Block card Fit badge | the block's **best** flat score, shown as "up to 89.5" |
+| Block page content | only flats matching the current search, scored on the **full search's** price/lease thresholds, so scores match the results page; no map |
+| Bookmarks | stay per flat; there is no bookmark on the block card, and flats are bookmarked from the block page |
+| New classes | **none** |
+
+### 11.3 Class diagram changes
+
+No new classes. **Two new operations** are added, and three existing operations change behaviour.
+
+| Class | Change | Detail |
+|---|---|---|
+| `SearchController` «control» | **new operation** `groupByBlock(result: SearchResult)` | Groups the sorted flat ids by block, in display order. `sortResults` calls it last, so grouping always follows the sort. |
+| `SearchController` «control» | changed `sortResults(result, order)` | Now also regroups by block. |
+| `SearchResult` «entity» | **new attributes** `blockGroups: List<List<flatId>>`, `blockCount: int` | `count` still counts flats. |
+| `SearchUI` «boundary» | **new operation** `displayBlockResults(block, street, query)` | The Block Results page (`views/search.py`). It is still `SearchUI`, because it shows search results narrowed to one block. |
+| `FlatDetailsUI` «boundary» | changed Back (`back_url`) | Accepts `from=block`, so Back returns to the flat's block page with the same search. |
+| `MapUI` «boundary» | changed `selectFlatPin(…)` | Highlights a single flat **or** a block, with its own pin and popup. |
+
+**Dialog map:** a new page, **Block Results**, between Results and Property Details. It's reached by clicking a block card. Its Back button returns to Results with the same page, sort and search, and Back on Details returns to it.
+
+**Alternative considered (not chosen):** folding both operations into existing ones, so the grouping happens inside `sortResults` and the results page takes `block`/`street` URL parameters, with `SearchQuery` gaining `block` and `street` attributes. That adds no operations, but gives `sortResults` and the results page two jobs each. If the team would rather keep the diagram's operation list unchanged, switch to this before building.
+
+### 11.4 Build steps
+
+1. `SearchController.rank_flats` also reads `block` and `street_name`, giving each flat a numeric block key. `group_by_block` (numpy, like the sort) fills `SearchResult.blockGroups` and `blockCount`. The NFR 1 timing test must still pass.
+2. `views/search.py`:
+   - `results` paginates `blockGroups` (20 per page) and loads every flat on the page in one query.
+   - Each card is either a flat (`flat`, `fit`) or a block: its flats, count, price range, flat types, best Fit Score, one flat for the shared town and amenities, and the block page URL.
+3. `views/search.py`: new `block_results` view at `/blocks/<block>/<street>/?<search params>`.
+   - Ranks the block's matching flats with `rank_flats(..., bounds=bounds_for(query))`.
+   - Has a sort control.
+   - Shows an empty state ("No flats in this block match your search") for stale links.
+4. `views/details.py`: add `"block"` to `ORIGINS`; `back_url` builds the block page URL from the flat's own block and street.
+5. Templates:
+   - `partials/block_card.html` (List View)
+   - `partials/block_card_compact.html` (Map View, with "Show on map")
+   - `block.html` (breadcrumb, Back, block header with amenity chips, sort control, grid of `flat_card.html`)
+   - `results.html` picks a block or flat card per result and uses the new counts; pagination reads "… of N blocks".
+6. `map.js`: `selectFlatPin` handles a block button. The pin is labelled "from S$520K", and the popup shows the address, "3 matching flats", the price range and a link to the block page.
+7. Tests:
+   - grouping order for each sort option
+   - a single-flat block renders a flat card
+   - 20 blocks per page
+   - the block page shows only matching flats, with Fit Scores equal to the results page
+   - Back from the block page and from Details
+   - the stale-link empty state
+   - update tests that put several flats in the fixture's default block `"123"`
+8. Docs: move these changes into README §8 "Design changes" and tick them in `docs/CROSS_CHECK.md` §3.6 once built.
+
+### 11.5 Status
+
+- [x] Build (steps 1–8), 22 Oct 2026. **193 tests** pass (17 new, in `tests/test_blocks.py`). On the real data: "24,353 flats in 8,080 blocks"; grouping adds about 40 ms to a full search. Checked in the browser: List View block cards, the Block Results page, Details → Back to block → Back to results, and Map View "Show on map" on a block.
+  - Differences from §11.4, all small:
+    - The highlight pin shows the block's lowest price ("S$360K"), not "from S$360K", which doesn't fit in the pin. The popup shows the full range.
+    - The Block Results page keeps the filter sidebar, like Results. The List/Map toggle is hidden there, because the page has no map; Back keeps the view mode.
+    - Tests that put several flats in the fixture's default block now use distinct blocks (`three_flats`, the results Map View test), and two heading assertions use the new wording.
+- [ ] Update the class diagram (§11.3; checklist in `docs/CROSS_CHECK.md` §3.6)
+- [ ] Add the Block Results page to the dialog map

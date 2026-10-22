@@ -6,6 +6,7 @@
     </span>
     FlatFinder
   </a>
+  {% if hide_view_toggle %}<span></span>{% else %}
   <nav class="inline-flex rounded-full border border-slate-200 bg-slate-50 p-1 text-sm" aria-label="View mode">
     <a href="{% url_replace view='list' page=None %}" data-view="list" {% if view_mode != 'map' %}aria-current="page"{% endif %}
        class="flex items-center gap-1.5 rounded-full px-3.5 py-1 {% if view_mode != 'map' %}bg-white font-semibold text-slate-900 shadow-sm{% else %}text-slate-500 hover:text-slate-800{% endif %}">
@@ -18,6 +19,7 @@
       Map View
     </a>
   </nav>
+  {% endif %}
   <a href="{% url 'core:saved' %}" class="flex items-center gap-1.5 justify-self-end rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-brand-50 hover:text-brand-700">
     <svg class="h-4 w-4 text-brand-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>
     <span>Saved (<span id="saved-count">{{ saved_count }}</span>)</span>

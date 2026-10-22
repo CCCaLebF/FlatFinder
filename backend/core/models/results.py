@@ -36,7 +36,10 @@ class SearchResult:
     - fitScores: flat id -> FitScore
     - sortOrder: the current SortOrder; sorting (UC-10) reorders flatIds only
     - bounds: the price/lease thresholds the scores were computed with
-    - baseIds / sortKeys: the unsorted ids and the parallel numpy arrays used to sort
+    - blockGroups: flatIds grouped by block (same block and street), in display order;
+      the results page shows one card per group (PLAN §11)
+    - baseIds / sortKeys / blockKeys: the unsorted ids and the parallel numpy arrays used
+      to sort and to group
     """
 
     query: SearchQuery
@@ -44,12 +47,20 @@ class SearchResult:
     fitScores: dict = field(default_factory=dict)
     sortOrder: SortOrder = field(default_factory=SortOrder)
     bounds: Optional[object] = None
+    blockGroups: list = field(default_factory=list)
     baseIds: Optional[object] = field(default=None, repr=False)
     sortKeys: dict = field(default_factory=dict, repr=False)
+    blockKeys: Optional[object] = field(default=None, repr=False)
 
     @property
     def count(self) -> int:
+        """Matching flats (resale transactions)."""
         return len(self.flatIds)
+
+    @property
+    def blockCount(self) -> int:
+        """Blocks those flats are in."""
+        return len(self.blockGroups)
 
     @property
     def isEmpty(self) -> bool:

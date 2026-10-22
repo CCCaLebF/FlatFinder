@@ -61,7 +61,7 @@ Tick items off as they're resolved.
   - add `anchorLabel: String` and `anchorWeight: int`
 - [ ] `FitScore`: add `anchorScore: float`.
 - [ ] `Bookmark`: rename `user_id` to `session_id`. The diagram's own `BookmarkController` already uses `session_id`.
-- [ ] `MapController`: remove the rendering methods (`RenderMap`, `DropLocationPins`, `PanZoom`, `ToggleLayer`, `RestoreLastMapState`). That work belongs to `MapUI`. In the code, `MapController` has `getAreaCounts(query)` and `getPinsInView(bounds, query, limit)`.
+- [ ] `MapController`: remove the rendering methods (`RenderMap`, `DropLocationPins`, `PanZoom`, `ToggleLayer`, `RestoreLastMapState`). That work belongs to `MapUI`. In the code, `MapController` has `getAreaCounts(query)` and `getPinsInView(bounds, query, limit)` and, since 22 Oct 2026, `getFlatsAtLocation(lat, lng, query)`, which loads one pin's popup list on demand.
 
 ### 3.2 Where the diagram contradicts the real OneMap API
 
@@ -89,7 +89,7 @@ In the BCE layering, control classes shouldn't display anything; that's the boun
   - The five `Fetch*()` methods are one method in the code: `findNearestAmenities(flat, radiusM): Map<category, List<Amenity>>`. It searches our database within 1 km and lists each MRT station once (its nearest exit).
 - [ ] **`MapState`:**
   - It's stored in the browser, so only `MapUI` can read or write it. Replace the `MapController <<write>> MapState` and `ErrorHandler <<read>> MapState` arrows with `MapUI <<write>>/<<read>> MapState`.
-  - Rename `visiblePins` to `visibleLayers`, and add `viewMode` (list or map).
+  - Rename `visiblePins` to `visibleLayers`, and add `viewMode` (list or map) and `panelsHidden` (Map View side panels hidden so the map fills the window; added 22 Oct 2026).
 
 ### 3.4 Signatures and attributes that differ
 
@@ -127,6 +127,17 @@ In the BCE layering, control classes shouldn't display anything; that's the boun
   The behaviour already exists; only the names change.
 
 ---
+
+### 3.6 Group search results by block (`PLAN.md` §11, built 22 Oct 2026)
+
+No new classes. The code has these; tick each one when the diagram is updated.
+
+- [ ] `SearchController`: add the operation `groupByBlock(result: SearchResult)`. `sortResults(result, order)` now also regroups by block.
+- [ ] `SearchResult`: add `blockGroups: List<List<flatId>>` (flat ids per block, in display order) and `blockCount: int`.
+- [ ] `SearchUI`: add the operation `displayBlockResults(block, street, query)`, the Block Results page.
+- [ ] `FlatDetailsUI`: Back also returns to the Block Results page (`from=block`).
+- [ ] `MapUI`: `selectFlatPin` highlights a single flat or a whole block.
+- [ ] Dialog map: add the **Block Results** page between Results and Property Details.
 
 ## 4. Problems in the SRS (for the team)
 

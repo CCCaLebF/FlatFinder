@@ -2,7 +2,7 @@
 SearchUI sidebar (UC-01, UC-08). Every control must fit without scrolling at 1366×768 (NFR 3.2).
 Context: `sidebar` from SearchForm.sidebar_state(), optional `form_errors`.
 {% endcomment %}
-<aside class="w-[26rem] shrink-0 overflow-y-auto border-r border-slate-200 bg-white" aria-label="Search filters">
+<aside class="w-[26rem] shrink-0 overflow-y-auto border-r border-slate-200 bg-white" aria-label="Search filters"{% if view_mode == "map" %} data-side-panel{% endif %}>
   <form method="get" action="{% url 'core:results' %}" id="search-form" class="flex flex-col gap-2.5 px-5 py-3 text-sm">
     {% if view_mode %}<input type="hidden" name="view" value="{{ view_mode }}">{% endif %}
     {% for key, value in sidebar.anchor.hidden.items %}{% if value %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}

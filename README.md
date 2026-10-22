@@ -205,7 +205,8 @@ tests/
 | Endpoint | What it returns |
 |---|---|
 | `GET /api/flats/area-counts` | Matching flats per town |
-| `GET /api/flats/in-bounds` | Matching flats in the visible map area |
+| `GET /api/flats/in-bounds` | One pin per location in the visible map area: count, best Fit Score and price (gzip-compressed) |
+| `GET /api/flats/at-location` | A pin's popup list: the matching flats at one location, best first |
 | `GET /api/flats/<id>/amenities` | Everything within 1 km of a flat |
 | `GET /api/walking-distance` | Walking distance from a flat to a point |
 | `GET /api/bookmarks` | The session's saved flats |
@@ -214,6 +215,7 @@ tests/
 **Changing the look:**
 - **Colours:** the whole palette is one `tailwind.config` block in `frontend/templates/base.html` (`brand-*`), plus the matching `--ff-*` variables at the top of `frontend/static/css/map.css`.
 - **Page pieces:** the reusable parts are in `frontend/templates/partials/`.
+- **Pin colours by Fit Score:** a pin takes the colour of its best flat's score. The thresholds are `MAP_FIT_COLOUR_BANDS` in `backend/config/settings.py` (85, 75, 65, 55, 45: dark green, green, light green, yellow, orange, then red), and the map legend follows them. The colours themselves are the `.ff-fit-1` to `.ff-fit-6` rules in `frontend/static/css/map.css`. Pins are grey when there's no search, saved flats are near-black with a star, and approximate locations have a dashed outline.
 
 ## 8. Design changes (for updating the class diagram)
 
@@ -226,12 +228,19 @@ These differ from the original class diagram. **[docs/CROSS_CHECK.md](docs/CROSS
 - `MapController` has no rendering methods
 
 **Added while building:**
+- **Results grouped by block (`PLAN.md` §11).** Each data row is one resale transaction, so the results show one card per block (20 blocks per page), and a new **Block Results** page (`/blocks/<block>/<street>/`) lists a block's matching flats. No new classes:
+  - new operations `SearchController.group_by_block` and `SearchUI`'s Block Results page
+  - new attributes `SearchResult.blockGroups` and `blockCount`
+  - Back on Details can return to the block (`from=block`), and `MapUI.selectFlatPin` can highlight a block
+  - the diagram checklist is in `docs/CROSS_CHECK.md` §3.6
 - **`OneMapTokenProvider` and `OneMapError`.** Only routing needs a OneMap token; search and map tiles don't. That's tested against the live API.
 - **`ScoreBounds`:** the price and lease thresholds, so a flat scores the same on the details page as in the list.
 - **`NearbyAmenity`:** an amenity plus its distance from the flat.
 - **`SearchResult` holds result ids rather than whole flats,** along with the Fit Scores, the sort order and the bounds. A page only loads the 20 flats it shows.
 - **`GET /api/bookmarks`,** so saved flats can be drawn on the map (UC-03.AC.1). The Saved page also has a Map View.
 - **Browsing maps reopen where you left them,** using `MapState`.
+- **Map pins load their popup lists on demand.** `MapController.get_flats_at_location` (`GET /api/flats/at-location`) is a new operation. The pins response carries no flat lists, which cut it from 175 KB to 6 KB at zoom 14.
+- **Collapsible side panels in Map View.** A "Hide panels" button on the map hides the filters and the results, saved or details panel, so the map fills the window. The choice is kept in `MapState.panelsHidden` and applies on every Map View page.
 - **`search.js` and `errors.js`,** client-side pieces of `SearchUI` and `ErrorHandler`.
 
 ## 9. Open decisions and known limits

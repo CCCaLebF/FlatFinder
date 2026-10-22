@@ -1,6 +1,7 @@
 /**
  * «Entity» MapState — the last successfully rendered map, kept in localStorage (UC-13, FR 1.2.1.2).
- * Holds centre, zoom, visibleLayers and viewMode.
+ * Holds centre, zoom, visibleLayers, viewMode and panelsHidden (Map View side panels hidden,
+ * so the map fills the window).
  *
  * Also applies the view-mode default (PLAN §6): the `view` URL parameter wins; without one,
  * the last mode chosen in the header toggle is used.
@@ -41,7 +42,11 @@
       return Array.isArray(layers) ? layers : fallback;
     },
     viewMode: function () { return load().viewMode === "map" ? "map" : "list"; },
+    panelsHidden: function () { return load().panelsHidden === true; },
   };
+
+  // Hidden side panels: set before the page paints, so they never flash in (map.css hides them).
+  if (window.FlatFinder.MapState.panelsHidden()) document.documentElement.dataset.panelsHidden = "1";
 
   // Remember the mode the user picks in the header toggle.
   document.addEventListener("click", function (event) {

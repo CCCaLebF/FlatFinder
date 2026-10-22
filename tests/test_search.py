@@ -284,7 +284,7 @@ def test_results_page_lists_ranked_flats(client, make_flat):
     response = client.get(reverse("core:results"), {"w_bus_stop": 5, "view": "list"})
     content = response.content.decode()
     assert response.status_code == 200
-    assert "2 flats match" in content
+    assert "2 flats in 2 blocks match" in content
     assert content.index("Blk 1A") < content.index("Blk 9Z")
     assert "S$300,000" in content and "Fit Score" in content
     assert "Approximate location (town centre)" in content
@@ -341,7 +341,7 @@ def test_error_messages_name_the_control(client):
 @pytest.mark.django_db
 def test_singular_result_heading(client, make_flat):
     make_flat()
-    assert "1 flat matches" in client.get(reverse("core:results")).content.decode()
+    assert "1 flat in 1 block matches" in client.get(reverse("core:results")).content.decode()
 
 
 @pytest.mark.django_db

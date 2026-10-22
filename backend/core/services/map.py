@@ -37,9 +37,10 @@ class MapController:
 
         Flats at the same coordinates (several sales in one block, or every flat in a
         town while coordinates are approximate) share one location pin. Locations are
-        ordered by their best Fit Score and capped at `limit`; each lists up to
-        FLATS_PER_LOCATION flats, best first. Scores use the whole filtered set's
-        thresholds, so they match the results list.
+        ordered by their best Fit Score and capped at `limit`. Each pin carries only what
+        drawing it needs (count, best Fit Score and that flat's price); its popup list comes
+        from get_flats_at_location when opened, which keeps this response small and fast.
+        Scores use the whole filtered set's thresholds, so they match the results list.
         """
         south, west, north, east = bounds
         filtered = self.search.filter_flats(query)
@@ -47,28 +48,44 @@ class MapController:
                                   longitude__gte=west, longitude__lte=east)
         result = self.search.rank_flats(in_view, query, bounds=self.search.bounds_for(query))
 
-        rows = {row["id"]: row for row in in_view.values(
-            "id", "block", "street_name", "flat_type", "storey_range", "floor_area_sqm",
-            "resale_price", "latitude", "longitude", "coords_approximate")}
+        rows = {row[0]: row[1:] for row in in_view.values_list(
+            "id", "latitude", "longitude", "coords_approximate", "resale_price")}
 
         locations = {}
         for flat_id in result.flatIds:  # best Fit Score first
-            row = rows[flat_id]
-            key = (round(row["latitude"], 6), round(row["longitude"], 6))
+            lat, lng, approximate, price = rows[flat_id]
+            key = (round(lat, 6), round(lng, 6))
             location = locations.get(key)
             if location is None:
                 if len(locations) >= limit:
                     continue
                 location = locations[key] = {
-                    "lat": row["latitude"], "lng": row["longitude"],
-                    "approximate": row["coords_approximate"], "count": 0, "flats": [],
+                    "lat": lat, "lng": lng, "approximate": approximate, "count": 0,
+                    "fit": result.fitScores[flat_id].total if with_scores else None,  # the best flat's
+                    "price": float(price),
                 }
             location["count"] += 1
-            if len(location["flats"]) < FLATS_PER_LOCATION:
-                location["flats"].append(_pin_flat(row, result.fitScores[flat_id].total if with_scores else None))
 
         shown = sum(loc["count"] for loc in locations.values())
         return {"locations": list(locations.values()), "total": result.count, "truncated": shown < result.count}
+
+    def get_flats_at_location(self, lat: float, lng: float, query: SearchQuery, with_scores: bool = True) -> dict:
+        """
+        One pin's popup list: the matching flats at exactly (lat, lng), best Fit Score first,
+        up to FLATS_PER_LOCATION, plus how many there are. Scored on the whole filtered set's
+        thresholds, as on the pin itself and in the results list.
+        """
+        here = self.search.filter_flats(query).filter(latitude=lat, longitude=lng)
+        result = self.search.rank_flats(here, query, bounds=self.search.bounds_for(query))
+        listed = result.flatIds[:FLATS_PER_LOCATION]
+        rows = {row["id"]: row for row in here.filter(id__in=listed).values(
+            "id", "block", "street_name", "flat_type", "storey_range", "floor_area_sqm",
+            "resale_price", "coords_approximate")}
+        return {
+            "count": result.count,
+            "approximate": bool(listed) and rows[listed[0]]["coords_approximate"],
+            "flats": [_pin_flat(rows[fid], result.fitScores[fid].total if with_scores else None) for fid in listed],
+        }
 
 
 def _pin_flat(row, fit):

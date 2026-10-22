@@ -32,8 +32,10 @@
     minZoom: cfg.minZoom, maxZoom: cfg.maxZoom,
     maxBounds: SINGAPORE.pad(0.15), maxBoundsViscosity: 0.8,
   });
+  // No detectRetina: on high-DPI screens it asks for one zoom level more than the map shows
+  // and caps the layer one level lower, so the top zoom (19, OneMap's last) went grey.
   var tiles = L.tileLayer(cfg.tileUrl, {
-    attribution: cfg.attribution, minZoom: cfg.minZoom, maxZoom: cfg.maxZoom, detectRetina: true,
+    attribution: cfg.attribution, minZoom: cfg.minZoom, maxZoom: cfg.maxZoom,
   }).addTo(map);
   FF.map = map;
 
@@ -103,6 +105,18 @@
     });
   }
 
+  /**
+   * The colour class for a pin's best Fit Score: ff-fit-1 (dark green, best) to ff-fit-6 (red),
+   * from cfg.fitBands (MAP_FIT_COLOUR_BANDS, each a band's lower bound). No score: ff-fit-none.
+   */
+  function fitBandClass(fit) {
+    if (fit === null || fit === undefined) return "ff-fit-none";
+    for (var i = 0; i < cfg.fitBands.length; i++) {
+      if (fit >= cfg.fitBands[i]) return "ff-fit-" + (i + 1);
+    }
+    return "ff-fit-" + (cfg.fitBands.length + 1);
+  }
+
   /** A price tag pin for a location with a single flat, as in the Results (Map View) mockup. */
   function priceTagIcon(classes, text) {
     var icon = L.divIcon({
@@ -146,24 +160,44 @@
   }
 
   // --- UC-06 / UC-13: base-map tiles from OneMap ----------------------------------------
-  // A view is saved to MapState only once its tiles have loaded without errors, so MapState
+  // A view is saved to MapState only once its tiles have rendered (see below), so MapState
   // always holds the last *successfully rendered* map (FR 1.2.1.2). If tiles fail, show the
   // banner and go back to that view once (its tiles may still be in the browser cache);
   // with no saved view, show a blank map with the banner (UC-13.EX.1).
+  // OneMap answers 200 with an empty body where it has no map (open sea, outside Singapore),
+  // which the browser reports as a tile error too. So failed tiles alongside loaded ones are
+  // normal; if none loaded, re-fetch one failed tile (OneMap allows CORS) and only a network
+  // failure or an error status counts as OneMap being unavailable.
   var tileErrors = 0;
+  var tilesLoaded = 0;
+  var failedTileUrl = null;
   var restoring = false;
   var rememberView = mode === "browse";
-  tiles.on("loading", function () { tileErrors = 0; });
-  tiles.on("tileerror", function () { tileErrors += 1; });
+  tiles.on("loading", function () { tileErrors = 0; tilesLoaded = 0; failedTileUrl = null; });
+  tiles.on("tileerror", function (e) {
+    tileErrors += 1;
+    failedTileUrl = failedTileUrl || e.tile.src;
+  });
+  tiles.on("tileload", function () { tilesLoaded += 1; });
   tiles.on("load", function () {
-    if (tileErrors === 0) {
-      restoring = false;
-      if (rememberView) {
-        var c = map.getCenter();
-        FF.MapState.save({ centre: [c.lat, c.lng], zoom: map.getZoom() });
-      }
-      return;
+    if (tileErrors === 0 || tilesLoaded > 0) return tilesRendered();
+    fetch(failedTileUrl, { cache: "no-store" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        tilesRendered();
+      })
+      .catch(tilesUnavailable);
+  });
+
+  function tilesRendered() {
+    restoring = false;
+    if (rememberView) {
+      var c = map.getCenter();
+      FF.MapState.save({ centre: [c.lat, c.lng], zoom: map.getZoom() });
     }
+  }
+
+  function tilesUnavailable() {
     displayErrorMessage("OneMap service currently unavailable. The map may not display correctly.");
     var last = rememberView ? FF.MapState.lastView() : null;
     if (last && !restoring) {
@@ -172,7 +206,33 @@
     } else if (!last) {
       displayBlankMap();
     }
-  });
+  }
+
+  // --- Side panels: hide them so the map fills the window -------------------------------
+  // The panels beside the map (filters, results or saved list, flat details) carry
+  // data-side-panel. A round handle sits on their edge, halfway down: its arrow points left
+  // to hide them and right to show them. The choice is kept in MapState, across pages.
+  if (document.querySelector("[data-side-panel]")) {
+    var root = document.documentElement;
+    var panelToggle = h("button", { type: "button", className: "ff-panel-toggle" },
+      h("span", { className: "ff-panel-toggle__icon" }));
+    panelToggle.addEventListener("click", function () { setPanelsHidden(!root.dataset.panelsHidden); });
+    el.parentElement.appendChild(panelToggle);  // beside #map, so it can overlap the panel edge
+
+    var updatePanelToggle = function () {
+      var label = root.dataset.panelsHidden ? "Show side panels" : "Hide side panels to see the whole map";
+      panelToggle.setAttribute("aria-label", label);
+      panelToggle.title = label;
+      panelToggle.setAttribute("aria-expanded", String(!root.dataset.panelsHidden));
+    };
+    var setPanelsHidden = function (hidden) {
+      if (hidden) root.dataset.panelsHidden = "1"; else delete root.dataset.panelsHidden;
+      FF.MapState.save({ panelsHidden: hidden });
+      updatePanelToggle();
+      map.invalidateSize();  // the map's box changed; this also reloads pins for the new area
+    };
+    updatePanelToggle();
+  }
 
   // --- Browse: area counts, flat pins, saved flats ----------------------------------------
 
@@ -210,26 +270,70 @@
       setStatus(data.total.toLocaleString("en-SG") + " matching flats · zoom in or select a town to see flats");
     }
 
+    // Flat pins on the map, by location: {marker, signature}. A redraw keeps a pin whose
+    // location and flats haven't changed and only touches the rest, so panning stays smooth
+    // (redrawing every pin froze the page for 80–150 ms at the pin limit).
+    var pinMarkers = {};
+
+    function clearFlatPins() {
+      pinLayer.clearLayers();
+      pinMarkers = {};
+    }
+
+    /**
+     * A pin's popup: its matching flats, best Fit Score first (FR 2.2.1). Fetched the first time
+     * the popup opens rather than sent with every pin, which kept the pins response small.
+     */
+    function fillLocationPopup(loc, popup, marker) {
+      if (popup.dataset.loaded) return;
+      var params = new URLSearchParams(search);
+      params.set("lat", loc.lat);
+      params.set("lng", loc.lng);
+      getJSON("/api/flats/at-location?" + params)
+        .then(function (data) {
+          var list = h("ul", {});
+          data.flats.forEach(function (f) { list.appendChild(flatLine(f, origin)); });
+          popup.replaceChildren(
+            h("h3", {}, data.count === 1 ? "1 matching flat" : data.count.toLocaleString("en-SG") + " matching flats here"),
+            data.approximate ? h("p", { className: "ff-note" }, "Approximate location (town centre)") : "",
+            list,
+            data.count > data.flats.length
+              ? h("p", { className: "ff-note" }, "Showing the best " + data.flats.length + ". Use List View to see all " + data.count.toLocaleString("en-SG") + ".")
+              : "");
+          popup.dataset.loaded = "1";
+        })
+        .catch(function () {
+          popup.replaceChildren(h("p", {}, "Couldn't load these flats. Close this and try again."));
+        })
+        .then(function () { marker.getPopup().update(); });  // resize to the new content
+    }
+
     /** displayFlatPins(flats): FR 2.1.2 / 2.2.1 — one pin per location, best Fit Score first. */
     function displayFlatPins(data) {
-      pinLayer.clearLayers();
+      var next = {};
       data.locations.forEach(function (loc) {
+        var key = loc.lat + "," + loc.lng;
+        var signature = loc.count + "|" + loc.approximate + "|" + loc.fit + "|" + loc.price;
+        var current = pinMarkers[key];
+        if (current && current.signature === signature) {
+          next[key] = current;
+          delete pinMarkers[key];  // whatever is left in pinMarkers afterwards is removed
+          return;
+        }
         var approx = loc.approximate ? " ff-pin--approx" : "";
+        var band = " " + fitBandClass(loc.fit);  // the location's best flat
         var icon = loc.count === 1
-          ? priceTagIcon(approx.replace("ff-pin", "ff-price"), shortPrice(loc.flats[0].price))
-          : pinIcon(approx, loc.count > 99 ? "99+" : String(loc.count));
-        var list = h("ul", {});
-        loc.flats.forEach(function (f) { list.appendChild(flatLine(f, origin)); });
-        var popup = h("div", { className: "ff-popup" },
-          h("h3", {}, loc.count === 1 ? "1 matching flat" : loc.count.toLocaleString("en-SG") + " matching flats here"),
-          loc.approximate ? h("p", { className: "ff-note" }, "Approximate location (town centre)") : null,
-          list,
-          loc.count > loc.flats.length
-            ? h("p", { className: "ff-note" }, "Showing the best " + loc.flats.length + ". Use List View to see all " + loc.count.toLocaleString("en-SG") + ".")
-            : null);
-        addLabelledMarker([loc.lat, loc.lng], icon, { title: loc.count + " matching flat(s)" }, pinLayer)
+          ? priceTagIcon(approx.replace("ff-pin", "ff-price") + band, shortPrice(loc.price))
+          : pinIcon(approx + band, loc.count > 99 ? "99+" : String(loc.count));
+        var popup = h("div", { className: "ff-popup" }, h("p", {}, "Loading flats…"));
+        var marker = addLabelledMarker([loc.lat, loc.lng], icon, { title: loc.count + " matching flat(s)" }, pinLayer)
           .bindPopup(popup, { maxWidth: 300 });
+        marker.on("popupopen", function () { fillLocationPopup(loc, popup, marker); });
+        next[key] = { marker: marker, signature: signature };
       });
+      // Pins that left the view, or whose flats changed (their replacement was added above).
+      Object.keys(pinMarkers).forEach(function (key) { pinLayer.removeLayer(pinMarkers[key].marker); });
+      pinMarkers = next;
       var shown = data.locations.reduce(function (sum, loc) { return sum + loc.count; }, 0);
       setStatus(data.truncated
         ? "Showing " + shown.toLocaleString("en-SG") + " of " + data.total.toLocaleString("en-SG") + " flats in view · zoom in for more"
@@ -256,7 +360,7 @@
       var signal = pending.signal;
       var done;
       if (map.getZoom() < cfg.pinMinZoom) {
-        pinLayer.clearLayers();
+        clearFlatPins();
         done = (areaCache ? Promise.resolve(areaCache) : getJSON("/api/flats/area-counts?" + search, signal))
           .then(function (data) { areaCache = data; displayAreaCounts(data); });
       } else {
@@ -293,16 +397,53 @@
         h("p", {}, displayName(anchorParams.get("anchor_label") || "Selected location")))).addTo(map);
     }
 
-    /** selectFlatPin: "Show on map" on a side-list card centres the map on that flat. */
-    function selectFlatPin(lat, lng) {
+    /**
+     * selectFlatPin: "Show on map" on a side-list card centres the map on that flat, or that
+     * block (PLAN §11), and marks it with its own highlighted pin and open popup. The pin is
+     * separate from the flat pins, so it shows even when the block's pin is cut by the pin limit.
+     */
+    var focusMarker = null;
+    function selectFlatPin(button) {
+      var d = button.dataset;
+      var isBlock = d.kind === "block";
+      var lat = parseFloat(d.lat), lng = parseFloat(d.lng);
+      if (focusMarker) map.removeLayer(focusMarker);
+      document.querySelectorAll(".ff-card--focus").forEach(function (card) {
+        card.classList.remove("ff-card--focus");
+      });
+      var card = button.closest("[data-flat-card], [data-block-card]");
+      if (card) card.classList.add("ff-card--focus");
+      var priceText = price(parseFloat(d.price))
+        + (isBlock && d.priceMax !== d.price ? " – " + price(parseFloat(d.priceMax)) : "");
+
+      var icon = L.divIcon({
+        className: "", iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -38],
+        html: '<div class="ff-focus"><div class="ff-pin ff-pin--focus"><span></span></div></div>',
+      });
+      icon.label = shortPrice(parseFloat(d.price));
       displayMap(lat, lng, Math.max(map.getZoom(), 16));
+      focusMarker = L.marker([lat, lng], { icon: icon, title: d.label, zIndexOffset: 1000, keyboard: true })
+        .bindPopup(h("div", { className: "ff-popup" },
+          h("h3", {}, isBlock ? "Selected block" : "Selected flat"),
+          h("ul", {}, h("li", {},
+            d.fit ? h("span", { className: "ff-fit", title: isBlock ? "Best Fit Score" : "Fit Score" },
+              (isBlock ? "up to " : "") + d.fit) : null,
+            h("a", { href: d.detailsUrl }, d.label),
+            h("p", {}, d.summary + " · " + priceText))),
+          isBlock ? h("p", { className: "ff-note" }, h("a", { href: d.detailsUrl }, "View each flat in this block")) : null),
+          { maxWidth: 300 });
+      focusMarker.on("add", function () {
+        focusMarker.getElement().querySelector(".ff-pin span").textContent = icon.label;
+      });
+      focusMarker.addTo(map).openPopup();
     }
 
-    map.on("moveend", function () { clearTimeout(timer); timer = setTimeout(load, 200); });
+    // A short pause after the map stops, so a quick series of moves makes one request.
+    map.on("moveend", function () { clearTimeout(timer); timer = setTimeout(load, 100); });
     document.addEventListener("flatfinder:bookmark-changed", loadSaved);
     document.addEventListener("click", function (event) {
       var button = event.target.closest("[data-show-on-map]");
-      if (button) selectFlatPin(parseFloat(button.dataset.lat), parseFloat(button.dataset.lng));
+      if (button) selectFlatPin(button);
     });
     load();
     loadSaved();

@@ -7,8 +7,9 @@
   --ff-brand: #287462;       /* = brand-600 in base.html */
   --ff-brand-dark: #225e50;  /* = brand-700 */
   --ff-brand-tint: #d9f0e8;  /* = brand-100 */
-  --ff-saved: #e11d48;
-  --ff-approx: #d97706;
+  /* Saved, approximate and "Show on map" stay clear of the Fit Score colours below. */
+  --ff-saved: #0f172a;       /* near-black pin with a star */
+  --ff-focus: #7c3aed;       /* the flat or block picked with "Show on map" */
   /* One colour per amenity category (UC-12 layers and legend). */
   --ff-bus_stop: #2563eb;
   --ff-mrt_station: #dc2626;
@@ -18,6 +19,24 @@
 }
 
 .ff-map { background: #e5e7eb; }
+
+/* --- Side panels hidden: the map fills the window (map.js, MapState.panelsHidden) ----------- */
+html[data-panels-hidden] [data-side-panel] { display: none; }
+/* The round handle on the panels' edge, halfway down; it moves to the map's edge when they hide. */
+.ff-panel-toggle {
+  position: absolute; left: 0; top: 50%; z-index: 1001; transform: translate(-50%, -50%);
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9999px; cursor: pointer;
+  background: #fff; color: #334155; border: 1px solid #cbd5e1; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+html[data-panels-hidden] .ff-panel-toggle { left: 10px; transform: translateY(-50%); }
+.ff-panel-toggle:hover { background: var(--ff-brand-tint); color: var(--ff-brand-dark); border-color: var(--ff-brand); }
+.ff-panel-toggle:focus-visible { outline: 2px solid var(--ff-brand); outline-offset: 2px; }
+/* A chevron: left to hide the panels, right to show them. */
+.ff-panel-toggle__icon {
+  width: 9px; height: 9px; border-left: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor;
+  transform: translateX(2px) rotate(45deg);
+}
+html[data-panels-hidden] .ff-panel-toggle__icon { transform: translateX(-2px) rotate(-135deg); }
 .ff-map .leaflet-popup-content { margin: 10px 12px; font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
 
 /* --- Area counts (FR 2.1.1) ------------------------------------------------- */
@@ -29,27 +48,59 @@
 .ff-area small { display: block; font-weight: 500; font-size: 9px; opacity: 0.9; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ff-area:hover { background: var(--ff-brand-dark); }
 
+/* --- Fit Score colours (MAP_FIT_COLOUR_BANDS): pins, price tags and legend swatches ---- */
+/* Each band sets a fill and a readable text colour; best (1) to worst (6). */
+.ff-fit-1 { --ff-fit: #166534; --ff-fit-text: #fff; }     /* dark green, 85+ */
+.ff-fit-2 { --ff-fit: #16a34a; --ff-fit-text: #fff; }     /* green */
+.ff-fit-3 { --ff-fit: #86efac; --ff-fit-text: #14532d; }  /* light green */
+.ff-fit-4 { --ff-fit: #facc15; --ff-fit-text: #422006; }  /* yellow */
+.ff-fit-5 { --ff-fit: #fb923c; --ff-fit-text: #431407; }  /* orange */
+.ff-fit-6 { --ff-fit: #dc2626; --ff-fit-text: #fff; }     /* red */
+.ff-fit-none { --ff-fit: #64748b; --ff-fit-text: #fff; }  /* no search, so no score */
+.ff-swatch[class*="ff-fit-"] { background: var(--ff-fit); }
+.ff-swatch--approx { background: #fff; border: 1.5px dashed #0f172a; }
+
 /* --- Flat pins (FR 2.1.2) ----------------------------------------------------- */
 .ff-pin {
   position: relative; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
-  background: var(--ff-brand); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  background: var(--ff-fit, var(--ff-brand)); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 .ff-pin span {
   position: absolute; inset: 0; display: grid; place-items: center; transform: rotate(45deg);
-  color: #fff; font: 700 10px/1 ui-sans-serif, system-ui, sans-serif;
+  color: var(--ff-fit-text, #fff); font: 700 10px/1 ui-sans-serif, system-ui, sans-serif;
 }
-.ff-pin--approx { background: var(--ff-approx); border-style: dashed; }
+/* Approximate location (town centre): a dashed outline; the fill still shows the Fit Score. */
+.ff-pin--approx { border-style: dashed; border-color: #0f172a; }
 
 /* A single flat: a price tag, as in the Results (Map View) mockup. Anchored at its centre. */
 .ff-price {
   position: absolute; transform: translate(-50%, -50%); white-space: nowrap;
-  padding: 2px 7px; border-radius: 6px; background: #fff; color: var(--ff-brand-dark);
-  border: 1.5px solid var(--ff-brand); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  padding: 2px 7px; border-radius: 6px; background: var(--ff-fit, #fff); color: var(--ff-fit-text, var(--ff-brand-dark));
+  border: 1.5px solid var(--ff-fit, var(--ff-brand)); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   font: 700 11px/1.4 Inter, ui-sans-serif, system-ui, sans-serif;
 }
-.ff-price--approx { border-style: dashed; border-color: var(--ff-approx); color: #92400e; }
-.ff-pin--saved { background: var(--ff-saved); }
-.ff-pin--focus { outline: 3px solid #fde047; }
+.ff-price--approx { border-style: dashed; border-color: #0f172a; }
+.ff-pin--saved { --ff-fit: var(--ff-saved); --ff-fit-text: #fde047; }
+
+/* The flat or block picked with "Show on map": bigger, violet, with a pulsing ring, above every other pin. */
+.ff-focus { position: relative; width: 40px; height: 40px; }
+.ff-focus::before {
+  content: ""; position: absolute; left: 50%; bottom: -6px; width: 28px; height: 12px; margin-left: -14px;
+  border-radius: 9999px; background: var(--ff-focus); opacity: 0.5; animation: ff-pulse 1.6s ease-out infinite;
+}
+.ff-pin--focus {
+  width: 40px; height: 40px; background: var(--ff-focus); border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35), 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+.ff-pin--focus span { color: #fff; font-size: 10px; letter-spacing: -0.02em; }
+@keyframes ff-pulse {
+  from { transform: scale(0.6); opacity: 0.6; }
+  to { transform: scale(2.4); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .ff-focus::before { animation: none; } }
+
+/* Its card in the side list. */
+[data-flat-card].ff-card--focus, [data-block-card].ff-card--focus { border-color: var(--ff-focus); box-shadow: 0 0 0 2px var(--ff-focus); }
 
 /* --- Amenity pins (UC-11 / UC-12) ------------------------------------------------ */
 .ff-amenity {

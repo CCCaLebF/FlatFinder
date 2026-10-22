@@ -8,10 +8,19 @@ Variables: mode ("browse" | "flat" | "saved"), origin ("start" | "results" | "sa
   <p data-map-status role="status"
      class="hidden absolute bottom-6 left-3 z-[500] max-w-[80%] rounded-lg bg-white/95 px-3 py-1.5 text-xs text-slate-700 shadow"></p>
   {% if mode == "browse" %}
+    {# Pin colours follow MAP_FIT_COLOUR_BANDS; map.js reads the same values from map_config. #}
     <div class="absolute right-3 top-3 z-[500] rounded-lg bg-white/95 px-3 py-2 text-xs text-slate-600 shadow">
-      <p class="flex items-center gap-1.5"><span class="ff-swatch" style="background:var(--ff-brand)"></span>Matching flats</p>
-      <p class="flex items-center gap-1.5"><span class="ff-swatch" style="background:var(--ff-approx)"></span>Approximate (town centre)</p>
-      <p class="flex items-center gap-1.5"><span class="ff-swatch" style="background:var(--ff-saved)"></span>Saved flats</p>
+      <p class="mb-1 font-semibold text-slate-700">Best Fit Score</p>
+      <ul class="grid grid-cols-2 gap-x-3 gap-y-0.5">
+        {% for row in fit_legend %}
+          <li class="flex items-center gap-1.5"><span class="ff-swatch ff-fit-{{ row.band }}"></span>{{ row.label }}</li>
+        {% endfor %}
+      </ul>
+      <div class="mt-1.5 border-t border-slate-200 pt-1.5">
+        <p class="flex items-center gap-1.5"><span class="ff-swatch ff-fit-none"></span>No search yet</p>
+        <p class="flex items-center gap-1.5"><span class="ff-swatch" style="background:var(--ff-saved)"></span>Saved flats</p>
+        <p class="flex items-center gap-1.5"><span class="ff-swatch ff-swatch--approx"></span>Approximate location</p>
+      </div>
     </div>
   {% endif %}
 </div>

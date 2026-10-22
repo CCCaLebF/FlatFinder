@@ -51,8 +51,13 @@ def test_pins_in_view_group_flats_at_the_same_point(make_flat):
     assert pins["total"] == 3 and not pins["truncated"]
     first = pins["locations"][0]
     assert (first["lat"], first["lng"], first["count"]) == (1.35, 103.85, 2)
-    assert first["flats"][0]["id"] == best.id  # best Fit Score first
+    assert first["price"] == 300000.0  # the best flat's price, for a price tag
+    assert "flats" not in first        # the popup list is fetched when the pin opens
     assert [loc["count"] for loc in pins["locations"]] == [2, 1]
+
+    popup = MapController().get_flats_at_location(1.35, 103.85, SearchQuery())
+    assert popup["count"] == 2 and popup["flats"][0]["id"] == best.id  # best Fit Score first
+    assert popup["flats"][0]["block"] == "1" and popup["approximate"] is False
 
 
 @pytest.mark.django_db
@@ -63,8 +68,9 @@ def test_pin_scores_match_the_results_list(make_flat):
     query = SearchQuery(mrtStationWeight=7)
     controller = SearchController()
     result = controller.rank_flats(controller.filter_flats(query), query)
-    pin = MapController().get_pins_in_view((1.30, 103.80, 1.40, 103.90), query)["locations"][0]["flats"][0]
-    assert pin["fit"] == result.fitScores[pin["id"]].total
+    pin = MapController().get_pins_in_view((1.30, 103.80, 1.40, 103.90), query)["locations"][0]
+    popup_flat = MapController().get_flats_at_location(1.35, 103.85, query)["flats"][0]
+    assert pin["fit"] == popup_flat["fit"] == result.fitScores[popup_flat["id"]].total
 
 
 @pytest.mark.django_db
@@ -90,9 +96,29 @@ def test_in_bounds_api_and_fit_only_with_a_search(client, make_flat):
     make_flat(latitude=1.35, longitude=103.85, coords_approximate=True)
     no_search = client.get(reverse("core:api_flats_in_bounds"), VIEW).json()
     assert no_search["locations"][0]["approximate"] is True
-    assert no_search["locations"][0]["flats"][0]["fit"] is None
+    assert no_search["locations"][0]["fit"] is None
     with_search = client.get(reverse("core:api_flats_in_bounds"), {**VIEW, "w_bus_stop": 5}).json()
-    assert with_search["locations"][0]["flats"][0]["fit"] is not None
+    assert with_search["locations"][0]["fit"] is not None
+
+
+@pytest.mark.django_db
+def test_at_location_api(client, make_flat):
+    flat = make_flat(latitude=1.35, longitude=103.85, coords_approximate=True)
+    make_flat(latitude=1.36, longitude=103.85)  # another pin
+    data = client.get(reverse("core:api_flats_at_location"), {"lat": 1.35, "lng": 103.85, "w_bus_stop": 5}).json()
+    assert data["count"] == 1 and data["approximate"] is True
+    assert [f["id"] for f in data["flats"]] == [flat.id] and data["flats"][0]["fit"] is not None
+    no_search = client.get(reverse("core:api_flats_at_location"), {"lat": 1.35, "lng": 103.85}).json()
+    assert no_search["flats"][0]["fit"] is None
+    assert client.get(reverse("core:api_flats_at_location"), {"lat": "x"}).status_code == 400
+
+
+@pytest.mark.django_db
+def test_in_bounds_api_is_compressed(client, make_flat):
+    for i in range(30):
+        make_flat(latitude=1.31 + i / 1000, longitude=103.85)
+    response = client.get(reverse("core:api_flats_in_bounds"), VIEW, HTTP_ACCEPT_ENCODING="gzip")
+    assert response["Content-Encoding"] == "gzip"
 
 
 @pytest.mark.django_db
@@ -154,7 +180,7 @@ def test_start_map_view(client):
 @pytest.mark.django_db
 def test_results_map_view_has_side_list_and_map(client, make_flat):
     flat = make_flat(latitude=1.37, longitude=103.85)
-    make_flat()
+    make_flat(block="9Z")  # another block, so two cards
     content = client.get(reverse("core:results"), {"view": "map", "w_bus_stop": 5}).content.decode()
     assert 'data-map-mode="browse"' in content and 'data-origin="results"' in content
     assert content.count("data-flat-card=") == 2
@@ -220,3 +246,57 @@ def test_mapstate_js_handles_missing_storage():
     assert source.count("try {") >= 2 and "localStorage" in source
     for key in ("centre", "zoom", "visibleLayers", "viewMode"):
         assert key in source
+
+
+# --- Collapsible side panels in Map View ------------------------------------------------------
+
+@pytest.mark.django_db
+def test_side_panels_are_collapsible_in_map_view_only(client, make_flat):
+    flat = make_flat(latitude=1.37, longitude=103.85)
+    map_pages = {
+        "start": (reverse("core:start"), 1),            # filters
+        "results": (reverse("core:results"), 2),        # filters + results list
+        "saved": (reverse("core:saved"), 1),            # saved list
+        "details": (reverse("core:flat_details", args=[flat.id]), 1),  # details panel
+    }
+    for name, (url, panels) in map_pages.items():
+        assert client.get(url, {"view": "map"}).content.decode().count("data-side-panel") == panels, name
+        assert "data-side-panel" not in client.get(url, {"view": "list"}).content.decode(), name
+
+
+def test_panel_toggle_contracts():
+    source = (STATIC_JS / "map.js").read_text(encoding="utf-8")
+    assert "[data-side-panel]" in source and "panelsHidden" in source
+    assert "map.invalidateSize()" in source                             # the map refits its new box
+    state = (STATIC_JS / "mapstate.js").read_text(encoding="utf-8")
+    assert "dataset.panelsHidden" in state                              # applied before paint
+
+
+# --- Pins coloured by Fit Score -----------------------------------------------------------------
+
+def test_fit_legend_rows_follow_the_bands():
+    from backend.core.views.context import fit_legend
+    assert fit_legend((85, 75, 65, 55, 45)) == [
+        {"band": 1, "label": "85+"}, {"band": 2, "label": "75–85"}, {"band": 3, "label": "65–75"},
+        {"band": 4, "label": "55–65"}, {"band": 5, "label": "45–55"}, {"band": 6, "label": "under 45"}]
+
+
+@pytest.mark.django_db
+def test_browse_map_has_fit_bands_and_legend(client):
+    content = client.get(reverse("core:start"), {"view": "map"}).content.decode()
+    assert f'"fitBands": {list(settings.MAP_FIT_COLOUR_BANDS)}' in content
+    assert "Best Fit Score" in content and 'class="ff-swatch ff-fit-1"' in content and "under 45" in content
+
+
+def test_map_js_colours_pins_by_fit():
+    source = (STATIC_JS / "map.js").read_text(encoding="utf-8")
+    assert "function fitBandClass" in source and "cfg.fitBands" in source
+    assert "fitBandClass(loc.fit)" in source  # the location's best flat
+
+
+def test_map_js_keeps_unchanged_pins():
+    """A redraw only touches pins that changed; clearing all 500 every move made zoom 14 laggy."""
+    source = (STATIC_JS / "map.js").read_text(encoding="utf-8")
+    assert "pinMarkers" in source and "pinLayer.removeLayer(pinMarkers[key].marker)" in source
+    body = source[source.index("function displayFlatPins"):source.index("function displayBookmarkPins")]
+    assert "pinLayer.clearLayers()" not in body

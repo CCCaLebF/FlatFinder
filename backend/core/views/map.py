@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.views.decorators.gzip import gzip_page
 from django.views.decorators.http import require_GET
 
 from backend.core.integrations.onemap import OneMapError
@@ -37,10 +38,12 @@ def area_counts_api(request):
 
 
 @require_GET
+@gzip_page  # the biggest response the map fetches; it holds no secrets, so compressing is safe
 def flats_in_bounds_api(request):
     """
     GET /api/flats/in-bounds?south=&west=&north=&east=&<query> — FR 2.1.2, FR 2.2.1.
-    Fit Scores are included only when the URL carries a search.
+    Fit Scores are included only when the URL carries a search. Each pin's flat list comes
+    from flats_at_location_api when its popup opens.
     """
     query, error = _query_or_error(request)
     if error:
@@ -54,6 +57,22 @@ def flats_in_bounds_api(request):
     pins = MapController().get_pins_in_view(bounds, query, limit=settings.MAP_PIN_LIMIT,
                                             with_scores=has_search(request.GET))
     return JsonResponse(pins)
+
+
+@require_GET
+def flats_at_location_api(request):
+    """
+    GET /api/flats/at-location?lat=&lng=&<query> — the matching flats at one pin, best Fit
+    Score first, for its popup (FR 2.2.1). Fit Scores only when the URL carries a search.
+    """
+    query, error = _query_or_error(request)
+    if error:
+        return error
+    try:
+        lat, lng = float(request.GET["lat"]), float(request.GET["lng"])
+    except (KeyError, ValueError):
+        return JsonResponse({"error": "lat and lng are required numbers."}, status=400)
+    return JsonResponse(MapController().get_flats_at_location(lat, lng, query, with_scores=has_search(request.GET)))
 
 
 @require_GET

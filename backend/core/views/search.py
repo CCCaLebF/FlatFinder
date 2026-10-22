@@ -1,17 +1,19 @@
 """
-«Boundary» SearchUI — sidebar filter form, results list, sort control, search bar
-and the No Results state (UC-01, UC-07, UC-08, UC-09, UC-10; NFR 2.2, NFR 3.2).
+«Boundary» SearchUI — sidebar filter form, results list (one card per block), the Block
+Results page, sort control, search bar and the No Results state (UC-01, UC-07, UC-08, UC-09,
+UC-10; NFR 2.2, NFR 3.2; PLAN §11).
 """
 from django.conf import settings
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from backend.core.integrations.onemap import OneMapError
 from backend.core.services.errors import ErrorHandler
 from backend.core.services.search import SearchController
-from backend.core.models import CATEGORIES, ResaleFlat, SearchQuery
+from backend.core.models import CATEGORIES, FLAT_TYPES, ResaleFlat, SearchQuery
 
 from .forms import SORT_OPTIONS, SearchForm, parse_sort_order, sort_param
 
@@ -50,9 +52,12 @@ def results(request):
     order = parse_sort_order(request.GET.get("sort"))
     result = controller.sort_results(result, order)  # UC-10
 
-    page = Paginator(result.flatIds, settings.RESULTS_PER_PAGE).get_page(request.GET.get("page"))
-    flats = ResaleFlat.objects.select_related("proximity").in_bulk(list(page.object_list))
-    cards = [{"flat": flats[fid], "fit": result.fitScores[fid]} for fid in page.object_list]
+    # One card per block, 20 blocks per page (PLAN §11).
+    page = Paginator(result.blockGroups, settings.RESULTS_PER_PAGE).get_page(request.GET.get("page"))
+    flats = ResaleFlat.objects.select_related("proximity").in_bulk(
+        [fid for group in page.object_list for fid in group])
+    block_query = request.GET.urlencode()
+    cards = [_card([flats[fid] for fid in group], result.fitScores, block_query) for group in page.object_list]
 
     details_params = request.GET.copy()
     details_params.pop("page", None)
@@ -70,6 +75,77 @@ def results(request):
         current_sort=sort_param(order),
     )
     return render(request, "results.html", context)
+
+
+def block_results(request, block, street):
+    """
+    Block Results page (PLAN §11): the flats in one block that match the search, each with
+    the Fit Score it has on the Results page (scored on the whole search's thresholds).
+    Back returns to the Results page with the same search, page and sort.
+    """
+    lead = ResaleFlat.objects.select_related("proximity").filter(block=block, street_name=street).first()
+    if lead is None:
+        raise Http404("No such block.")
+    remember_browsing_page(request)
+    form = SearchForm(request.GET)
+    back = request.GET.urlencode()
+    # No map on this page, so the List/Map toggle is hidden; Back keeps the view mode.
+    context = {"lead": lead, "back_url": reverse("core:results") + (f"?{back}" if back else ""),
+               "sidebar": form.sidebar_state(), "hide_view_toggle": True,
+               "result": None, "cards": [], "form_errors": None}
+    if not form.is_valid():
+        context["form_errors"] = _error_messages(form)
+        return render(request, "block.html", context, status=400)
+
+    query = form.to_query()
+    controller = SearchController()
+    order = parse_sort_order(request.GET.get("sort"))
+    matching = controller.filter_flats(query).filter(block=block, street_name=street)
+    result = controller.rank_flats(matching, query, bounds=controller.bounds_for(query))
+    result = controller.sort_results(result, order)
+    flats = ResaleFlat.objects.select_related("proximity").in_bulk(result.flatIds)
+
+    details_params = request.GET.copy()
+    details_params["from"] = "block"
+    context.update(
+        result=result,
+        cards=[{"flat": flats[fid], "fit": result.fitScores[fid]} for fid in result.flatIds],
+        details_query=details_params.urlencode(),
+        sort_options=SORT_OPTIONS,
+        current_sort=sort_param(order),
+    )
+    return render(request, "block.html", context)
+
+
+def block_url(block, street, query="") -> str:
+    """The Block Results page for one block, carrying the search's query string."""
+    path = reverse("core:block_results", args=[block, street])
+    return f"{path}?{query}" if query else path
+
+
+def _card(flats, fit_scores, block_query) -> dict:
+    """
+    One results card (PLAN §11): a flat card when the block has one matching flat,
+    otherwise a block card summarising its flats, which links to the Block Results page.
+    """
+    lead = flats[0]
+    if len(flats) == 1:
+        return {"flat": lead, "fit": fit_scores[lead.id]}
+    prices = [f.resale_price for f in flats]
+    areas = [f.floor_area_sqm for f in flats]
+    leases = [f.remaining_lease for f in flats]
+    commenced = [f.lease_commence_date for f in flats]
+    return {"block": {
+        "lead": lead,
+        "count": len(flats),
+        "best_fit": max(fit_scores[f.id].total for f in flats),
+        "flat_types": [t for t in FLAT_TYPES if any(f.flat_type == t for f in flats)],
+        "min_price": min(prices), "max_price": max(prices),
+        "min_area": min(areas), "max_area": max(areas),
+        "min_lease": min(leases), "max_lease": max(leases),
+        "first_commenced": min(commenced), "last_commenced": max(commenced),
+        "url": block_url(lead.block, lead.street_name, block_query),
+    }}
 
 
 def apply_search_bar(request):

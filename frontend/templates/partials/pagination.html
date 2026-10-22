@@ -1,8 +1,11 @@
 {% load flatfinder humanize %}
-{% comment %} Numbered pages, as in the Results Page mockup. 20 results per page (decision 12). {% endcomment %}
+{% comment %}
+Numbered pages, as in the Results Page mockup. 20 results per page (decision 12); a result is
+a block since PLAN §11. Variables: page, page_range, unit (optional, e.g. "blocks").
+{% endcomment %}
 {% if page.paginator.num_pages > 1 %}
 <nav class="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm" aria-label="Pagination">
-  <p class="text-xs text-slate-500">Showing {{ page.start_index|intcomma }}–{{ page.end_index|intcomma }} of {{ page.paginator.count|intcomma }}</p>
+  <p class="text-xs text-slate-500">Showing {{ page.start_index|intcomma }}–{{ page.end_index|intcomma }} of {{ page.paginator.count|intcomma }}{% if unit %} {{ unit }}{% endif %}</p>
   <ul class="flex flex-wrap items-center gap-1">
     {% if page.has_previous %}
       <li><a href="{% url_replace page=page.previous_page_number %}" class="grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-brand-400 hover:text-brand-700" aria-label="Previous page">‹</a></li>

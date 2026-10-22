@@ -1,7 +1,7 @@
 """
 «Boundary» FlatDetailsUI — Property Details Page (UC-02): the FR 2.2.3.1 fields, the
 Fit Score breakdown and nearby amenities (UC-11). Back follows the `from` guard
-(start | results | saved). Selecting an amenity happens on the map, through MapUI.
+(start | results | block | saved). Selecting an amenity happens on the map, through MapUI.
 """
 from django.conf import settings
 from django.shortcuts import get_object_or_404, render
@@ -13,8 +13,9 @@ from backend.core.models import CATEGORIES, ResaleFlat
 from backend.core.templatetags.flatfinder import display_name
 
 from .forms import SearchForm, has_search
+from .search import block_url
 
-ORIGINS = ("start", "results", "saved")
+ORIGINS = ("start", "results", "block", "saved")
 
 
 def flat_details(request, flat_id):
@@ -41,7 +42,7 @@ def flat_details(request, flat_id):
     return render(request, "details.html", {
         "flat": flat,
         "origin": origin,
-        "back_url": back_url(request, origin),
+        "back_url": back_url(request, origin, flat),
         "fit": fit,
         "breakdown": breakdown,
         "search_error": search_error,
@@ -50,16 +51,19 @@ def flat_details(request, flat_id):
     })
 
 
-def back_url(request, origin) -> str:
+def back_url(request, origin, flat=None) -> str:
     """
-    The `from` guard on Back (dialog map): Results keeps its full query string,
-    Saved goes to the Saved page, and Start (or anything unknown) goes to Start.
+    The `from` guard on Back (dialog map): Results keeps its full query string, Block goes
+    to this flat's Block Results page with the same query (PLAN §11), Saved goes to the
+    Saved page, and Start (or anything unknown) goes to Start.
     """
     if origin == "saved":
         return reverse("core:saved")
     params = request.GET.copy()
     params.pop("from", None)
     query = params.urlencode()
+    if origin == "block" and flat is not None:
+        return block_url(flat.block, flat.street_name, query)
     path = reverse("core:results") if origin == "results" else reverse("core:start")
     return f"{path}?{query}" if query else path
 

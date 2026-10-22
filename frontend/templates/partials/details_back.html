@@ -3,7 +3,7 @@
 <nav class="flex flex-wrap items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
   <a href="{{ back_url }}" class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700 hover:border-brand-300 hover:text-brand-700" data-back-link>
     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
-    Back to {% if origin == "results" %}results{% elif origin == "saved" %}saved flats{% else %}start{% endif %}
+    Back to {% if origin == "results" %}results{% elif origin == "block" %}block{% elif origin == "saved" %}saved flats{% else %}start{% endif %}
   </a>
   <span aria-hidden="true">/</span><span>{{ flat.town|street_title }}</span>
   <span aria-hidden="true">/</span><span class="font-semibold text-slate-700">Blk {{ flat.block }} {{ flat.street_name|street_title }}</span>

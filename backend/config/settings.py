@@ -105,8 +105,11 @@ DEFAULT_ANCHOR_WEIGHT = 5
 
 RESULTS_PER_PAGE = 20            # decision 12
 MAP_PIN_MIN_ZOOM = 14            # area counts below, flat pins from here up (decision 12)
-MAP_PIN_LIMIT = 500
-MAP_MIN_ZOOM, MAP_MAX_ZOOM = 11, 19  # the range OneMap's basemap tiles cover Singapore at
+MAP_PIN_LIMIT = 250               # pins per view; more made zoom 14 laggy and too crowded to read
+# Flat pins are coloured by their best Fit Score: dark green from 85, then green, light green,
+# yellow, orange, and red below the last threshold. Each value is a band's lower bound.
+MAP_FIT_COLOUR_BANDS = (85, 75, 65, 55, 45)
+MAP_MIN_ZOOM, MAP_MAX_ZOOM = 12, 19  # the range OneMap's basemap tiles cover Singapore at
 
 # MapGateway (PLAN §5): base-map tiles and attribution, passed to MapUI via the template.
 # Both OneMap URLs can be overridden from the environment, e.g. to rehearse UC-06
