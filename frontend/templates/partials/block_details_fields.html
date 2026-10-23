@@ -1,0 +1,9 @@
+{% load humanize flatfinder %}
+{% comment %} Block-level shared fields on the consolidated details page. Variables: shared. {% endcomment %}
+<dl class="grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-3 text-sm">
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Street</dt><dd class="font-semibold text-slate-800">{{ shared.street_name|street_title }}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Block</dt><dd class="font-semibold text-slate-800">{{ shared.block }}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Resale price</dt><dd class="font-bold text-brand-700">S${{ shared.min_price|floatformat:0|intcomma }}{% if shared.max_price != shared.min_price %} – S${{ shared.max_price|floatformat:0|intcomma }}{% endif %}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Lease commenced</dt><dd class="font-semibold text-slate-800">{{ shared.first_commenced }}{% if shared.last_commenced != shared.first_commenced %} – {{ shared.last_commenced }}{% endif %}</dd></div>
+  <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Remaining lease</dt><dd class="font-semibold text-slate-800">{{ shared.min_lease|lease_years }}{% if shared.max_lease != shared.min_lease %} – {{ shared.max_lease|lease_years }}{% endif %}</dd></div>
+</dl>

@@ -1,0 +1,18 @@
+{% load flatfinder %}
+{% comment %}
+Compare-tray toggle (Phase H). Variables: flat_id, compact (icon-only, for the Map View side
+panel cards). Uses compare_ids/compare_count from context. compare.js updates it in place.
+{% endcomment %}
+{% with added=flat_id|is_in:compare_ids %}
+<form method="post" action="{% url 'core:api_toggle_compare' flat_id %}" data-compare-form="{{ flat_id }}" class="relative z-20">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <button type="submit" data-compare-button aria-pressed="{% if added %}true{% else %}false{% endif %}"
+          {% if not added and compare_count >= 3 %}disabled{% endif %}
+          class="{% if compact %}grid h-8 w-8 shrink-0 place-items-center rounded-md border{% else %}flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium{% endif %} transition disabled:cursor-not-allowed disabled:opacity-40 {% if added %}border-brand-300 bg-brand-50 text-brand-700{% else %}border-slate-300 bg-white text-slate-600 hover:border-brand-400 hover:text-brand-700{% endif %}"
+          title="{% if added %}Remove from compare{% elif compare_count >= 3 %}Compare is full (max 3){% else %}Add to compare{% endif %}">
+    <svg class="{% if compact %}h-4 w-4{% else %}h-3.5 w-3.5{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><path d="M3 12h18"/></svg>
+    {% if not compact %}<span>{% if added %}Remove{% else %}Compare{% endif %}</span>{% endif %}
+  </button>
+</form>
+{% endwith %}

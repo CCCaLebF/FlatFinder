@@ -187,7 +187,7 @@ def test_results_map_view_has_side_list_and_map(client, make_flat):
     assert 'data-show-on-map data-lat="1.370000"' in content
     assert "No location" in content
     assert 'name="sort"' in content  # sort control still there
-    assert f"/flats/{flat.id}/?" in content and "view=map" in content
+    assert f"/flats/{flat.id}/?" in content and "view=map" in content  # single-flat cards open the flat details page
 
 
 @pytest.mark.django_db
@@ -201,6 +201,8 @@ def test_details_map_view_has_layer_toggles(client, make_flat):
     flat = make_flat(latitude=1.37, longitude=103.85)
     content = client.get(reverse("core:flat_details", args=[flat.id]), {"view": "map", "from": "results"}).content.decode()
     assert 'data-map-mode="flat"' in content and f'data-flat-id="{flat.id}"' in content
+    assert 'class="ff-map-layers' in content
+    assert "Active map layers" not in content
     for key in ("bus_stop", "mrt_station", "child_care_centre", "hawker_centre", "chas_clinic"):
         assert f'data-layer-toggle="{key}"' in content
     assert "Fit Score" in content
@@ -238,6 +240,7 @@ def test_map_js_contracts():
     assert "/api/bookmarks" in source                                  # UC-03.AC.1
     assert "map.removeLayer(layers[type])" in source                   # UC-12: hide without re-fetching
     assert "MapState.save" in source                                   # UC-13
+    assert '"View details"' in source and "View each flat in this block" not in source
     assert "innerHTML" not in source                                   # server text is never parsed as HTML
 
 

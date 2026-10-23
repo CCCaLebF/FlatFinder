@@ -1,5 +1,6 @@
 """Phase 5: UC-02 View Flat Details and UC-11 Find Nearest Amenity."""
 
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -104,6 +105,147 @@ def test_details_page_shows_all_flat_fields(client, located_flat):
     for text in ("Blk 1A Ang Mo Kio Ave 3", "Ang Mo Kio Ave 3", "4 Room", "92 m²", "07 to 09",
                  "S$520,000", "1980", "54 yrs", "54 years 02 months at sale", "September 2026"):
         assert text in content, text
+
+
+@pytest.mark.django_db
+def test_details_list_map_view_link_keeps_the_search(client, located_flat):
+    response = client.get(details_url(located_flat, "from=results&max_budget=600000&view=list"))
+    content = response.content.decode()
+    assert "Open this block in Map View" in content  # a results link shows the block-level page
+    assert response.context["map_view_url"].startswith(f"/flats/{located_flat.id}/?")
+    assert "max_budget=600000" in response.context["map_view_url"]
+    assert "view=map" in response.context["map_view_url"]
+
+
+# --- Block-level details page (Phase F) ----------------------------------------------------
+
+@pytest.mark.django_db
+def test_block_view_shows_shared_fields_and_variants_table(client, make_flat):
+    cheap = make_flat(block="7A", flat_type="4 ROOM", storey_range="07 TO 09",
+                      resale_price=Decimal("400000"), flat_model="Model A", lease_commence_date=1980)
+    dear = make_flat(block="7A", flat_type="4 ROOM", storey_range="07 TO 09",
+                     resale_price=Decimal("600000"), flat_model="Model B", lease_commence_date=1982)
+    make_flat(block="7A", flat_type="5 ROOM", storey_range="10 TO 12",
+              resale_price=Decimal("500000"), floor_area_sqm=110.0,
+              flat_model="Model A", lease_commence_date=1980)
+    response = client.get(details_url(cheap, "from=results&max_budget=800000"))
+    content = response.content.decode()
+    assert response.context["block_view"] is True
+
+    shared = response.context["shared"]
+    assert shared["models"] == ["Model A", "Model B"]
+    assert (shared["min_price"], shared["max_price"]) == (Decimal("400000"), Decimal("600000"))
+    assert (shared["first_commenced"], shared["last_commenced"]) == (1980, 1982)
+    assert shared["count"] == 3 and shared["variant_count"] == 2
+
+    variants = response.context["variants"]
+    assert len(variants) == 2
+    four_room = next(v for v in variants if v["flat_type"] == "4 ROOM")
+    assert four_room["count"] == 2
+    assert (four_room["min_price"], four_room["max_price"]) == (Decimal("400000"), Decimal("600000"))
+
+    assert "Block details" in content and "Flat types and storeys" in content
+    assert "Model A, Model B" in content and "1980 – 1982" in content
+    assert "S$400,000 – S$600,000" in content
+    assert "Sold" not in content and "at sale" not in content  # block-level top hides per-flat fields
+
+
+@pytest.mark.django_db
+def test_block_view_price_row_is_varying(client, make_flat):
+    cheap = make_flat(block="8B", flat_type="4 ROOM", storey_range="01 TO 03", resale_price=Decimal("300000"))
+    make_flat(block="8B", flat_type="5 ROOM", storey_range="04 TO 06", resale_price=Decimal("600000"))
+    response = client.get(details_url(cheap, "from=results&w_bus_stop=5"))
+    price = next(r for r in response.context["breakdown"] if r["label"] == "Price")
+    assert price["varying"] is True
+    assert price["min_price"] == Decimal("300000") and price["max_price"] == Decimal("600000")
+    assert "varies by price" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_block_view_bookmark_uses_the_best_flat(client, make_flat):
+    cheap = make_flat(block="9C", resale_price=Decimal("300000"))
+    dear = make_flat(block="9C", resale_price=Decimal("600000"))
+    response = client.get(details_url(dear, "from=results&max_budget=800000"))
+    assert response.context["block_view"] is True
+    assert response.context["best_flat"].id == cheap.id
+    assert f'data-bookmark-form="{cheap.id}"' in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_single_flat_block_view_has_one_variant(client, make_flat):
+    flat = make_flat(block="4D")
+    response = client.get(details_url(flat, "from=results&max_budget=800000"))
+    assert response.context["block_view"] is True
+    assert len(response.context["variants"]) == 1
+    assert response.context["variants"][0]["count"] == 1
+    assert response.context["best_flat"].id == flat.id
+
+
+@pytest.mark.django_db
+def test_saved_link_keeps_single_flat_view(client, make_flat):
+    flat = make_flat(block="5F")
+    response = client.get(details_url(flat, "from=saved"))
+    content = response.content.decode()
+    assert response.context["block_view"] is False
+    assert "Sold" in content and "m²" in content  # single-flat fields remain
+
+
+@pytest.mark.django_db
+def test_no_search_still_shows_the_variants_table_without_fit(client, make_flat):
+    cheap = make_flat(block="6G", flat_type="4 ROOM", storey_range="01 TO 03", resale_price=Decimal("300000"))
+    make_flat(block="6G", flat_type="5 ROOM", storey_range="04 TO 06", resale_price=Decimal("500000"))
+    response = client.get(details_url(cheap, "from=saved"))
+    content = response.content.decode()
+    assert response.context["block_view"] is False
+    assert "Flat types and storeys" in content  # the table shows even without a search
+    variants = response.context["variants"]
+    assert len(variants) == 2
+    assert {v["flat_type"] for v in variants} == {"4 ROOM", "5 ROOM"}
+    assert all(v["best_fit"] is None for v in variants)  # no Fit Score without a search
+
+
+# --- Past transactions (Phase G) -----------------------------------------------------------
+
+@pytest.mark.django_db
+def test_past_transactions_are_newest_first(client, make_flat):
+    first = make_flat(block="7H", month=date(2026, 1, 1), resale_price=Decimal("300000"))
+    make_flat(block="7H", month=date(2026, 9, 1), resale_price=Decimal("500000"))
+    response = client.get(details_url(first, "from=saved"))
+    assert "Past transactions" in response.content.decode()
+    assert [t.month for t in response.context["transactions"]] == [date(2026, 9, 1), date(2026, 1, 1)]
+
+
+@pytest.mark.django_db
+def test_past_transactions_are_paged_7_per_page(client, make_flat):
+    first = make_flat(block="8J", resale_price=Decimal("300000"))
+    for i in range(1, 10):
+        make_flat(block="8J", resale_price=Decimal(300_000 + i * 1000))
+    page1 = client.get(details_url(first, "from=saved")).context["transactions"]
+    assert len(page1) == 7 and page1.paginator.num_pages == 2
+    page2 = client.get(details_url(first, "from=saved&tx_page=2")).context["transactions"]
+    assert len(page2) == 3
+
+
+@pytest.mark.django_db
+def test_past_transaction_filters_default_to_the_search(client, make_flat):
+    match = make_flat(block="9K", flat_type="4 ROOM", resale_price=Decimal("400000"), remaining_lease=60)
+    make_flat(block="9K", flat_type="5 ROOM", resale_price=Decimal("900000"), remaining_lease=80)
+    response = client.get(reverse("core:flat_details", args=[match.id]),
+                          {"from": "results", "flat_type": "4 ROOM", "max_budget": "600000", "min_lease": "55"})
+    assert [t.id for t in response.context["transactions"]] == [match.id]
+
+
+@pytest.mark.django_db
+def test_past_transaction_filters_can_be_overridden(client, make_flat):
+    a = make_flat(block="10L", flat_type="4 ROOM", resale_price=Decimal("400000"))
+    make_flat(block="10L", flat_type="5 ROOM", resale_price=Decimal("500000"))
+    # Default from search: only the 4 ROOM transaction.
+    default = client.get(reverse("core:flat_details", args=[a.id]), {"from": "results", "flat_type": "4 ROOM"})
+    assert [t.id for t in default.context["transactions"]] == [a.id]
+    # Override (tx_submit with no flat type checked): show every transaction in the block.
+    overridden = client.get(reverse("core:flat_details", args=[a.id]),
+                            {"from": "results", "flat_type": "4 ROOM", "tx_submit": "1"})
+    assert len(overridden.context["transactions"]) == 2
 
 
 @pytest.mark.django_db

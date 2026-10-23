@@ -7,6 +7,22 @@ Variables: mode ("browse" | "flat" | "saved"), origin ("start" | "results" | "sa
        {% if flat_id %}data-flat-id="{{ flat_id }}"{% endif %} role="region" aria-label="Map"></div>
   <p data-map-status role="status"
      class="hidden absolute bottom-6 left-3 z-[500] max-w-[80%] rounded-lg bg-white/95 px-3 py-1.5 text-xs text-slate-700 shadow"></p>
+  {% if mode == "flat" %}
+    {% if flat.has_coords %}
+      {# UC-12: layer toggles sit on the map, clear of Leaflet's top-left zoom control. #}
+      <div class="ff-map-layers absolute left-14 right-3 top-3 z-[800] flex max-h-[calc(100%-1.5rem)] flex-wrap items-center gap-1.5 overflow-y-auto" role="group" aria-label="Amenity layers">
+        {% for group in amenity_groups %}
+          <label class="cursor-pointer">
+            <input type="checkbox" class="peer sr-only" data-layer-toggle="{{ group.key }}" checked>
+            <span class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-500 transition peer-checked:border-brand-300 peer-checked:bg-brand-50 peer-checked:font-semibold peer-checked:text-brand-800 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-400">
+              <span class="ff-swatch ff-cat-{{ group.key }}" aria-hidden="true"></span>
+              {{ group.label }} (<span data-layer-count="{{ group.key }}">{{ group.items|length }}</span>)
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
   {% if mode == "browse" %}
     {# Pin colours follow MAP_FIT_COLOUR_BANDS; map.js reads the same values from map_config. #}
     <div class="absolute right-3 top-3 z-[500] rounded-lg bg-white/95 px-3 py-2 text-xs text-slate-600 shadow">

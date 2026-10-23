@@ -1,6 +1,6 @@
 from django.urls import path
 
-from backend.core.views import bookmarks, details, map, search
+from backend.core.views import bookmarks, compare, details, map, search
 
 app_name = "core"
 
@@ -8,9 +8,11 @@ urlpatterns = [
     # Pages (PLAN §6, dialog map)
     path("", search.start, name="start"),
     path("results", search.results, name="results"),
-    path("blocks/<str:block>/<str:street>/", search.block_results, name="block_results"),
     path("flats/<int:flat_id>/", details.flat_details, name="flat_details"),
     path("saved/", bookmarks.saved, name="saved"),
+    path("compare", compare.compare, name="compare"),
+    path("api/compare/<int:flat_id>/toggle", compare.toggle_compare_api, name="api_toggle_compare"),
+    path("api/compare/clear", compare.clear_compare_api, name="api_compare_clear"),
     # JSON endpoints for MapUI and BookmarkUI
     path("api/flats/area-counts", map.area_counts_api, name="api_area_counts"),
     path("api/flats/in-bounds", map.flats_in_bounds_api, name="api_flats_in_bounds"),

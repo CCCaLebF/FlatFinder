@@ -20,6 +20,14 @@
 
 .ff-map { background: #e5e7eb; }
 
+/* --- Amenity-layer toggles over a flat's map (UC-12) ---------------------------------- */
+/* Keep clear of Leaflet's zoom control at the top-left; z-index below its controls. */
+.ff-map-layers {
+  position: absolute; left: 3.5rem; right: 0.75rem; top: 0.75rem; z-index: 800;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem;
+  max-height: calc(100% - 1.5rem); overflow-y: auto;
+}
+
 /* --- Side panels hidden: the map fills the window (map.js, MapState.panelsHidden) ----------- */
 html[data-panels-hidden] [data-side-panel] { display: none; }
 /* The round handle on the panels' edge, halfway down; it moves to the map's edge when they hide. */
@@ -113,6 +121,9 @@ html[data-panels-hidden] .ff-panel-toggle__icon { transform: translateX(-2px) ro
 .ff-cat-child_care_centre { background: var(--ff-child_care_centre); }
 .ff-cat-hawker_centre { background: var(--ff-hawker_centre); }
 .ff-cat-chas_clinic { background: var(--ff-chas_clinic); }
+
+/* --- Walking route (UC-04) --------------------------------------------------------- */
+.ff-route { stroke-linecap: round; stroke-linejoin: round; }
 
 /* --- Popups ------------------------------------------------------------------------ */
 .ff-popup h3 { font-weight: 600; margin: 0 0 2px; }

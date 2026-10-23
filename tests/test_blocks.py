@@ -1,6 +1,5 @@
-"""PLAN §11: results grouped by block, and the Block Results page."""
+"""PLAN §11: results grouped by block, and the block-level flat details page."""
 from decimal import Decimal
-from urllib.parse import quote
 
 import pytest
 from django.urls import reverse
@@ -10,10 +9,6 @@ from backend.core.services.search import SearchController
 from tests.conftest import build_flat
 
 STREET = "ANG MO KIO AVE 3"  # the fixture's default street
-
-
-def block_path(block, street=STREET):
-    return reverse("core:block_results", args=[block, street])
 
 
 @pytest.fixture
@@ -76,7 +71,23 @@ def test_results_show_a_block_card_and_a_flat_card(client, two_blocks):
     assert content.count("data-block-card=") == 1 and content.count("data-flat-card=") == 1
     assert f'data-flat-card="{two_blocks["b_only"].id}"' in content  # one sale keeps the flat card
     assert "3 matching flats" in content and "S$300,000 – S$700,000" in content
-    assert f'href="{block_path("1A")}?' in content and "w_bus_stop=5" in content
+    assert f'/flats/{two_blocks["a_cheap"].id}/?' in content  # block card opens its best-fit flat's details
+    assert f'/flats/{two_blocks["b_only"].id}/?' in content  # single-flat card opens its own details
+    assert "View details" in content and "View block" not in content
+    assert "w_bus_stop=5" in content and "from=results" in content
+    # Change 11: block cards and single-flat cards share the inline house drawing.
+    assert content.count("data-block-house") == 2
+    assert 'aria-label="View details at Blk 1A' in content  # change 7: block-card overlay
+    assert 'aria-label="View details for Blk 2B' in content  # change 7: single-flat-card overlay
+
+
+@pytest.mark.django_db
+def test_single_flat_block_shows_the_same_house(client, make_flat):
+    flat = make_flat(block="4D")
+    content = client.get(reverse("core:results"), {"view": "list"}).content.decode()
+    assert content.count("data-flat-card=") == 1
+    assert content.count("data-block-house") == 1
+    assert f'/flats/{flat.id}/?' in content  # Phase F: single-flat cards open the flat details page
 
 
 @pytest.mark.django_db
@@ -97,75 +108,26 @@ def test_map_view_side_list_uses_compact_block_cards(client, make_flat):
     content = client.get(reverse("core:results"), {"view": "map"}).content.decode()
     assert content.count("data-block-card=") == 1
     assert 'data-kind="block"' in content and 'data-price="520000" data-price-max="600000"' in content
-
-
-# --- Block Results page -----------------------------------------------------------------------
-
-@pytest.mark.django_db
-def test_block_page_lists_only_matching_flats(client, two_blocks):
-    response = client.get(block_path("1A"), {"max_budget": 600000})
-    content = response.content.decode()
-    assert response.status_code == 200
-    assert "2 flats in this block match your search" in content
-    # Default sort is Fit Score; with equal leases the cheaper flat scores higher.
-    assert [card["flat"] for card in response.context["cards"]] == [two_blocks["a_cheap"], two_blocks["a_mid"]]
-    assert f'data-flat-card="{two_blocks["a_dear"].id}"' not in content
-    assert f'data-flat-card="{two_blocks["b_only"].id}"' not in content
+    assert 'data-storey="storeys 07 to 09"' in content  # change 2: focus popup carries the storey range
+    # Change 7: the compact card also carries a whole-card overlay, with the actions above it.
+    assert 'aria-label="View details at Blk 1A' in content
+    assert "View flats" not in content
+    assert 'class="relative z-20' in content  # "Show on map" stays clickable above the overlay
 
 
 @pytest.mark.django_db
-def test_block_page_fit_scores_match_the_results_page(client, two_blocks):
-    params = {"max_budget": 800000, "w_bus_stop": 5}
-    results = client.get(reverse("core:results"), params).context["result"]
-    cards = client.get(block_path("1A"), params).context["cards"]
-    assert {c["flat"].id: c["fit"].total for c in cards} == {
-        c["flat"].id: results.fitScores[c["flat"].id].total for c in cards}
+def test_compact_flat_card_is_fully_clickable(client, make_flat):
+    flat = make_flat(block="3C", latitude=1.37, longitude=103.85)
+    content = client.get(reverse("core:results"), {"view": "map"}).content.decode()
+    assert 'aria-label="View details for Blk 3C' in content
+    assert f'/flats/{flat.id}/?' in content
+    assert "Show on map" in content
+    assert 'data-summary="4 Room"' in content and 'data-storey="storey 07 to 09"' in content
 
 
 @pytest.mark.django_db
-def test_block_page_sort(client, two_blocks):
-    response = client.get(block_path("1A"), {"sort": "price-desc"})
-    assert [c["flat"] for c in response.context["cards"]] == [
-        two_blocks["a_dear"], two_blocks["a_mid"], two_blocks["a_cheap"]]
-    assert '<option value="price-desc" selected>' in response.content.decode()
-
-
-@pytest.mark.django_db
-def test_back_from_block_page_keeps_search_page_and_sort(client, two_blocks):
-    response = client.get(block_path("1A"), {"max_budget": 800000, "page": 2, "sort": "price-asc"})
-    assert response.context["back_url"] == reverse("core:results") + "?max_budget=800000&page=2&sort=price-asc"
-    assert 'aria-label="View mode"' not in response.content.decode()  # no map here, so no toggle
-
-
-@pytest.mark.django_db
-def test_back_from_details_returns_to_the_block(client, two_blocks):
-    content = client.get(block_path("1A"), {"max_budget": 800000}).content.decode()
-    assert "from=block" in content
-    flat = two_blocks["a_mid"]
-    response = client.get(reverse("core:flat_details", args=[flat.id]), {"max_budget": 800000, "from": "block"})
-    assert response.context["back_url"] == block_path("1A") + "?max_budget=800000"
-    assert "Back to block" in response.content.decode()
-
-
-@pytest.mark.django_db
-def test_block_url_is_readable(two_blocks):
-    assert block_path("1A") == f"/blocks/1A/{quote(STREET)}/"
-
-
-@pytest.mark.django_db
-def test_stale_block_link_shows_empty_state(client, two_blocks):
-    response = client.get(block_path("1A"), {"max_budget": 100000})
-    assert response.status_code == 200
-    assert "No flats in this block match your search" in response.content.decode()
-
-
-@pytest.mark.django_db
-def test_unknown_block_is_404(client, two_blocks):
-    assert client.get(block_path("999Z")).status_code == 404
-
-
-@pytest.mark.django_db
-def test_invalid_search_on_block_page(client, two_blocks):
-    response = client.get(block_path("1A"), {"min_budget": "abc"})
-    assert response.status_code == 400
-    assert "Please check your search" in response.content.decode()
+def test_block_focus_lists_every_storey_range(client, make_flat):
+    make_flat(block="5E", storey_range="01 TO 03", latitude=1.37, longitude=103.85)
+    make_flat(block="5E", storey_range="04 TO 06", latitude=1.37, longitude=103.85)
+    content = client.get(reverse("core:results"), {"view": "map"}).content.decode()
+    assert 'data-storey="storeys 01 to 03, 04 to 06"' in content

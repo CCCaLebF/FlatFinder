@@ -1,18 +1,22 @@
 from django.conf import settings
 
 from backend.core.services.bookmark import BookmarkController
+from backend.core.services.compare import CompareController
 
 
 def flatfinder_context(request):
     """
     Values every page needs: the header's Saved (n) counter, which flats are bookmarked
-    (for the bookmark icons, UC-05) and the view mode (PLAN §6).
+    (for the bookmark icons, UC-05), the compare tray (Phase H) and the view mode (PLAN §6).
     """
     view_mode = request.GET.get("view")
     bookmarked_ids = BookmarkController().bookmarked_ids(request.session)
+    compare_ids = CompareController().ids(request.session)
     return {
         "saved_count": len(bookmarked_ids),
         "bookmarked_ids": bookmarked_ids,
+        "compare_ids": compare_ids,
+        "compare_count": len(compare_ids),
         "view_mode": view_mode if view_mode in ("list", "map") else None,
         "map_config": {
             "tileUrl": settings.MAP_TILE_URL,

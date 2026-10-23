@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 from backend.core.services.bookmark import BookmarkController
 from backend.core.models import ResaleFlat
 
-from .search import LAST_BROWSE_KEY
+from .search import ACTIVE_SEARCH_KEY, LAST_BROWSE_KEY
 
 
 def saved(request):
@@ -26,6 +26,7 @@ def saved(request):
         "entries": entries,
         "back_url": _back_url(request),
         "saved_count": len(entries),
+        "compare_query": request.session.get(ACTIVE_SEARCH_KEY) or "from=saved",
     })
 
 

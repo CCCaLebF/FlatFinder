@@ -68,6 +68,32 @@
   function shortPrice(value) {
     return value >= 1e6 ? "S$" + (value / 1e6).toFixed(2).replace(/\.?0+$/, "") + "M" : "S$" + Math.round(value / 1000) + "K";
   }
+  /** A stable key for a location, so template data and API floats match exactly. */
+  function latLngKey(lat, lng) { return Number(lat).toFixed(6) + "," + Number(lng).toFixed(6); }
+
+  /** Decode OneMap's encoded polyline (precision 5) into [[lat, lng], ...]. */
+  function decodePolyline(encoded) {
+    if (typeof encoded !== "string" || !encoded) return [];
+    var points = [], index = 0, lat = 0, lng = 0;
+    while (index < encoded.length) {
+      var shift = 0, result = 0, byte;
+      do {
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      } while (byte >= 0x20);
+      lat += result & 1 ? ~(result >> 1) : result >> 1;
+      shift = 0; result = 0;
+      do {
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      } while (byte >= 0x20);
+      lng += result & 1 ? ~(result >> 1) : result >> 1;
+      points.push([lat / 1e5, lng / 1e5]);
+    }
+    return points.filter(function (point) { return isFinite(point[0]) && isFinite(point[1]); });
+  }
 
   function getJSON(url, signal) {
     return fetch(url, { headers: { Accept: "application/json" }, credentials: "same-origin", signal: signal })
@@ -157,6 +183,89 @@
   /** displayBlankMap(): UC-13.EX.1 — no saved state to fall back on, so drop the broken tiles. */
   function displayBlankMap() {
     if (map.hasLayer(tiles)) map.removeLayer(tiles);
+  }
+
+  /**
+   * createFocusController(adapter): the shared "Show on map" focus pin (UC-09 / PLAN §11).
+   * The adapter hides the pin(s) already at the selected location so the teardrop never
+   * sits on top of one, and puts them back when the focus clears or the pins redraw:
+   *   adapter.hide({lat, lng, flatId})  hide the matching pins
+   *   adapter.restore()                 restore them
+   *   adapter.refresh()                 hide them again after a redraw
+   */
+  function createFocusController(adapter) {
+    var focusMarker = null;
+    var active = null;
+
+    function clearCardFocus() {
+      document.querySelectorAll(".ff-card--focus").forEach(function (card) {
+        card.classList.remove("ff-card--focus");
+      });
+    }
+
+    function clear() {
+      var marker = focusMarker;
+      focusMarker = null;  // before removeLayer, so its popupclose does not clear twice
+      if (marker) map.removeLayer(marker);
+      if (active) {
+        adapter.restore();
+        active = null;
+      }
+      clearCardFocus();
+    }
+
+    function refresh() {
+      if (active) adapter.refresh();
+    }
+
+    function select(button) {
+      var d = button.dataset;
+      var lat = parseFloat(d.lat), lng = parseFloat(d.lng);
+      if (isNaN(lat) || isNaN(lng)) return;
+      clear();
+      active = { lat: lat, lng: lng, flatId: d.flatId || null };
+      adapter.hide(active);
+
+      var isBlock = d.kind === "block";
+      var card = button.closest("[data-flat-card], [data-block-card]");
+      if (card) card.classList.add("ff-card--focus");
+
+      var priceText = price(parseFloat(d.price))
+        + (isBlock && d.priceMax !== d.price ? " – " + price(parseFloat(d.priceMax)) : "");
+      var detail = [d.summary, priceText, d.storey].filter(Boolean).join(" · ");
+
+      var icon = L.divIcon({
+        className: "", iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -38],
+        html: '<div class="ff-focus"><div class="ff-pin ff-pin--focus"><span></span></div></div>',
+      });
+      icon.label = shortPrice(parseFloat(d.price));
+      displayMap(lat, lng, Math.max(map.getZoom(), 16));
+      focusMarker = L.marker([lat, lng], { icon: icon, title: d.label, zIndexOffset: 1000, keyboard: true })
+        .bindPopup(h("div", { className: "ff-popup" },
+          h("h3", {}, isBlock ? "Selected block" : "Selected flat"),
+          h("ul", {}, h("li", {},
+            d.fit ? h("span", { className: "ff-fit", title: isBlock ? "Best Fit Score" : "Fit Score" },
+              (isBlock ? "up to " : "") + d.fit) : null,
+            h("a", { href: d.detailsUrl }, d.label),
+            h("p", {}, detail))),
+          isBlock ? h("p", { className: "ff-note" }, h("a", { href: d.detailsUrl }, "View details")) : null),
+          { maxWidth: 300 });
+      focusMarker.on("add", function () {
+        var element = focusMarker.getElement();
+        element.querySelector(".ff-pin span").textContent = icon.label;
+        // Clicking the focused pin itself must not reach the map's preclick, which would
+        // close its popup and clear the focus.
+        element.addEventListener("click", function (event) { event.stopPropagation(); });
+      });
+      focusMarker.addTo(map).openPopup();
+    }
+
+    map.on("click", clear);
+    map.on("popupclose", function (event) {
+      if (focusMarker && event.popup === focusMarker.getPopup()) clear();
+    });
+
+    return { select: select, clear: clear, refresh: refresh };
   }
 
   // --- UC-06 / UC-13: base-map tiles from OneMap ----------------------------------------
@@ -274,6 +383,11 @@
     // location and flats haven't changed and only touches the rest, so panning stays smooth
     // (redrawing every pin froze the page for 80–150 ms at the pin limit).
     var pinMarkers = {};
+    var savedMarkers = {};       // saved flat id -> {marker, lat, lng, hidden}
+    var hiddenPins = new Set();  // locations hidden under the focus pin
+    var hiddenSaved = new Set(); // saved flat ids hidden under the focus pin
+    var focusKey = null;         // the focused location, kept so redraws can re-hide it
+    var focus;                   // createFocusController(), shared with the saved map
 
     function clearFlatPins() {
       pinLayer.clearLayers();
@@ -312,7 +426,7 @@
     function displayFlatPins(data) {
       var next = {};
       data.locations.forEach(function (loc) {
-        var key = loc.lat + "," + loc.lng;
+        var key = latLngKey(loc.lat, loc.lng);
         var signature = loc.count + "|" + loc.approximate + "|" + loc.fit + "|" + loc.price;
         var current = pinMarkers[key];
         if (current && current.signature === signature) {
@@ -334,6 +448,8 @@
       // Pins that left the view, or whose flats changed (their replacement was added above).
       Object.keys(pinMarkers).forEach(function (key) { pinLayer.removeLayer(pinMarkers[key].marker); });
       pinMarkers = next;
+      syncSavedOverlap();          // keep saved locations clear after a redraw
+      if (focus) focus.refresh();  // keep the focus location hidden after a redraw
       var shown = data.locations.reduce(function (sum, loc) { return sum + loc.count; }, 0);
       setStatus(data.truncated
         ? "Showing " + shown.toLocaleString("en-SG") + " of " + data.total.toLocaleString("en-SG") + " flats in view · zoom in for more"
@@ -341,17 +457,42 @@
         : data.total.toLocaleString("en-SG") + " matching flats in view");
     }
 
+    /**
+     * Saved pins take precedence over a matching pin at the same location: a result pin
+     * and a ★ pin on top of each other obscure both. Keep the saved marker and hide the
+     * matching one; restore it when the bookmark is removed (or the pin redraws).
+     */
+    function syncSavedOverlap() {
+      var savedKeys = new Set();
+      Object.keys(savedMarkers).forEach(function (id) {
+        var saved = savedMarkers[id];
+        savedKeys.add(latLngKey(saved.lat, saved.lng));
+      });
+      Object.keys(pinMarkers).forEach(function (key) {
+        var pin = pinMarkers[key];
+        if (savedKeys.has(key) || pin.hidden) {
+          if (pinLayer.hasLayer(pin.marker)) pinLayer.removeLayer(pin.marker);
+        } else if (!pinLayer.hasLayer(pin.marker)) {
+          pinLayer.addLayer(pin.marker);
+        }
+      });
+    }
+
     /** displayBookmarkPins(flats): UC-03.AC.1 — saved flats get their own pins. */
     function displayBookmarkPins(flats) {
       savedLayer.clearLayers();
+      savedMarkers = {};
       flats.forEach(function (f) {
-        L.marker([f.lat, f.lng], { icon: pinIcon("ff-pin--saved", "★"), title: "Saved flat", zIndexOffset: 500 })
+        var marker = L.marker([f.lat, f.lng], { icon: pinIcon("ff-pin--saved", "★"), title: "Saved flat", zIndexOffset: 500 })
           .bindPopup(h("div", { className: "ff-popup" },
             h("h3", {}, "Saved flat"),
             f.approximate ? h("p", { className: "ff-note" }, "Approximate location (town centre)") : null,
             h("ul", {}, flatLine(f, origin))), { maxWidth: 300 })
           .addTo(savedLayer);
+        savedMarkers[String(f.id)] = { marker: marker, lat: f.lat, lng: f.lng, hidden: false };
       });
+      syncSavedOverlap();          // a saved pin replaces the matching pin at its location
+      if (focus) focus.refresh();  // the focused saved pin stays hidden after a reload
     }
 
     function load() {
@@ -384,7 +525,8 @@
         .catch(function () { /* saved pins are extra; the rest of the map still works */ });
     }
 
-    // UC-07: the search-bar location, if one is set.
+    // UC-07: the search-bar location, if one is set. Centre the map on it so the
+    // searched block is visible immediately, at least at pin zoom.
     var anchorParams = new URLSearchParams(window.location.search);
     var anchorLat = parseFloat(anchorParams.get("anchor_lat"));
     var anchorLng = parseFloat(anchorParams.get("anchor_lng"));
@@ -395,55 +537,76 @@
       }).bindPopup(h("div", { className: "ff-popup" },
         h("h3", {}, "Search location"),
         h("p", {}, displayName(anchorParams.get("anchor_label") || "Selected location")))).addTo(map);
+      displayMap(anchorLat, anchorLng, Math.max(map.getZoom(), cfg.pinMinZoom));
     }
 
-    /**
-     * selectFlatPin: "Show on map" on a side-list card centres the map on that flat, or that
-     * block (PLAN §11), and marks it with its own highlighted pin and open popup. The pin is
-     * separate from the flat pins, so it shows even when the block's pin is cut by the pin limit.
-     */
-    var focusMarker = null;
-    function selectFlatPin(button) {
-      var d = button.dataset;
-      var isBlock = d.kind === "block";
-      var lat = parseFloat(d.lat), lng = parseFloat(d.lng);
-      if (focusMarker) map.removeLayer(focusMarker);
-      document.querySelectorAll(".ff-card--focus").forEach(function (card) {
-        card.classList.remove("ff-card--focus");
+    /** The browse focus adapter: matching pins by location, saved pins by flat. */
+    function hideFocusPins(active) {
+      focusKey = latLngKey(active.lat, active.lng);
+      var pin = pinMarkers[focusKey];
+      if (pin && !pin.hidden) {
+        pinLayer.removeLayer(pin.marker);
+        pin.hidden = true;
+        hiddenPins.add(focusKey);
+      }
+      Object.keys(savedMarkers).forEach(function (id) {
+        var saved = savedMarkers[id];
+        if (!saved.hidden && latLngKey(saved.lat, saved.lng) === focusKey) {
+          savedLayer.removeLayer(saved.marker);
+          saved.hidden = true;
+          hiddenSaved.add(id);
+        }
       });
-      var card = button.closest("[data-flat-card], [data-block-card]");
-      if (card) card.classList.add("ff-card--focus");
-      var priceText = price(parseFloat(d.price))
-        + (isBlock && d.priceMax !== d.price ? " – " + price(parseFloat(d.priceMax)) : "");
-
-      var icon = L.divIcon({
-        className: "", iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -38],
-        html: '<div class="ff-focus"><div class="ff-pin ff-pin--focus"><span></span></div></div>',
-      });
-      icon.label = shortPrice(parseFloat(d.price));
-      displayMap(lat, lng, Math.max(map.getZoom(), 16));
-      focusMarker = L.marker([lat, lng], { icon: icon, title: d.label, zIndexOffset: 1000, keyboard: true })
-        .bindPopup(h("div", { className: "ff-popup" },
-          h("h3", {}, isBlock ? "Selected block" : "Selected flat"),
-          h("ul", {}, h("li", {},
-            d.fit ? h("span", { className: "ff-fit", title: isBlock ? "Best Fit Score" : "Fit Score" },
-              (isBlock ? "up to " : "") + d.fit) : null,
-            h("a", { href: d.detailsUrl }, d.label),
-            h("p", {}, d.summary + " · " + priceText))),
-          isBlock ? h("p", { className: "ff-note" }, h("a", { href: d.detailsUrl }, "View each flat in this block")) : null),
-          { maxWidth: 300 });
-      focusMarker.on("add", function () {
-        focusMarker.getElement().querySelector(".ff-pin span").textContent = icon.label;
-      });
-      focusMarker.addTo(map).openPopup();
     }
+
+    function restoreFocusPins() {
+      hiddenPins.forEach(function (key) {
+        var pin = pinMarkers[key];
+        if (pin && pin.hidden) {
+          pinLayer.addLayer(pin.marker);
+          pin.hidden = false;
+        }
+      });
+      hiddenPins.clear();
+      hiddenSaved.forEach(function (id) {
+        var saved = savedMarkers[id];
+        if (saved && saved.hidden) {
+          savedLayer.addLayer(saved.marker);
+          saved.hidden = false;
+        }
+      });
+      hiddenSaved.clear();
+      focusKey = null;
+      syncSavedOverlap();  // saved pins still replace matching pins after focus clears
+    }
+
+    function refreshFocusPins() {
+      if (!focusKey) return;
+      var pin = pinMarkers[focusKey];
+      if (pin) {
+        if (pinLayer.hasLayer(pin.marker)) pinLayer.removeLayer(pin.marker);
+        pin.hidden = true;
+        hiddenPins.add(focusKey);
+      }
+      Object.keys(savedMarkers).forEach(function (id) {
+        var saved = savedMarkers[id];
+        if (latLngKey(saved.lat, saved.lng) !== focusKey) return;
+        if (savedLayer.hasLayer(saved.marker)) savedLayer.removeLayer(saved.marker);
+        saved.hidden = true;
+        hiddenSaved.add(id);
+      });
+    }
+
+    focus = createFocusController({
+      hide: hideFocusPins, restore: restoreFocusPins, refresh: refreshFocusPins,
+    });
 
     // A short pause after the map stops, so a quick series of moves makes one request.
     map.on("moveend", function () { clearTimeout(timer); timer = setTimeout(load, 100); });
     document.addEventListener("flatfinder:bookmark-changed", loadSaved);
     document.addEventListener("click", function (event) {
       var button = event.target.closest("[data-show-on-map]");
-      if (button) selectFlatPin(button);
+      if (button) focus.select(button);
     });
     load();
     loadSaved();
@@ -455,7 +618,43 @@
     var flatId = el.dataset.flatId;
     var toggles = document.querySelectorAll("[data-layer-toggle]");
     var layers = {};
+    var routeLayer = null;
+    var activeWalkLine = null;
+    var walkRequest = 0;
     displayMap(DEFAULT_VIEW.centre[0], DEFAULT_VIEW.centre[1], DEFAULT_VIEW.zoom);
+
+    /** Remove the drawn route, if any. */
+    function clearRouteLayer() {
+      if (routeLayer) {
+        map.removeLayer(routeLayer);
+        routeLayer = null;
+      }
+    }
+
+    /** UC-04: drop the route and put the popup's walking line back to its initial text. */
+    function clearWalkingRoute() {
+      walkRequest += 1;  // ignore a response that is still in flight
+      clearRouteLayer();
+      if (activeWalkLine) {
+        activeWalkLine.dataset.state = "";
+        activeWalkLine.textContent = "Walking distance: select to calculate";
+        activeWalkLine = null;
+      }
+    }
+
+    /** Draw OneMap's encoded route; the line is non-interactive so a click still clears it. */
+    function drawWalkingRoute(encoded) {
+      clearRouteLayer();
+      var points = decodePolyline(encoded);
+      if (!points.length) return;
+      routeLayer = L.polyline(points, {
+        color: "#287462", weight: 4, opacity: 0.9,
+        lineCap: "round", lineJoin: "round", interactive: false, className: "ff-route",
+      }).addTo(map);
+    }
+
+    map.on("click", clearWalkingRoute);
+    map.on("popupclose", clearWalkingRoute);
 
     /** toggleLayer(type, visible): UC-12 — show or hide pins already fetched; no new request. */
     function toggleLayer(type, visible) {
@@ -466,9 +665,12 @@
       });
     }
 
-    /** selectAmenityPin(amenity): UC-04 step 1 — ask for the walking distance once per pin. */
+    /** selectAmenityPin(amenity): UC-04 step 1 — ask for the walking route when its popup opens. */
     function selectAmenityPin(item, line, flat) {
-      if (line.dataset.state === "done" || line.dataset.state === "loading") return;
+      if (line.dataset.state === "loading") return;
+      clearWalkingRoute();
+      activeWalkLine = line;
+      var requestId = walkRequest;
       line.dataset.state = "loading";
       line.textContent = "Walking distance: calculating…";
       var params = new URLSearchParams({ flat_id: flat.id, lat: item.lat, lng: item.lng });
@@ -476,13 +678,19 @@
         .then(function (response) {
           return response.json().then(function (body) { return { ok: response.ok, status: response.status, body: body }; });
         })
-        .then(function (res) { displayWalkingDistance(line, res); })
-        .catch(function () { displayWalkingDistance(line, { ok: false, status: 0, body: {} }); });
+        .then(function (res) {
+          if (requestId === walkRequest) displayWalkingDistance(line, res);
+        })
+        .catch(function () {
+          if (requestId === walkRequest) displayWalkingDistance(line, { ok: false, status: 0, body: {} });
+        });
     }
 
     /** displayWalkingDistance(amenity, metres): UC-04 step 4, or UC-06 on failure. */
     function displayWalkingDistance(line, res) {
       if (!res.ok) {
+        clearWalkingRoute();
+        activeWalkLine = line;
         line.dataset.state = "failed";
         line.textContent = "Walking distance unavailable.";
         if (res.status === 502 || res.status === 0) displayErrorMessage(res.body.error);
@@ -493,6 +701,7 @@
       if (res.body.minutes) text += " · about " + res.body.minutes + " min";
       if (res.body.fromTownCentre) text += " (from the town centre)";
       line.textContent = text;
+      drawWalkingRoute(res.body.routeGeometry);
     }
 
     /** displayAmenityPins(amenities): UC-11 — one layer per category, coloured as in the legend. */
@@ -550,25 +759,75 @@
 
   function initSaved() {
     var layer = L.layerGroup().addTo(map);
+    var savedMarkers = {};       // saved flat id -> {marker, lat, lng, hidden}
+    var hidden = new Set();      // saved flat ids hidden under the focus pin
+    var focusKey = null;         // the focused location, kept so reloads can re-hide it
+    var focus;
     displayMap(DEFAULT_VIEW.centre[0], DEFAULT_VIEW.centre[1], DEFAULT_VIEW.zoom);
+
+    /** The saved-map focus adapter: hide every saved pin at the selected location. */
+    function hideAt(active) {
+      focusKey = latLngKey(active.lat, active.lng);
+      Object.keys(savedMarkers).forEach(function (id) {
+        var entry = savedMarkers[id];
+        if (!entry.hidden && latLngKey(entry.lat, entry.lng) === focusKey) {
+          layer.removeLayer(entry.marker);
+          entry.hidden = true;
+          hidden.add(id);
+        }
+      });
+    }
+
+    function restore() {
+      hidden.forEach(function (id) {
+        var entry = savedMarkers[id];
+        if (entry && entry.hidden) {
+          layer.addLayer(entry.marker);
+          entry.hidden = false;
+        }
+      });
+      hidden.clear();
+      focusKey = null;
+    }
+
+    function refresh() {
+      if (!focusKey) return;
+      Object.keys(savedMarkers).forEach(function (id) {
+        var entry = savedMarkers[id];
+        if (latLngKey(entry.lat, entry.lng) !== focusKey) return;
+        if (layer.hasLayer(entry.marker)) layer.removeLayer(entry.marker);
+        entry.hidden = true;
+        hidden.add(id);
+      });
+    }
+
+    focus = createFocusController({ hide: hideAt, restore: restore, refresh: refresh });
+
     function load() {
       getJSON("/api/bookmarks").then(function (data) {
         layer.clearLayers();
+        savedMarkers = {};
         var points = [];
         data.flats.forEach(function (f) {
           points.push([f.lat, f.lng]);
-          L.marker([f.lat, f.lng], { icon: pinIcon("ff-pin--saved", "★"), title: "Saved flat" })
+          var marker = L.marker([f.lat, f.lng], { icon: pinIcon("ff-pin--saved", "★"), title: "Saved flat" })
             .bindPopup(h("div", { className: "ff-popup" },
               f.approximate ? h("p", { className: "ff-note" }, "Approximate location (town centre)") : null,
               h("ul", {}, flatLine(f, "saved"))), { maxWidth: 300 })
             .addTo(layer);
+          savedMarkers[String(f.id)] = { marker: marker, lat: f.lat, lng: f.lng, hidden: false };
         });
+        focus.refresh();  // the focused saved pin stays hidden after a reload
         if (points.length) map.fitBounds(L.latLngBounds(points).pad(0.3), { maxZoom: 16 });
         setStatus(data.count === 0 ? "No saved flats yet"
           : points.length < data.count ? (data.count - points.length) + " saved flat(s) have no location and aren't shown" : "");
       }).catch(function () { setStatus("Couldn't load your saved flats for the map."); });
     }
     document.addEventListener("flatfinder:bookmark-changed", load);
+    document.addEventListener("click", function (event) {
+      var button = event.target.closest("[data-show-on-map]");
+      if (button) focus.select(button);
+    });
     load();
   }
 

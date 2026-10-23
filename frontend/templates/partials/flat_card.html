@@ -1,18 +1,18 @@
 {% load humanize flatfinder %}
 {% comment %}
 One flat card with the FR 2.2.3.1 fields, styled after the Results Page (List View) mockup.
+It uses the same house banner as a block card, so a block with one matching flat looks
+consistent. The whole card opens the flat details; the bookmark sits above it (z-20).
 Variables: flat (ResaleFlat, ideally with proximity loaded), fit (FitScore, optional),
 details_query, bookmark_style ("icon" | "remove"), saved_on (datetime, optional).
 {% endcomment %}
 <article class="group relative flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-300 hover:shadow-md" data-flat-card="{{ flat.id }}">
+  {% include "partials/house_banner.html" with flat=flat %}
+
   <div class="flex items-start justify-between gap-3">
     <div class="min-w-0">
-      <h2 class="font-semibold text-slate-900">
-        <a href="{% url 'core:flat_details' flat.id %}?{{ details_query }}" class="after:absolute after:inset-0 focus:outline-none">
-          Blk {{ flat.block }} {{ flat.street_name|street_title }}
-        </a>
-      </h2>
-      <p class="mt-0.5 text-xs text-slate-500">{{ flat.town|street_title }} · {{ flat.flat_type|street_title }} · {{ flat.flat_model }}</p>
+      <p class="text-xs text-slate-500">{{ flat.town|street_title }} · {{ flat.flat_type|street_title }} · {{ flat.flat_model }}</p>
+      <h2 class="mt-0.5 truncate text-lg font-bold text-slate-900">Blk {{ flat.block }} {{ flat.street_name|street_title }}</h2>
     </div>
     <div class="flex shrink-0 items-center gap-1">
       {% if fit %}
@@ -20,6 +20,7 @@ details_query, bookmark_style ("icon" | "remove"), saved_on (datetime, optional)
           <span><span class="block text-sm font-bold tabular-nums">{{ fit.total|floatformat:1 }}</span><span class="block text-[9px] font-semibold uppercase tracking-wide">Fit</span></span>
         </p>
       {% endif %}
+      {% include "partials/compare_toggle.html" with flat_id=flat.id %}
       {% include "partials/bookmark_button.html" with flat_id=flat.id saved=flat.id|is_in:bookmarked_ids style=bookmark_style %}
     </div>
   </div>
@@ -46,4 +47,9 @@ details_query, bookmark_style ("icon" | "remove"), saved_on (datetime, optional)
     {% endif %}
     {% if saved_on %}<span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-slate-500">Saved {{ saved_on|naturaltime }}</span>{% endif %}
   </div>
+
+  {# Change 7: the overlay link makes the whole card clickable; controls sit above it (z-20). #}
+  <a href="{% url 'core:flat_details' flat.id %}?{{ details_query }}"
+     class="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+     aria-label="View details for Blk {{ flat.block }} {{ flat.street_name|street_title }}, {{ flat.flat_type|street_title }}"></a>
 </article>

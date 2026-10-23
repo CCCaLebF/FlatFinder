@@ -103,6 +103,11 @@ AMENITY_RADIUS_M = 1000          # "nearest amenities within 1 km" (FR 2.3)
 WEIGHT_MIN, WEIGHT_MAX = 1, 10   # importance scale (decision 1)
 DEFAULT_ANCHOR_WEIGHT = 5
 
+# Compare Score (Phase H): absolute reference scales for the numeric factors, so a small
+# difference stays a small score difference (min–max would exaggerate it).
+COMPARE_AREA_REF_MAX_M2 = 150.0       # floor-area score reaches 1.0 at this size
+COMPARE_PRICE_REF_MAX = 1_500_000.0   # price score reaches 0.0 at this price (cheaper = higher)
+
 RESULTS_PER_PAGE = 20            # decision 12
 MAP_PIN_MIN_ZOOM = 14            # area counts below, flat pins from here up (decision 12)
 MAP_PIN_LIMIT = 250               # pins per view; more made zoom 14 laggy and too crowded to read

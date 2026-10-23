@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static humanize flatfinder %}
+
+{% block title %}Compare homes · FlatFinder{% endblock %}
+
+{% block body %}
+<main class="min-w-0 flex-1 overflow-y-auto bg-slate-100/60">
+  <div class="mx-auto max-w-6xl px-6 py-5">
+    <nav class="flex flex-wrap items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
+      <a href="{{ back_url }}" class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700 hover:border-brand-300 hover:text-brand-700">
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        Back to {% if origin == "saved" %}saved flats{% else %}results{% endif %}
+      </a>
+    </nav>
+
+    <h1 class="mt-4 text-2xl font-bold text-slate-900">Compare homes</h1>
+
+    {% if result %}
+      {# --- Weight editor --------------------------------------------------------- #}
+      <form method="get" action="" class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+        {% hidden_query_inputs exclude=weight_exclude %}
+        <fieldset>
+          <legend class="mb-2 flex w-full items-baseline justify-between">
+            <span class="font-semibold text-slate-900">Priority weights</span>
+            <span class="text-xs font-normal text-slate-400">1–10, how much each factor matters</span>
+          </legend>
+          <div class="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+            {% for row in weight_rows %}
+              {% include "partials/slider_row.html" with label=row.label name=row.name flag=row.flag value=row.value off=row.off min=1 max=10 step=1 unit="/10" off_label="Ignore" swatch=row.swatch %}
+            {% endfor %}
+          </div>
+        </fieldset>
+        <div class="mt-3 flex items-center gap-2">
+          <button type="submit" class="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700">Update</button>
+          <a href="{{ reset_url }}" class="text-xs font-semibold text-slate-500 hover:text-brand-700">Reset</a>
+        </div>
+        <p class="mt-2 text-xs text-slate-400">Each factor is scored 0–100% and weighted; tick "Ignore" to drop a factor.{% if search_error %}<span class="text-red-600"> The search in this link isn't valid, so neutral weights are used.</span>{% endif %}</p>
+      </form>
+
+      {% if result.winner %}
+        <p class="mt-4 rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm">
+          <span class="font-semibold text-brand-800">Blk {{ result.winner.flat.block }} {{ result.winner.flat.street_name|street_title }} wins.</span>
+        </p>
+      {% endif %}
+
+      {# --- Comparison table ------------------------------------------------------ #}
+      <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <table class="w-full min-w-[42rem] text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-200">
+              <th class="p-4 align-bottom text-xs font-semibold uppercase tracking-wide text-slate-400">Factor</th>
+              {% for home in result.homes %}
+                <th class="p-4 align-bottom {% if home.is_winner %}bg-brand-50{% endif %}">
+                  <p class="font-bold text-slate-900">{% if home.is_winner %}<span class="text-brand-700">★</span> {% endif %}Blk {{ home.flat.block }} {{ home.flat.street_name|street_title }}</p>
+                  <p class="mt-0.5 text-xs font-normal text-slate-500">{{ home.flat.town|street_title }} · {{ home.flat.flat_type|street_title }} · storey {{ home.flat.storey_range|lower }}</p>
+                  <p class="mt-1 text-xs font-normal text-slate-600">S${{ home.flat.resale_price|floatformat:0|intcomma }} · {{ home.flat.floor_area_sqm|floatformat:"-1" }} m²</p>
+                  <p class="text-xs font-normal text-slate-600">{{ home.flat.remaining_lease|lease_years }} left</p>
+                  <a href="{% url 'core:flat_details' home.flat.id %}?from=compare" class="mt-1 inline-block text-xs font-semibold text-brand-700 hover:text-brand-800">View details →</a>
+                </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for row in result.rows %}
+              <tr>
+                <th class="p-3 text-left font-medium text-slate-700">
+                  {{ row.factor.label }}
+                  <span class="block text-[10px] font-normal uppercase tracking-wide text-slate-400">w{{ row.factor.weight }} · {{ row.factor.higher_is_better|yesno:"higher is better,lower is better" }}</span>
+                </th>
+                {% for cell in row.cells %}
+                  <td class="p-3">
+                    {% if cell.score is not None and cell.points is not None %}
+                      <div class="flex items-center gap-2">
+                        <span class="w-12 shrink-0 text-right text-xs tabular-nums text-slate-500">+{{ cell.points|floatformat:1 }}</span>
+                        <div class="h-1.5 min-w-0 flex-1 rounded-full bg-slate-100"><div class="h-1.5 rounded-full bg-brand-500" style="width: {% widthratio cell.score 1 100 %}%"></div></div>
+                      </div>
+                    {% else %}
+                      <span class="text-slate-400">—</span>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+            <tr class="bg-slate-50">
+              <th class="p-3 text-left font-semibold text-slate-900">Total</th>
+              {% for home in result.homes %}
+                <td class="p-3 font-bold tabular-nums text-brand-700">{% if home.total is not None %}{{ home.total|floatformat:1 }}{% else %}—{% endif %}</td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <section class="mx-auto mt-12 max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center">
+        <h2 class="text-lg font-semibold text-slate-800">Select 2–3 homes to compare</h2>
+        <p class="mt-2 text-sm text-slate-600">Add homes from the Results page or your Saved flats with the "Compare" button, then come back here.</p>
+        <a href="{{ back_url }}" class="mt-4 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Back to {% if origin == "saved" %}saved flats{% else %}results{% endif %}</a>
+      </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/search.js' %}"></script>{% endblock %}

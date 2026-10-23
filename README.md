@@ -228,10 +228,10 @@ These differ from the original class diagram. **[docs/CROSS_CHECK.md](docs/CROSS
 - `MapController` has no rendering methods
 
 **Added while building:**
-- **Results grouped by block (`PLAN.md` §11).** Each data row is one resale transaction, so the results show one card per block (20 blocks per page), and a new **Block Results** page (`/blocks/<block>/<street>/`) lists a block's matching flats. No new classes:
-  - new operations `SearchController.group_by_block` and `SearchUI`'s Block Results page
+- **Results grouped by block (`PLAN.md` §11).** Each data row is one resale transaction, so the results show one card per block (20 blocks per page). Block cards (and single-flat cards) open the flat details page, which shows the whole block — shared block fields, a read-only `(flat_type, storey_range)` table, and the block's best Fit Score. No new classes:
+  - new operations `SearchController.group_by_block`
   - new attributes `SearchResult.blockGroups` and `blockCount`
-  - Back on Details can return to the block (`from=block`), and `MapUI.selectFlatPin` can highlight a block
+  - `MapUI.selectFlatPin` can highlight a block
   - the diagram checklist is in `docs/CROSS_CHECK.md` §3.6
 - **`OneMapTokenProvider` and `OneMapError`.** Only routing needs a OneMap token; search and map tiles don't. That's tested against the live API.
 - **`ScoreBounds`:** the price and lease thresholds, so a flat scores the same on the details page as in the list.

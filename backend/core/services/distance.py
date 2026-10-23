@@ -86,5 +86,5 @@ class WalkingDistance(DistanceStrategy):
         return self.gateway.walking_distance_m(origin, target)
 
     def route(self, origin, target) -> dict:
-        """{"metres", "seconds"}: the distance plus OneMap's walking time."""
+        """{"metres", "seconds", "route_geometry"}: distance, walking time and the encoded path."""
         return self.gateway.walking_route(origin, target)

@@ -109,8 +109,8 @@ WALK_CACHE_SECONDS = 24 * 3600
 @require_GET
 def walking_distance_api(request):
     """
-    GET /api/walking-distance?flat_id=&lat=&lng= -> {metres, minutes} (UC-04, FR 1.2.1),
-    or {error} with HTTP 502 when OneMap fails (UC-04.EX.1 -> UC-06).
+    GET /api/walking-distance?flat_id=&lat=&lng= -> {metres, minutes, routeGeometry}
+    (UC-04, FR 1.2.1), or {error} with HTTP 502 when OneMap fails (UC-04.EX.1 -> UC-06).
 
     Only routes to points near the flat, so the endpoint can't be used to spend our
     OneMap quota on arbitrary routes. Results are cached for a day.
@@ -127,7 +127,8 @@ def walking_distance_api(request):
     if StraightLineDistance().distance_m(origin, target) > WALK_MAX_STRAIGHT_LINE_M:
         return JsonResponse({"error": "That point is too far from the flat."}, status=400)
 
-    key = "walk:%.6f,%.6f:%.6f,%.6f" % (*origin, *target)
+    # v2: cache the route geometry too; don't reuse pre-Phase-E entries that lack it.
+    key = "walk:v2:%.6f,%.6f:%.6f,%.6f" % (*origin, *target)
     route = cache.get(key)
     if route is None:
         try:
@@ -138,5 +139,6 @@ def walking_distance_api(request):
     return JsonResponse({
         "metres": round(route["metres"]),
         "minutes": max(1, round(route["seconds"] / 60)) if route["seconds"] else None,
+        "routeGeometry": route.get("route_geometry"),
         "fromTownCentre": flat.coords_approximate,
     })

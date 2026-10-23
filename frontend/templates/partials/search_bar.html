@@ -1,7 +1,9 @@
 {% load flatfinder %}
 {% comment %}
 UC-07 Search via Search Bar: a postal code or place name, geocoded by OneMap into a
-proximity anchor that re-ranks the results (decision 4). Variables: query (SearchQuery).
+proximity anchor that re-ranks the results (decision 4). Rendered at the top of the
+sidebar so it is available in both List View and Map View. The anchor lives in the URL,
+so the chip reads it from the request rather than from a page-specific context value.
 {% endcomment %}
 <form method="get" action="{% url 'core:results' %}" class="flex gap-2" role="search" data-search-bar>
   {% hidden_query_inputs exclude="q,page,anchor_lat,anchor_lng,anchor_label" %}
@@ -11,9 +13,9 @@ proximity anchor that re-ranks the results (decision 4). Variables: query (Searc
          class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
   <button type="submit" class="shrink-0 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700">Search</button>
 </form>
-{% if query.hasAnchor %}
+{% if request.GET.anchor_lat and request.GET.anchor_lng %}
   <p class="mt-2 inline-flex max-w-full items-center gap-2 rounded-full bg-brand-50 py-1 pl-3 pr-1 text-xs text-brand-800" data-anchor-chip>
-    <span class="truncate">Ranking includes distance to <strong>{{ query.anchorLabel|display_name }}</strong></span>
+    <span class="truncate">Ranking includes distance to <strong>{{ request.GET.anchor_label|default:"Selected location"|display_name }}</strong></span>
     <a href="{% url_replace anchor_lat=None anchor_lng=None anchor_label=None w_anchor=None page=None %}"
        class="grid h-5 w-5 shrink-0 place-items-center rounded-full hover:bg-brand-100" aria-label="Clear search location" title="Clear search location">×</a>
   </p>

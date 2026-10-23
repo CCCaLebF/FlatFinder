@@ -277,6 +277,26 @@ def test_start_page_shows_sidebar(client):
 
 
 @pytest.mark.django_db
+def test_start_page_shows_search_bar(client):
+    """UC-07: a postal code or place name can be geocoded before the first search."""
+    response = client.get(reverse("core:start"))
+    content = response.content.decode()
+    assert response.status_code == 200
+    assert 'name="q"' in content
+    assert "Rank by distance to" in content
+
+
+@pytest.mark.django_db
+def test_location_search_bar_is_in_the_sidebar_for_both_views(client):
+    """UC-07: the search bar sits at the top of the left panel in List View and Map View."""
+    for view in ("list", "map"):
+        response = client.get(reverse("core:results"), {"view": view})
+        content = response.content.decode()
+        assert response.status_code == 200
+        assert content.count("data-search-bar") == 1
+
+
+@pytest.mark.django_db
 def test_results_page_lists_ranked_flats(client, make_flat):
     make_flat(block="1A", resale_price=Decimal("300000"), remaining_lease=90, coords_approximate=True,
               latitude=1.37, longitude=103.85)
@@ -289,7 +309,8 @@ def test_results_page_lists_ranked_flats(client, make_flat):
     assert "S$300,000" in content and "Fit Score" in content
     assert "Approximate location (town centre)" in content
     assert "Location not available" in content
-    assert "from=results" in content and "w_bus_stop=5" in content  # details link keeps the query
+    assert "/flats/" in content and "w_bus_stop=5" in content  # single-flat cards open the flat details page
+    assert 'aria-label="View details for Blk 1A' in content
 
 
 @pytest.mark.django_db

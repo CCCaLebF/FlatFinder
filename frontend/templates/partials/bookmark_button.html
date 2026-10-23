@@ -3,7 +3,7 @@ BookmarkUI toggle (UC-05). A real form, so it works without JS; bookmarks.js sen
 fetch() instead and updates every icon for the flat plus the Saved (n) counter.
 Variables: flat_id, saved (bool), style ("icon" | "remove").
 {% endcomment %}
-<form method="post" action="{% url 'core:api_toggle_bookmark' flat_id %}" data-bookmark-form="{{ flat_id }}" class="relative z-10">
+<form method="post" action="{% url 'core:api_toggle_bookmark' flat_id %}" data-bookmark-form="{{ flat_id }}" class="relative z-20">
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ request.get_full_path }}">
   {% if style == "remove" %}

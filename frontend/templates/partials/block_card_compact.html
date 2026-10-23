@@ -1,38 +1,44 @@
 {% load humanize flatfinder %}
 {% comment %}
-Compact block card for the Map View side panel (PLAN §11), like flat_card_compact.html.
-The address opens the Block Results page; "Show on map" highlights the block on the map.
-Variables: block (the dict built by views.search._card).
+Compact block card for the Map View side panel (PLAN §11), laid out like flat_card_compact.html.
+Row 1: price range (left) + bookmark (right). Row 2: best Fit Score, right-aligned. Footer:
+town (left) + "Show on map" and "Compare" (⇄) on the right. The whole card opens the block's
+best-fit flat's details; controls sit above it (z-20). Variables: block (views.search._card).
 {% endcomment %}
 {% with flat=block.lead %}
 <article class="relative rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm transition hover:border-brand-300" data-block-card="{{ flat.block }}|{{ flat.street_name }}">
-  <div class="min-w-0">
-    <p class="flex items-center gap-2">
-      <span class="font-bold text-slate-900">S${{ block.min_price|floatformat:0|intcomma }}{% if block.max_price != block.min_price %} – S${{ block.max_price|floatformat:0|intcomma }}{% endif %}</span>
-      <span class="shrink-0 rounded bg-brand-50 px-1.5 py-0.5 text-[11px] font-bold text-brand-700" title="Best Fit Score in this block (0–100)">Fit up to {{ block.best_fit|floatformat:1 }}</span>
-    </p>
-    <h2 class="truncate font-semibold text-slate-800">
-      <a href="{{ block.url }}" class="hover:text-brand-700">Blk {{ flat.block }} {{ flat.street_name|street_title }}</a>
-    </h2>
-    <p class="truncate text-xs text-slate-500">
-      <span class="font-semibold text-brand-700">{{ block.count }} matching flats</span> · {% for type in block.flat_types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %}
-    </p>
+  <div class="flex items-center justify-between gap-2">
+    <span class="min-w-0 truncate text-sm font-bold text-slate-900">S${{ block.min_price|floatformat:0|intcomma }}{% if block.max_price != block.min_price %} – S${{ block.max_price|floatformat:0|intcomma }}{% endif %}</span>
+    {% include "partials/bookmark_button.html" with flat_id=block.best_id saved=block.best_id|is_in:bookmarked_ids style="icon" %}
   </div>
-  <div class="mt-1.5 flex items-center justify-between gap-2 text-xs">
+  <div class="mt-0.5 flex items-center justify-between gap-2">
+    <h2 class="min-w-0 truncate text-xs font-semibold text-slate-800">Blk {{ flat.block }} {{ flat.street_name|street_title }}</h2>
+    <span class="shrink-0 rounded bg-brand-50 px-1.5 py-0.5 text-[11px] font-bold text-brand-700" title="Best Fit Score in this block (0–100)">Fit up to {{ block.best_fit|floatformat:1 }}</span>
+  </div>
+  <p class="truncate text-xs text-slate-500">
+    <span class="font-semibold text-brand-700">{{ block.count }} matching flat{{ block.count|pluralize }}</span> · {% for type in block.flat_types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %}
+  </p>
+  <div class="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-1.5 text-xs">
     <span class="truncate text-slate-400">{{ flat.town|street_title }}{% if flat.coords_approximate %} · approx. location{% endif %}</span>
-    <span class="flex shrink-0 items-center gap-3">
-      <a href="{{ block.url }}" class="font-semibold text-slate-600 hover:text-brand-700">View flats</a>
+    <span class="flex shrink-0 items-center gap-1.5">
       {% if flat.has_coords %}
-        <button type="button" class="font-semibold text-brand-700 hover:text-brand-800"
+        <button type="button" class="relative z-20 font-semibold text-brand-700 hover:text-brand-800"
                 data-show-on-map data-lat="{{ flat.latitude|stringformat:'f' }}" data-lng="{{ flat.longitude|stringformat:'f' }}"
                 data-kind="block" data-label="Blk {{ flat.block }} {{ flat.street_name|street_title }}"
-                data-summary="{{ block.count }} matching flats · {% for type in block.flat_types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                data-summary="{{ block.count }} matching flat{{ block.count|pluralize }} · {% for type in block.flat_types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                data-storey="storeys {{ block.storey_ranges|join:', '|lower }}"
                 data-price="{{ block.min_price|floatformat:0 }}" data-price-max="{{ block.max_price|floatformat:0 }}"
                 data-fit="{{ block.best_fit|floatformat:1 }}" data-details-url="{{ block.url }}">Show on map</button>
       {% else %}
         <span class="text-slate-400">No location</span>
       {% endif %}
+      {% include "partials/compare_toggle.html" with flat_id=block.best_id compact=True %}
     </span>
   </div>
+
+  {# Change 7: the whole card is clickable; buttons and links sit above the overlay (z-20). #}
+  <a href="{{ block.url }}"
+     class="absolute inset-0 z-10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+     aria-label="View details at Blk {{ flat.block }} {{ flat.street_name|street_title }}"></a>
 </article>
 {% endwith %}

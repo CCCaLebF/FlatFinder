@@ -1,0 +1,36 @@
+{% load flatfinder %}
+{% comment %}
+Cartoon house banner (change 11). One shared partial, so a block card and a single-flat
+card look the same. Variables: flat (uses flat.block and flat.street_name). The card owns
+the overlay link, so this banner is decorative; the address is clamped to two lines with
+the full address in a tooltip.
+{% endcomment %}
+<div class="relative -mx-4 -mt-4 mb-3 h-24 overflow-hidden rounded-t-xl bg-brand-50" data-block-house>
+  <svg viewBox="0 0 640 120" class="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <rect width="640" height="120" fill="#e8f6f1"/>
+    <circle cx="590" cy="24" r="12" fill="#fde68a"/>
+    <ellipse cx="120" cy="26" rx="24" ry="9" fill="#ffffff" opacity=".9"/>
+    <ellipse cx="142" cy="30" rx="16" ry="7" fill="#ffffff" opacity=".9"/>
+    <ellipse cx="500" cy="38" rx="18" ry="7" fill="#ffffff" opacity=".75"/>
+    <path d="M0 88c68-8 136-10 208-6 80 5 156 9 232 4 72-5 136-3 200 2v32H0z" fill="#bfe5d7"/>
+    <path d="M0 102c80-6 164-7 248-3 88 4 168 6 252 1 48-3 92-3 140 0v20H0z" fill="#a7d7c5"/>
+    <rect x="198" y="60" width="7" height="26" rx="3" fill="#8a5a3b"/>
+    <circle cx="201" cy="52" r="17" fill="#3f9c7f"/>
+    <circle cx="189" cy="60" r="11" fill="#4fb392"/>
+    <circle cx="213" cy="61" r="11" fill="#4fb392"/>
+    <rect x="280" y="44" width="86" height="42" rx="3" fill="#287462"/>
+    <path d="M268 46 323 11l55 35z" fill="#225e50"/>
+    <rect x="313" y="64" width="20" height="22" rx="2" fill="#f0fdfa"/>
+    <circle cx="329" cy="75" r="1.6" fill="#287462"/>
+    <rect x="290" y="53" width="15" height="15" rx="2" fill="#d9f0e8"/>
+    <rect x="341" y="53" width="15" height="15" rx="2" fill="#d9f0e8"/>
+    <path d="M313 86h20l9 12h-38z" fill="#e2e8f0"/>
+    <circle cx="432" cy="80" r="11" fill="#4fb392"/>
+    <circle cx="447" cy="82" r="8" fill="#3f9c7f"/>
+    <circle cx="166" cy="84" r="8" fill="#4fb392"/>
+  </svg>
+  <h2 class="absolute bottom-0.5 left-1/2 line-clamp-2 w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-lg bg-white/85 px-2 py-0.5 text-center text-xs font-semibold leading-snug text-brand-900 shadow-sm"
+      title="Blk {{ flat.block }} {{ flat.street_name|street_title }}">
+    Blk {{ flat.block }} {{ flat.street_name|street_title }}
+  </h2>
+</div>

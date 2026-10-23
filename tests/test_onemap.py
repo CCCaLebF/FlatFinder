@@ -29,7 +29,9 @@ SEARCH_HIT = {"found": 1, "totalNumPages": 1, "pageNum": 1, "results": [{
     "SEARCHVAL": "BISHAN MRT STATION (NS17 / CC15)", "BLK_NO": "200", "ROAD_NAME": "BISHAN ROAD",
     "BUILDING": "BISHAN MRT STATION (NS17 / CC15)", "ADDRESS": "200 BISHAN ROAD SINGAPORE 579827",
     "POSTAL": "579827", "LATITUDE": "1.35100", "LONGITUDE": "103.84850", "X": "29000", "Y": "37000"}]}
-ROUTE_OK = {"status": 0, "status_message": "Found route", "route_summary": {"total_distance": 1514, "total_time": 1090}}
+ROUTE_GEOMETRY = "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
+ROUTE_OK = {"status": 0, "status_message": "Found route", "route_summary": {"total_distance": 1514, "total_time": 1090},
+            "route_geometry": ROUTE_GEOMETRY}
 
 
 @pytest.fixture(autouse=True)
@@ -144,7 +146,7 @@ def test_walking_route_success_sends_token():
     add_token(responses)
     responses.add(responses.GET, ROUTE_URL, json=ROUTE_OK)
     route = OneMapRoutingGateway(OneMapTokenProvider()).walking_route((1.38, 103.84), (1.373, 103.8495))
-    assert route == {"metres": 1514.0, "seconds": 1090.0}
+    assert route == {"metres": 1514.0, "seconds": 1090.0, "route_geometry": ROUTE_GEOMETRY}
     request = responses.calls[1].request
     assert request.headers["Authorization"] == "tok-1"
     assert "routeType=walk" in request.url and "start=1.38%2C103.84" in request.url
@@ -194,9 +196,11 @@ def test_walking_distance_strategy_uses_the_gateway():
             return 640.0
 
         def walking_route(self, origin, target):
-            return {"metres": 640.0, "seconds": 480.0}
+            return {"metres": 640.0, "seconds": 480.0, "route_geometry": "encoded"}
     strategy = WalkingDistance(FakeGateway())
-    assert strategy.distance_m((1, 2), (3, 4)) == 640.0 and strategy.route((1, 2), (3, 4))["seconds"] == 480.0
+    route = strategy.route((1, 2), (3, 4))
+    assert strategy.distance_m((1, 2), (3, 4)) == 640.0
+    assert route["seconds"] == 480.0 and route["route_geometry"] == "encoded"
 
 
 # --- ErrorHandler (UC-06) ----------------------------------------------------------------------
@@ -229,8 +233,9 @@ def test_walking_distance_api(client, flat):
     responses.add(responses.GET, ROUTE_URL, json=ROUTE_OK)
     first = client.get(walk_url(flat.id))
     assert first.status_code == 200
-    assert first.json() == {"metres": 1514, "minutes": 18, "fromTownCentre": False}
-    assert client.get(walk_url(flat.id)).json()["metres"] == 1514
+    assert first.json() == {"metres": 1514, "minutes": 18, "routeGeometry": ROUTE_GEOMETRY,
+                            "fromTownCentre": False}
+    assert client.get(walk_url(flat.id)).json()["routeGeometry"] == ROUTE_GEOMETRY
     assert len([c for c in responses.calls if "routingsvc" in c.request.url]) == 1  # second answer cached
     assert "tok-1" not in first.content.decode()  # the token never reaches the browser
 
@@ -342,6 +347,8 @@ def test_no_banner_when_nothing_failed(client):
 def test_map_js_onemap_contracts():
     source = (STATIC_JS / "map.js").read_text(encoding="utf-8")
     assert "/api/walking-distance?" in source                # UC-04
+    assert "decodePolyline" in source and "routeGeometry" in source  # UC-04 draws the route
+    assert 'map.on("click", clearWalkingRoute)' in source    # clicking the map clears it
     assert 'tiles.on("tileerror"' in source                  # UC-06 for base-map tiles
     assert "FF.MapState.lastView()" in source                # UC-13 restore
     assert "anchor_lat" in source                            # UC-07 anchor pin

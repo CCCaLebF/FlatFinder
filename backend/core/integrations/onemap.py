@@ -119,7 +119,7 @@ class OneMapRoutingGateway:
         self.tokens = tokens or token_provider
 
     def walking_route(self, origin, destination) -> dict:
-        """{"metres", "seconds"} for walking between two `(lat, lng)` points (routeType=walk)."""
+        """{"metres", "seconds", "route_geometry"} for a walk between two `(lat, lng)` points."""
         params = {"start": f"{origin[0]},{origin[1]}", "end": f"{destination[0]},{destination[1]}",
                   "routeType": "walk"}
         try:
@@ -132,7 +132,11 @@ class OneMapRoutingGateway:
         summary = body.get("route_summary") or {}
         if "total_distance" not in summary:
             raise OneMapError(ROUTE_PATH, "no-route", body.get("status_message") or "OneMap found no walking route")
-        return {"metres": float(summary["total_distance"]), "seconds": float(summary.get("total_time") or 0)}
+        return {
+            "metres": float(summary["total_distance"]),
+            "seconds": float(summary.get("total_time") or 0),
+            "route_geometry": body.get("route_geometry"),
+        }
 
     def walking_distance_m(self, origin, destination) -> float:
         """Walking distance in metres between two `(lat, lng)` points (routeType=walk)."""
