@@ -31,6 +31,7 @@ def flat_details(request, flat_id):
     block_view = False
     shared, variants, best_flat, location_flat = None, [], flat, flat
     query = None
+    fits = {}  # flat id -> Fit Score total, for the past-transactions table
 
     form = SearchForm(request.GET)
     if has_search(request.GET):
@@ -50,24 +51,26 @@ def flat_details(request, flat_id):
                     shared = _shared(sorted_flats, location_flat, variants)
                     best_flat = _best_flat(sorted_flats, result.fitScores)
                     fit = result.fitScores[best_flat.id]
+                    fits = {fid: score.total for fid, score in result.fitScores.items()}
                     breakdown = breakdown_rows(fit, query, price_range=(shared["min_price"], shared["max_price"]))
                     block_view = True
             else:
                 # Saved / direct link that still carries a search in its URL: score this flat.
                 fit = controller.calculate_fit_score(flat, query, controller.bounds_for(query))
+                fits = {flat.id: fit.total}
                 breakdown = breakdown_rows(fit, query)
         else:
             search_error = True
 
-    # The "Flat types and storeys" table always appears. With a Results search it holds the
-    # matching flats (with Fit Scores); otherwise it lists every flat in the block (no Fit
-    # Scores, so the Fit Score column shows a dash).
+    # Without a Results search, the variants (for the price-by-type lines and the building)
+    # are every flat in the block.
     if not block_view:
         block_flats = ResaleFlat.objects.filter(block=flat.block, street_name=flat.street_name)
         variants = _variants(block_flats)
 
     # Past transactions (Phase G): every transaction for this block, filtered (defaulting to
-    # the search's flat type / price / lease unless overridden) and paged 7 per page.
+    # the search's flat type / price unless overridden) and paged 7 per page. Each carries its
+    # Fit Score when it is one of the scored flats; a dash otherwise.
     tx_filters = _transaction_filters(request, query)
     transactions = ResaleFlat.objects.filter(block=flat.block, street_name=flat.street_name)
     if tx_filters["flat_types"]:
@@ -76,11 +79,12 @@ def flat_details(request, flat_id):
         transactions = transactions.filter(resale_price__gte=tx_filters["min_price"])
     if tx_filters["max_price"] is not None:
         transactions = transactions.filter(resale_price__lte=tx_filters["max_price"])
-    if tx_filters["min_lease"] is not None:
-        transactions = transactions.filter(remaining_lease__gte=tx_filters["min_lease"])
     transactions = transactions.order_by("-month", "-resale_price")
     tx_paginator = Paginator(transactions, 7)
     transactions_page = tx_paginator.get_page(request.GET.get("tx_page"))
+    transactions_page.object_list = list(transactions_page.object_list)
+    for tx in transactions_page.object_list:
+        tx.fit = fits.get(tx.id)
     tx_page_range = tx_paginator.get_elided_page_range(transactions_page.number, on_each_side=1, on_ends=1)
 
     nearby = AmenityController().find_nearest_amenities(location_flat)
@@ -99,6 +103,9 @@ def flat_details(request, flat_id):
         "block_view": block_view,
         "shared": shared,
         "variants": variants,
+        "price_by_type": _price_by_type(variants),
+        # Block view: the matching sales; single view: just this flat's storeys.
+        "building": _building(flat, variants if block_view else _variants([flat])),
         "best_flat": best_flat,
         "location_flat": location_flat,
         "back_url": back_url(request, origin),
@@ -117,7 +124,6 @@ def flat_details(request, flat_id):
             ],
             "min_price": "" if tx_filters["min_price"] is None else str(tx_filters["min_price"]),
             "max_price": "" if tx_filters["max_price"] is None else str(tx_filters["max_price"]),
-            "min_lease": "" if tx_filters["min_lease"] is None else format(tx_filters["min_lease"], "g"),
         },
     })
 
@@ -174,6 +180,61 @@ def _variants(flats, fit_scores=None) -> list:
     else:
         variants.sort(key=lambda v: (v["flat_type"], v["storey_range"]))
     return variants
+
+
+def _storeys(storey_range):
+    """'07 TO 09' -> (7, 9); None when the text isn't a storey range."""
+    try:
+        low, high = (int(part) for part in storey_range.split(" TO "))
+    except (AttributeError, ValueError):
+        return None
+    return low, high
+
+
+def _building(flat, variants) -> dict:
+    """
+    The block illustration at the top of the details page: one row per storey, as tall as
+    the highest storey sold in this block (the dataset has no building heights), with the
+    storeys of the shown sales (`variants`) lit up and listed in a legend.
+    """
+    all_ranges = ResaleFlat.objects.filter(block=flat.block, street_name=flat.street_name) \
+        .values_list("storey_range", flat=True).distinct()
+    spans = [s for s in map(_storeys, all_ranges) if s]
+    top = max([high for _, high in spans] + [4])
+
+    sold, legend = set(), {}
+    for variant in variants:
+        span = _storeys(variant["storey_range"])
+        if not span:
+            continue
+        sold.update(range(span[0], span[1] + 1))
+        entry = legend.setdefault(span, {"low": span[0], "high": span[1], "types": [], "count": 0})
+        if variant["flat_type"] not in entry["types"]:
+            entry["types"].append(variant["flat_type"])
+        entry["count"] += variant["count"]
+
+    return {
+        "block": flat.block,
+        "top": top,
+        "floors": [{"storey": n, "sold": n in sold} for n in range(top, 0, -1)],
+        "floor_px": max(4, min(9, 230 // top)),  # keeps the drawing about 230 px tall
+        "legend": sorted(legend.values(), key=lambda e: -e["low"]),
+    }
+
+
+def _price_by_type(variants) -> list:
+    """The resale price range of each flat type in the variants table, in FLAT_TYPES order."""
+    groups = {}
+    for variant in variants:
+        group = groups.setdefault(variant["flat_type"], {
+            "flat_type": variant["flat_type"], "min_price": variant["min_price"],
+            "max_price": variant["max_price"], "count": 0,
+        })
+        group["min_price"] = min(group["min_price"], variant["min_price"])
+        group["max_price"] = max(group["max_price"], variant["max_price"])
+        group["count"] += variant["count"]
+    order = {t: i for i, t in enumerate(FLAT_TYPES)}
+    return sorted(groups.values(), key=lambda g: (order.get(g["flat_type"], len(order)), g["flat_type"]))
 
 
 def _shared(sorted_flats, location_flat, variants) -> dict:
@@ -249,20 +310,11 @@ def _transaction_filters(request, query) -> dict:
                       else (query.minBudget if query else None)),
         "max_price": (_parse_int(request.GET.get("tx_max_price")) if submitted
                       else (query.maxBudget if query else None)),
-        "min_lease": (_parse_float(request.GET.get("tx_min_lease")) if submitted
-                      else (query.minRemainingLease if query else None)),
     }
 
 
 def _parse_int(value):
     try:
         return int(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _parse_float(value):
-    try:
-        return float(value)
     except (TypeError, ValueError):
         return None

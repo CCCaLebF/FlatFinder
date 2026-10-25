@@ -1,0 +1,18 @@
+{% comment %}
+An HDB slab block drawn in HTML/CSS (styles: .ff-hdb in app.css). One row of windows per
+storey up to the highest storey sold here; the storeys of the shown sales are lit up, and the
+block number is painted at the top like a real block. Variables: building (views.details._building).
+{% endcomment %}
+<div class="ff-scene" role="img" data-block-building
+     aria-label="Block {{ building.block }}, {{ building.top }} storeys shown; storeys with past sales are highlighted">
+  <span class="ff-scene__tree ff-scene__tree--left" aria-hidden="true"></span>
+  <div class="ff-hdb" style="--floor: {{ building.floor_px }}px" aria-hidden="true">
+    <div class="ff-hdb__roof"></div>
+    <div class="ff-hdb__body">
+      <span class="ff-hdb__plate">{{ building.block }}</span>
+      {% for floor in building.floors %}<div class="ff-hdb__floor{% if floor.sold %} is-sold{% endif %}"></div>{% endfor %}
+    </div>
+    <div class="ff-hdb__void"></div>
+  </div>
+  <span class="ff-scene__tree ff-scene__tree--right" aria-hidden="true"></span>
+</div>

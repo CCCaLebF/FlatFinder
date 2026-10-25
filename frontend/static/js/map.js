@@ -131,6 +131,17 @@
     });
   }
 
+  var HOUSE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
+
+  /** A block pin: the pin shape with a house drawing instead of a number. */
+  function houseIcon(classes) {
+    return L.divIcon({
+      className: "", iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -26],
+      html: '<div class="ff-pin ' + classes + '">' + HOUSE_SVG + "</div>",
+    });
+  }
+
   /**
    * The colour class for a pin's best Fit Score: ff-fit-1 (dark green, best) to ff-fit-6 (red),
    * from cfg.fitBands (MAP_FIT_COLOUR_BANDS, each a band's lower bound). No score: ff-fit-none.
@@ -245,7 +256,7 @@
           h("h3", {}, isBlock ? "Selected block" : "Selected flat"),
           h("ul", {}, h("li", {},
             d.fit ? h("span", { className: "ff-fit", title: isBlock ? "Best Fit Score" : "Fit Score" },
-              (isBlock ? "up to " : "") + d.fit) : null,
+              d.fit) : null,
             h("a", { href: d.detailsUrl }, d.label),
             h("p", {}, detail))),
           isBlock ? h("p", { className: "ff-note" }, h("a", { href: d.detailsUrl }, "View details")) : null),
@@ -376,7 +387,7 @@
         marker.on("click", function () { displayMap(area.lat, area.lng, cfg.pinMinZoom); });
         areaLayer.addLayer(marker);
       });
-      setStatus(data.total.toLocaleString("en-SG") + " matching flats · zoom in or select a town to see flats");
+      setStatus(data.total.toLocaleString("en-SG") + " past sales · zoom in or select a town to see blocks");
     }
 
     // Flat pins on the map, by location: {marker, signature}. A redraw keeps a pin whose
@@ -408,7 +419,7 @@
           var list = h("ul", {});
           data.flats.forEach(function (f) { list.appendChild(flatLine(f, origin)); });
           popup.replaceChildren(
-            h("h3", {}, data.count === 1 ? "1 matching flat" : data.count.toLocaleString("en-SG") + " matching flats here"),
+            h("h3", {}, data.count === 1 ? "1 past sale" : data.count.toLocaleString("en-SG") + " past sales here"),
             data.approximate ? h("p", { className: "ff-note" }, "Approximate location (town centre)") : "",
             list,
             data.count > data.flats.length
@@ -422,27 +433,37 @@
         .then(function () { marker.getPopup().update(); });  // resize to the new content
     }
 
-    /** displayFlatPins(flats): FR 2.1.2 / 2.2.1 — one pin per location, best Fit Score first. */
+    /**
+     * displayFlatPins(flats): FR 2.1.2 / 2.2.1 — one pin per location, best Fit Score first.
+     * A located block is one house pin that opens its block-level details page; an approximate
+     * (town-centre) location holds several blocks, so it keeps the popup list instead.
+     */
     function displayFlatPins(data) {
       var next = {};
       data.locations.forEach(function (loc) {
         var key = latLngKey(loc.lat, loc.lng);
-        var signature = loc.count + "|" + loc.approximate + "|" + loc.fit + "|" + loc.price;
+        var signature = loc.id + "|" + loc.count + "|" + loc.approximate + "|" + loc.fit + "|" + loc.price;
         var current = pinMarkers[key];
         if (current && current.signature === signature) {
           next[key] = current;
           delete pinMarkers[key];  // whatever is left in pinMarkers afterwards is removed
           return;
         }
-        var approx = loc.approximate ? " ff-pin--approx" : "";
         var band = " " + fitBandClass(loc.fit);  // the location's best flat
-        var icon = loc.count === 1
-          ? priceTagIcon(approx.replace("ff-pin", "ff-price") + band, shortPrice(loc.price))
-          : pinIcon(approx + band, loc.count > 99 ? "99+" : String(loc.count));
-        var popup = h("div", { className: "ff-popup" }, h("p", {}, "Loading flats…"));
-        var marker = addLabelledMarker([loc.lat, loc.lng], icon, { title: loc.count + " matching flat(s)" }, pinLayer)
-          .bindPopup(popup, { maxWidth: 300 });
-        marker.on("popupopen", function () { fillLocationPopup(loc, popup, marker); });
+        var title = loc.count === 1 ? "1 past sale" : loc.count.toLocaleString("en-SG") + " past sales";
+        var marker;
+        if (loc.approximate) {
+          var icon = loc.count === 1
+            ? priceTagIcon("ff-price--approx" + band, shortPrice(loc.price))
+            : pinIcon("ff-pin--approx" + band, loc.count > 99 ? "99+" : String(loc.count));
+          var popup = h("div", { className: "ff-popup" }, h("p", {}, "Loading flats…"));
+          marker = addLabelledMarker([loc.lat, loc.lng], icon, { title: title }, pinLayer)
+            .bindPopup(popup, { maxWidth: 300 });
+          marker.on("popupopen", function () { fillLocationPopup(loc, popup, marker); });
+        } else {
+          marker = addLabelledMarker([loc.lat, loc.lng], houseIcon(band), { title: title, keyboard: true }, pinLayer);
+          marker.on("click", function () { window.location.href = detailsUrl(loc.id, origin); });
+        }
         next[key] = { marker: marker, signature: signature };
       });
       // Pins that left the view, or whose flats changed (their replacement was added above).
@@ -452,9 +473,9 @@
       if (focus) focus.refresh();  // keep the focus location hidden after a redraw
       var shown = data.locations.reduce(function (sum, loc) { return sum + loc.count; }, 0);
       setStatus(data.truncated
-        ? "Showing " + shown.toLocaleString("en-SG") + " of " + data.total.toLocaleString("en-SG") + " flats in view · zoom in for more"
-        : data.total === 0 ? "No matching flats with a location in this area"
-        : data.total.toLocaleString("en-SG") + " matching flats in view");
+        ? "Showing " + shown.toLocaleString("en-SG") + " of " + data.total.toLocaleString("en-SG") + " past sales in view · zoom in for more"
+        : data.total === 0 ? "No matching past sales with a location in this area"
+        : data.total.toLocaleString("en-SG") + " past sales in view");
     }
 
     /**

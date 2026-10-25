@@ -1,8 +1,10 @@
 {% load humanize flatfinder %}
 {% comment %}
-Past transactions for a block (Phase G / change 9): an editable filter bar (defaulting to the
-search's flat type / price / lease) and a table ordered by month, paged 7 per page.
-Variables: transactions (Page), tx_page_range, tx_form.
+Past transactions for a block (Phase G / change 9), which also replaced the separate flat-type
+and storey table: an editable filter bar (defaulting to the search's flat type / price) and a
+table ordered by month, paged 7 per page. Each row's Fit Score is set when that sale was
+scored for the current search (tx.fit), a dash otherwise. The block shares one lease, so there
+is no lease column. Variables: transactions (Page), tx_page_range, tx_form.
 {% endcomment %}
 <section class="scroll-mt-4 rounded-xl border border-slate-200 bg-white p-5" id="past-transactions" data-block-transactions>
   <div class="flex flex-wrap items-baseline justify-between gap-2">
@@ -11,14 +13,14 @@ Variables: transactions (Page), tx_page_range, tx_form.
   </div>
 
   <form method="get" action="#past-transactions" class="mt-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm">
-    {% hidden_query_inputs exclude="tx_submit,tx_flat_type,tx_min_price,tx_max_price,tx_min_lease,tx_page" %}
+    {% hidden_query_inputs exclude="tx_submit,tx_flat_type,tx_min_price,tx_max_price,tx_page" %}
     <input type="hidden" name="tx_submit" value="1">
     <div class="flex flex-wrap items-end gap-3">
-      <fieldset class="min-w-0 flex-1">
+      <fieldset class="w-full min-w-0">
         <legend class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Flat type</legend>
         <div class="mt-1 flex flex-wrap gap-1.5">
           {% for option in tx_form.flat_type_options %}
-            <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-white px-2 py-1 text-xs ring-1 ring-inset ring-slate-200">
+            <label class="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md bg-white px-2 py-1 text-xs ring-1 ring-inset ring-slate-200">
               <input type="checkbox" name="tx_flat_type" value="{{ option.value }}" {% if option.checked %}checked{% endif %} class="h-3.5 w-3.5 accent-brand-600">
               {{ option.label }}
             </label>
@@ -33,28 +35,24 @@ Variables: transactions (Page), tx_page_range, tx_form.
         <label class="block text-[10px] font-semibold uppercase tracking-wide text-slate-400" for="tx_max_price">Max price (S$)</label>
         <input id="tx_max_price" name="tx_max_price" type="number" min="0" step="10000" value="{{ tx_form.max_price }}" placeholder="Any" class="mt-1 w-28 rounded-lg border border-slate-300 bg-white px-2 py-1.5">
       </div>
-      <div>
-        <label class="block text-[10px] font-semibold uppercase tracking-wide text-slate-400" for="tx_min_lease">Min lease (yrs)</label>
-        <input id="tx_min_lease" name="tx_min_lease" type="number" min="0" step="1" value="{{ tx_form.min_lease }}" placeholder="Any" class="mt-1 w-28 rounded-lg border border-slate-300 bg-white px-2 py-1.5">
-      </div>
       <div class="flex items-center gap-2">
         <button type="submit" class="rounded-lg bg-brand-600 px-3 py-1.5 font-semibold text-white hover:bg-brand-700">Apply</button>
-        <a href="{% url_replace tx_submit=None tx_flat_type=None tx_min_price=None tx_max_price=None tx_min_lease=None tx_page=None %}#past-transactions" class="text-xs font-semibold text-slate-500 hover:text-brand-700">Reset</a>
+        <a href="{% url_replace tx_submit=None tx_flat_type=None tx_min_price=None tx_max_price=None tx_page=None %}#past-transactions" class="text-xs font-semibold text-slate-500 hover:text-brand-700">Reset</a>
       </div>
     </div>
   </form>
 
   {% if transactions %}
     <div class="mt-3 overflow-x-auto">
-      <table class="w-full min-w-[40rem] text-left text-sm">
+      <table class="w-full min-w-[36rem] text-left text-sm">
         <thead>
           <tr class="border-b border-slate-200 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
             <th class="py-2 pr-4">Month</th>
             <th class="py-2 pr-4">Flat type</th>
             <th class="py-2 pr-4">Storey range</th>
             <th class="py-2 pr-4">Floor area</th>
-            <th class="py-2 pr-4">Resale price</th>
-            <th class="py-2">Remaining lease</th>
+            <th class="py-2 pr-4">Fit Score</th>
+            <th class="py-2">Resale price</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -64,8 +62,8 @@ Variables: transactions (Page), tx_page_range, tx_form.
               <td class="py-2 pr-4 font-medium text-slate-800">{{ tx.flat_type|street_title }}</td>
               <td class="py-2 pr-4 text-slate-600">{{ tx.storey_range|lower }}</td>
               <td class="py-2 pr-4 text-slate-600">{{ tx.floor_area_sqm|floatformat:"-1" }} m²</td>
-              <td class="py-2 pr-4 font-semibold text-slate-800">S${{ tx.resale_price|floatformat:0|intcomma }}</td>
-              <td class="py-2 text-slate-600">{{ tx.remaining_lease|lease_years }}</td>
+              <td class="py-2 pr-4 font-semibold tabular-nums text-brand-700">{% if tx.fit is not None %}{{ tx.fit|floatformat:1 }}{% else %}—{% endif %}</td>
+              <td class="py-2 font-semibold text-slate-800">S${{ tx.resale_price|floatformat:0|intcomma }}</td>
             </tr>
           {% endfor %}
         </tbody>

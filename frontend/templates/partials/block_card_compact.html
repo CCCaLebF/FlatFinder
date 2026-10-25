@@ -13,10 +13,10 @@ best-fit flat's details; controls sit above it (z-20). Variables: block (views.s
   </div>
   <div class="mt-0.5 flex items-center justify-between gap-2">
     <h2 class="min-w-0 truncate text-xs font-semibold text-slate-800">Blk {{ flat.block }} {{ flat.street_name|street_title }}</h2>
-    <span class="shrink-0 rounded bg-brand-50 px-1.5 py-0.5 text-[11px] font-bold text-brand-700" title="Best Fit Score in this block (0–100)">Fit up to {{ block.best_fit|floatformat:1 }}</span>
+    <span class="shrink-0 rounded bg-brand-50 px-1.5 py-0.5 text-[11px] font-bold text-brand-700" title="Best Fit Score in this block (0–100)">Fit {{ block.best_fit|floatformat:1 }}</span>
   </div>
   <p class="truncate text-xs text-slate-500">
-    <span class="font-semibold text-brand-700">{{ block.count }} matching flat{{ block.count|pluralize }}</span> · {% for type in block.flat_types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %}
+    <span class="font-semibold text-brand-700">{{ block.count }} past sale{{ block.count|pluralize }}</span> · {% for type in block.flat_types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %}
   </p>
   <div class="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-1.5 text-xs">
     <span class="truncate text-slate-400">{{ flat.town|street_title }}{% if flat.coords_approximate %} · approx. location{% endif %}</span>
@@ -25,7 +25,7 @@ best-fit flat's details; controls sit above it (z-20). Variables: block (views.s
         <button type="button" class="relative z-20 font-semibold text-brand-700 hover:text-brand-800"
                 data-show-on-map data-lat="{{ flat.latitude|stringformat:'f' }}" data-lng="{{ flat.longitude|stringformat:'f' }}"
                 data-kind="block" data-label="Blk {{ flat.block }} {{ flat.street_name|street_title }}"
-                data-summary="{{ block.count }} matching flat{{ block.count|pluralize }} · {% for type in block.flat_types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                data-summary="{{ block.count }} past sale{{ block.count|pluralize }} · {% for type in block.flat_types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %}"
                 data-storey="storeys {{ block.storey_ranges|join:', '|lower }}"
                 data-price="{{ block.min_price|floatformat:0 }}" data-price-max="{{ block.max_price|floatformat:0 }}"
                 data-fit="{{ block.best_fit|floatformat:1 }}" data-details-url="{{ block.url }}">Show on map</button>

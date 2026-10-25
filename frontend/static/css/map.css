@@ -77,6 +77,11 @@ html[data-panels-hidden] .ff-panel-toggle__icon { transform: translateX(-2px) ro
   position: absolute; inset: 0; display: grid; place-items: center; transform: rotate(45deg);
   color: var(--ff-fit-text, #fff); font: 700 10px/1 ui-sans-serif, system-ui, sans-serif;
 }
+/* A block pin: a house drawing in place of the number. */
+.ff-pin svg {
+  position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+  transform: rotate(45deg); color: var(--ff-fit-text, #fff); cursor: pointer;
+}
 /* Approximate location (town centre): a dashed outline; the fill still shows the Fit Score. */
 .ff-pin--approx { border-style: dashed; border-color: #0f172a; }
 

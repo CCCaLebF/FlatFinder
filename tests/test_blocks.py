@@ -70,7 +70,7 @@ def test_results_show_a_block_card_and_a_flat_card(client, two_blocks):
     assert "4 flats in 2 blocks match your requirements" in content
     assert content.count("data-block-card=") == 1 and content.count("data-flat-card=") == 1
     assert f'data-flat-card="{two_blocks["b_only"].id}"' in content  # one sale keeps the flat card
-    assert "3 matching flats" in content and "S$300,000 – S$700,000" in content
+    assert "3 past sales" in content and "S$300,000 – S$700,000" in content
     assert f'/flats/{two_blocks["a_cheap"].id}/?' in content  # block card opens its best-fit flat's details
     assert f'/flats/{two_blocks["b_only"].id}/?' in content  # single-flat card opens its own details
     assert "View details" in content and "View block" not in content

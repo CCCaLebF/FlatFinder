@@ -31,3 +31,57 @@
 .ff-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #b4e0d1; }
 .ff-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px #b4e0d1; }
 .ff-range:disabled { cursor: default; }
+
+/* --- Details page: the HDB block illustration (partials/block_building.html) ------------ */
+.ff-scene {
+  position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 0.75rem;
+  min-height: 17rem; padding: 1.75rem 1rem 18px; overflow: hidden;
+  background: linear-gradient(#d9f0e8, #f4fbf8 75%);
+}
+.ff-scene::before {  /* the sun */
+  content: ""; position: absolute; top: 18px; right: 22px; width: 26px; height: 26px;
+  border-radius: 9999px; background: #fde68a;
+}
+.ff-scene::after {   /* the grass */
+  content: ""; position: absolute; inset: auto 0 0; height: 18px; background: #a7d7c5;
+}
+.ff-scene__tree {
+  position: relative; z-index: 1; width: 34px; height: 34px; margin-bottom: 8px;
+  border-radius: 9999px; background: #4fb392; box-shadow: 10px -8px 0 -4px #3f9c7f;
+}
+.ff-scene__tree::after {
+  content: ""; position: absolute; left: 50%; top: 100%; width: 5px; height: 10px;
+  margin-left: -2.5px; background: #8a5a3b; border-radius: 2px;
+}
+.ff-scene__tree--right { width: 26px; height: 26px; }
+
+.ff-hdb { position: relative; z-index: 1; display: flex; flex-direction: column; width: 9.5rem; }
+.ff-hdb__roof {           /* parapet, with the water tank on top */
+  position: relative; height: 8px; margin: 0 6px; background: #94a3b8; border-radius: 2px 2px 0 0;
+}
+.ff-hdb__roof::before {
+  content: ""; position: absolute; bottom: 100%; left: 18%; width: 28px; height: 9px;
+  background: #cbd5e1; border: 1.5px solid #94a3b8; border-bottom: 0; border-radius: 2px 2px 0 0;
+}
+.ff-hdb__body {
+  display: flex; flex-direction: column; gap: 2px; padding: 5px 9px 3px;
+  background: #f8fafc; border: 2px solid #cbd5e1; border-bottom: 0;
+  box-shadow: inset -12px 0 0 #e2e8f0;  /* the shaded end wall */
+}
+.ff-hdb__plate {          /* the block number, painted at the top of the facade */
+  align-self: center; margin-bottom: 5px; padding: 1px 9px; border-radius: 4px;
+  background: #287462; color: #fff; font: 800 1.05rem/1.25 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.02em; white-space: nowrap;
+}
+.ff-hdb__floor {          /* a storey: a row of window panes */
+  height: var(--floor, 6px); border-radius: 1px;
+  background: repeating-linear-gradient(90deg, #bcd3e6 0 10px, transparent 10px 15px);
+}
+.ff-hdb__floor.is-sold {  /* storeys with a past sale: lights on */
+  background: repeating-linear-gradient(90deg, #f59e0b 0 10px, transparent 10px 15px);
+}
+.ff-hdb__void {           /* the void deck: open ground floor with pillars */
+  height: 16px; border: 2px solid #cbd5e1; border-top: 3px solid #94a3b8; border-bottom: 0;
+  background: repeating-linear-gradient(90deg, #cbd5e1 0 6px, #eef2f6 6px 30px);
+}
+.ff-swatch-sold { display: inline-block; width: 12px; height: 6px; border-radius: 1px; background: #f59e0b; }

@@ -144,10 +144,58 @@ def test_block_view_shows_shared_fields_and_variants_table(client, make_flat):
     assert four_room["count"] == 2
     assert (four_room["min_price"], four_room["max_price"]) == (Decimal("400000"), Decimal("600000"))
 
-    assert "Block details" in content and "Flat types and storeys" in content
+    assert "Block details" in content and "Past transactions" in content
+    assert "Flat types and storeys" not in content and "Remaining lease</th>" not in content
     assert "Model A, Model B" in content and "1980 – 1982" in content
     assert "S$400,000 – S$600,000" in content
     assert "Sold" not in content and "at sale" not in content  # block-level top hides per-flat fields
+
+
+@pytest.mark.django_db
+def test_block_view_shows_a_price_range_per_flat_type(client, make_flat):
+    cheap = make_flat(block="7C", flat_type="4 ROOM", storey_range="01 TO 03", resale_price=Decimal("400000"))
+    make_flat(block="7C", flat_type="4 ROOM", storey_range="10 TO 12", resale_price=Decimal("450000"))
+    make_flat(block="7C", flat_type="3 ROOM", storey_range="04 TO 06", resale_price=Decimal("300000"))
+    response = client.get(details_url(cheap, "from=results&max_budget=800000"))
+    rows = [(r["flat_type"], r["min_price"], r["max_price"]) for r in response.context["price_by_type"]]
+    assert rows == [("3 ROOM", Decimal("300000"), Decimal("300000")),
+                    ("4 ROOM", Decimal("400000"), Decimal("450000"))]
+    assert "data-price-by-type" in response.content.decode()
+
+    # A flat-type search leaves the other types out.
+    filtered = client.get(details_url(cheap, "from=results&flat_type=4+ROOM"))
+    assert [r["flat_type"] for r in filtered.context["price_by_type"]] == ["4 ROOM"]
+
+
+@pytest.mark.django_db
+def test_block_building_lights_up_the_storeys_sold(client, make_flat):
+    cheap = make_flat(block="7E", flat_type="4 ROOM", storey_range="04 TO 06", resale_price=Decimal("400000"))
+    make_flat(block="7E", flat_type="3 ROOM", storey_range="04 TO 06", resale_price=Decimal("300000"))
+    make_flat(block="7E", flat_type="5 ROOM", storey_range="13 TO 15", resale_price=Decimal("900000"))
+    response = client.get(details_url(cheap, "from=results&max_budget=800000"))
+    building = response.context["building"]
+    assert building["block"] == "7E" and building["top"] == 15  # as tall as any sale in the block
+    assert [f["storey"] for f in building["floors"] if f["sold"]] == [6, 5, 4]  # the 5 ROOM is over budget
+    assert building["legend"] == [{"low": 4, "high": 6, "types": ["3 ROOM", "4 ROOM"], "count": 2}]
+    content = response.content.decode()
+    assert "data-block-building" in content and "Storeys 04–06" in content
+
+
+@pytest.mark.django_db
+def test_past_transactions_carry_the_fit_score_of_scored_sales(client, make_flat):
+    cheap = make_flat(block="7F", flat_type="4 ROOM", resale_price=Decimal("400000"))
+    dear = make_flat(block="7F", flat_type="5 ROOM", resale_price=Decimal("900000"))
+    # Override the filters so the over-budget sale is listed too; it wasn't scored.
+    response = client.get(details_url(cheap, "from=results&max_budget=800000&tx_submit=1"))
+    fits = {tx.id: tx.fit for tx in response.context["transactions"]}
+    assert fits[cheap.id] == response.context["fit"].total and fits[dear.id] is None
+
+
+@pytest.mark.django_db
+def test_map_view_details_show_past_transactions(client, make_flat):
+    flat = make_flat(block="7D", latitude=1.37, longitude=103.85)
+    content = client.get(details_url(flat, "from=results&max_budget=800000&view=map")).content.decode()
+    assert "data-block-transactions" in content
 
 
 @pytest.mark.django_db
@@ -191,13 +239,14 @@ def test_saved_link_keeps_single_flat_view(client, make_flat):
 
 
 @pytest.mark.django_db
-def test_no_search_still_shows_the_variants_table_without_fit(client, make_flat):
+def test_no_search_shows_transactions_without_fit(client, make_flat):
     cheap = make_flat(block="6G", flat_type="4 ROOM", storey_range="01 TO 03", resale_price=Decimal("300000"))
     make_flat(block="6G", flat_type="5 ROOM", storey_range="04 TO 06", resale_price=Decimal("500000"))
     response = client.get(details_url(cheap, "from=saved"))
     content = response.content.decode()
     assert response.context["block_view"] is False
-    assert "Flat types and storeys" in content  # the table shows even without a search
+    assert all(tx.fit is None for tx in response.context["transactions"])  # no search, no Fit Score
+    assert "data-block-transactions" in content
     variants = response.context["variants"]
     assert len(variants) == 2
     assert {v["flat_type"] for v in variants} == {"4 ROOM", "5 ROOM"}

@@ -22,10 +22,10 @@
         {% include "partials/bookmark_button.html" with flat_id=best_flat.id saved=best_flat.id|is_in:bookmarked_ids style="icon" %}
       </div>
       {% include "partials/location_notice.html" with flat=location_flat %}
-      <div class="mt-3">{% if block_view %}{% include "partials/block_details_fields.html" %}{% else %}{% include "partials/details_fields.html" with columns=2 %}{% endif %}</div>
+      <div class="mt-3">{% if block_view %}{% include "partials/block_details_fields.html" with columns=2 %}{% else %}{% include "partials/details_fields.html" with columns=2 %}{% endif %}</div>
     </section>
 
-    {% include "partials/block_variants_table.html" %}
+    {% include "partials/block_transactions.html" %}
 
     {% if block_view %}{% include "partials/fit_breakdown.html" with unit="block" %}{% else %}{% include "partials/fit_breakdown.html" %}{% endif %}
 
@@ -62,25 +62,47 @@
     <div class="mx-auto max-w-6xl px-6 py-5">
       {% include "partials/details_back.html" %}
 
-      <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-slate-900">Blk {{ flat.block }} {{ flat.street_name|street_title }}</h1>
-          <p class="mt-1 text-slate-500">{% if block_view %}{{ shared.town|street_title }} · {{ shared.models|join:", " }}{% else %}{{ flat.town|street_title }} · {{ flat.flat_type|street_title }} · {{ flat.flat_model }}{% endif %}</p>
-          <p class="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold uppercase tracking-wide">
-            {% if block_view %}
-              <span class="rounded-md bg-white px-2 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200">{{ shared.count }} matching flat{{ shared.count|pluralize }}</span>
-              <span class="rounded-md bg-white px-2 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200">{{ shared.min_lease|lease_years }}{% if shared.max_lease != shared.min_lease %} – {{ shared.max_lease|lease_years }}{% endif %} remaining</span>
-            {% else %}
-              <span class="rounded-md bg-white px-2 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200">{{ flat.remaining_lease|lease_years }} remaining</span>
-              <span class="rounded-md bg-white px-2 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200">Sold {{ flat.month|date:"M Y" }}</span>
-            {% endif %}
-          </p>
+      {# Hero: the block drawn as an HDB slab (sold storeys lit up) beside the title and price. #}
+      <section class="mt-4 flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white sm:flex-row">
+        <div class="shrink-0 sm:w-80">{% include "partials/block_building.html" %}</div>
+        <div class="flex min-w-0 flex-1 flex-col gap-4 p-5">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="min-w-0">
+              <h1 class="text-2xl font-bold text-slate-900">Blk {{ flat.block }} {{ flat.street_name|street_title }}</h1>
+              <p class="mt-1 text-slate-500">{% if block_view %}{{ shared.town|street_title }} · {{ shared.models|join:", " }}{% else %}{{ flat.town|street_title }} · {{ flat.flat_type|street_title }} · {{ flat.flat_model }}{% endif %}</p>
+              <p class="mt-2 flex flex-wrap gap-1.5 text-[11px] font-semibold uppercase tracking-wide">
+                {% if block_view %}
+                  <span class="rounded-md bg-slate-50 px-2 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200">{{ shared.count }} past sale{{ shared.count|pluralize }}</span>
+                  <span class="rounded-md bg-slate-50 px-2 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200">{{ shared.min_lease|lease_years }}{% if shared.max_lease != shared.min_lease %} – {{ shared.max_lease|lease_years }}{% endif %} remaining</span>
+                {% else %}
+                  <span class="rounded-md bg-slate-50 px-2 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200">{{ flat.remaining_lease|lease_years }} remaining</span>
+                  <span class="rounded-md bg-slate-50 px-2 py-0.5 text-slate-600 ring-1 ring-inset ring-slate-200">Sold {{ flat.month|date:"M Y" }}</span>
+                {% endif %}
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <p class="text-3xl font-bold text-brand-700">{% if block_view %}S${{ shared.min_price|floatformat:0|intcomma }}{% if shared.max_price != shared.min_price %} – S${{ shared.max_price|floatformat:0|intcomma }}{% endif %}{% else %}S${{ flat.resale_price|floatformat:0|intcomma }}{% endif %}</p>
+              {% include "partials/bookmark_button.html" with flat_id=best_flat.id saved=best_flat.id|is_in:bookmarked_ids style="icon" %}
+            </div>
+          </div>
+
+          {% if building.legend %}
+            <div class="mt-auto border-t border-slate-100 pt-4">
+              <h2 class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                <span class="ff-swatch-sold" aria-hidden="true"></span>{% if block_view %}Storeys with past sales{% else %}This flat's storeys{% endif %}
+              </h2>
+              <ul class="mt-2 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2" data-storey-legend>
+                {% for range in building.legend %}
+                  <li class="flex items-baseline justify-between gap-3">
+                    <span class="font-semibold tabular-nums text-slate-800">Storeys {{ range.low|stringformat:"02d" }}–{{ range.high|stringformat:"02d" }}</span>
+                    <span class="text-slate-500">{% for type in range.types %}{{ type|street_title }}{% if not forloop.last %}, {% endif %}{% endfor %} · {{ range.count }} sale{{ range.count|pluralize }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
         </div>
-        <div class="flex items-center gap-2">
-          <p class="text-3xl font-bold text-brand-700">{% if block_view %}S${{ shared.min_price|floatformat:0|intcomma }}{% if shared.max_price != shared.min_price %} – S${{ shared.max_price|floatformat:0|intcomma }}{% endif %}{% else %}S${{ flat.resale_price|floatformat:0|intcomma }}{% endif %}</p>
-          {% include "partials/bookmark_button.html" with flat_id=best_flat.id saved=best_flat.id|is_in:bookmarked_ids style="icon" %}
-        </div>
-      </div>
+      </section>
 
       {% include "partials/location_notice.html" with flat=location_flat %}
 
@@ -99,14 +121,11 @@
           {% if block_view %}{% include "partials/fit_breakdown.html" with unit="block" %}{% else %}{% include "partials/fit_breakdown.html" %}{% endif %}
         </aside>
 
-        <div class="lg:col-span-3">{% include "partials/block_variants_table.html" %}</div>
+        <div class="lg:col-span-3">{% include "partials/block_transactions.html" %}</div>
 
         {# --- UC-11 nearby amenities --------------------------------------------- #}
         {% include "partials/nearby_amenities.html" with flat=location_flat section_class="lg:col-span-3" %}
       </div>
-
-      {# --- Phase G: past transactions ------------------------------------------ #}
-      <div class="mt-5">{% include "partials/block_transactions.html" %}</div>
     </div>
   </main>
 {% endif %}

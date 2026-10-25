@@ -52,6 +52,7 @@ def test_pins_in_view_group_flats_at_the_same_point(make_flat):
     first = pins["locations"][0]
     assert (first["lat"], first["lng"], first["count"]) == (1.35, 103.85, 2)
     assert first["price"] == 300000.0  # the best flat's price, for a price tag
+    assert first["id"] == best.id      # the pin opens the best flat's (block-level) details
     assert "flats" not in first        # the popup list is fetched when the pin opens
     assert [loc["count"] for loc in pins["locations"]] == [2, 1]
 

@@ -60,6 +60,7 @@ class MapController:
                 if len(locations) >= limit:
                     continue
                 location = locations[key] = {
+                    "id": flat_id,  # the best flat here; its details page shows the whole block
                     "lat": lat, "lng": lng, "approximate": approximate, "count": 0,
                     "fit": result.fitScores[flat_id].total if with_scores else None,  # the best flat's
                     "price": float(price),

@@ -12,12 +12,12 @@ built by views.search._card).
 
   <div class="flex items-start justify-between gap-3">
     <div class="min-w-0">
-      <p class="text-xs text-slate-500">{{ flat.town|street_title }} · <span class="font-semibold text-brand-700">{{ block.count }} matching flat{{ block.count|pluralize }}</span></p>
+      <p class="text-xs text-slate-500">{{ flat.town|street_title }} · <span class="font-semibold text-brand-700">{{ block.count }} past sale{{ block.count|pluralize }}</span></p>
       <h2 class="mt-0.5 truncate text-lg font-bold text-slate-900">Blk {{ flat.block }} {{ flat.street_name|street_title }}</h2>
     </div>
     <div class="flex shrink-0 items-center gap-1.5">
       <p class="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-brand-300 bg-brand-50 text-center leading-none text-brand-700" title="Best Fit Score in this block (0–100)">
-        <span><span class="block text-[8px] font-semibold uppercase tracking-wide">Up to</span><span class="block text-sm font-bold tabular-nums">{{ block.best_fit|floatformat:1 }}</span><span class="block text-[8px] font-semibold uppercase tracking-wide">Fit</span></span>
+        <span><span class="block text-sm font-bold tabular-nums">{{ block.best_fit|floatformat:1 }}</span><span class="block text-[9px] font-semibold uppercase tracking-wide">Fit</span></span>
       </p>
       {% include "partials/compare_toggle.html" with flat_id=block.best_id %}
       {% include "partials/bookmark_button.html" with flat_id=block.best_id saved=block.best_id|is_in:bookmarked_ids style="icon" %}
