@@ -25,17 +25,27 @@ def towns(db):
 
 @pytest.mark.django_db
 def test_area_counts_follow_the_filters(towns, make_flat):
-    for _ in range(3):
-        make_flat(town="ANG MO KIO", flat_type="4 ROOM")
-    make_flat(town="ANG MO KIO", flat_type="3 ROOM")
+    for block in ("1", "2", "3"):
+        make_flat(town="ANG MO KIO", flat_type="4 ROOM", block=block)
+    make_flat(town="ANG MO KIO", flat_type="3 ROOM", block="4")
     make_flat(town="BEDOK", flat_type="4 ROOM")
     make_flat(town="ATLANTIS", flat_type="4 ROOM")  # no centroid: no marker to put it on
 
     areas = MapController().get_area_counts(SearchQuery())
-    assert areas == [{"town": "ANG MO KIO", "lat": 1.38, "lng": 103.84, "count": 4},
-                     {"town": "BEDOK", "lat": 1.33, "lng": 103.93, "count": 1}]
+    assert areas == [{"town": "ANG MO KIO", "lat": 1.38, "lng": 103.84, "blocks": 4},
+                     {"town": "BEDOK", "lat": 1.33, "lng": 103.93, "blocks": 1}]
     four_room = MapController().get_area_counts(SearchQuery(flatTypes=["4 ROOM"]))
-    assert [(a["town"], a["count"]) for a in four_room] == [("ANG MO KIO", 3), ("BEDOK", 1)]
+    assert [(a["town"], a["blocks"]) for a in four_room] == [("ANG MO KIO", 3), ("BEDOK", 1)]
+
+
+@pytest.mark.django_db
+def test_area_counts_count_blocks_not_sales(towns, make_flat):
+    for _ in range(3):  # three past sales in one block
+        make_flat(town="ANG MO KIO", block="123", street_name="ANG MO KIO AVE 3")
+    make_flat(town="ANG MO KIO", block="123", street_name="ANG MO KIO AVE 4")  # same number, other street
+
+    areas = MapController().get_area_counts(SearchQuery())
+    assert [(a["town"], a["blocks"]) for a in areas] == [("ANG MO KIO", 2)]
 
 
 @pytest.mark.django_db
@@ -51,7 +61,7 @@ def test_pins_in_view_group_flats_at_the_same_point(make_flat):
     assert pins["total"] == 3 and not pins["truncated"]
     first = pins["locations"][0]
     assert (first["lat"], first["lng"], first["count"]) == (1.35, 103.85, 2)
-    assert first["price"] == 300000.0  # the best flat's price, for a price tag
+    assert first["price"] == 300000.0  # the best flat's price
     assert "flats" not in first        # the popup list is fetched when the pin opens
     assert [loc["count"] for loc in pins["locations"]] == [2, 1]
 
@@ -88,7 +98,7 @@ def test_area_counts_api(client, towns, make_flat):
     make_flat(town="BEDOK", resale_price=Decimal("400000"))
     make_flat(town="BEDOK", resale_price=Decimal("900000"))
     data = client.get(reverse("core:api_area_counts"), {"max_budget": 500000}, **JSON).json()
-    assert data == {"areas": [{"town": "BEDOK", "lat": 1.33, "lng": 103.93, "count": 1}], "total": 1}
+    assert data == {"areas": [{"town": "BEDOK", "lat": 1.33, "lng": 103.93, "blocks": 1}], "total": 1}
 
 
 @pytest.mark.django_db

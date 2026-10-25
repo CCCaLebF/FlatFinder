@@ -29,12 +29,12 @@ def _query_or_error(request):
 
 @require_GET
 def area_counts_api(request):
-    """GET /api/flats/area-counts?<query> — FR 2.1.1: matching flats per town, at its centroid."""
+    """GET /api/flats/area-counts?<query> — FR 2.1.1: matching blocks per town, at its centroid."""
     query, error = _query_or_error(request)
     if error:
         return error
     areas = MapController().get_area_counts(query)
-    return JsonResponse({"areas": areas, "total": sum(a["count"] for a in areas)})
+    return JsonResponse({"areas": areas, "total": sum(a["blocks"] for a in areas)})
 
 
 @require_GET

@@ -1,4 +1,4 @@
-from django.db.models import Count
+from collections import Counter
 
 from backend.core.services.search import SearchController
 from backend.core.models import SearchQuery, Town
@@ -10,7 +10,7 @@ class MapController:
     """
     «Control» MapController — supplies map data for UC-03 Display Interactive Map.
 
-    - FR 2.1.1: flat counts per town when zoomed out (decision 8)
+    - FR 2.1.1: block counts per town when zoomed out (decision 8)
     - FR 2.1.2 / FR 2.2.1: matching flats as pins when zoomed in
 
     Has no rendering methods (approved change, PLAN §8); rendering is MapUI's job.
@@ -20,14 +20,21 @@ class MapController:
         self.search = search or SearchController()
 
     def get_area_counts(self, query: SearchQuery) -> list:
-        """FR 2.1.1: `[{town, lat, lng, count}]`, one entry per town centroid, by town name."""
-        counts = (self.search.filter_flats(query).order_by()
-                  .values("town").annotate(count=Count("id")))
+        """
+        FR 2.1.1: `[{town, lat, lng, blocks}]`, one entry per town centroid, by town name.
+
+        `blocks` counts distinct blocks (block + street) with at least one matching sale, not
+        the sales themselves: the data is past transactions, so a busy block would otherwise
+        look like many flats for sale.
+        """
+        blocks = (self.search.filter_flats(query).order_by()
+                  .values_list("town", "block", "street_name").distinct())
+        counts = Counter(town for town, _, _ in blocks)
         towns = Town.objects.in_bulk(field_name="name")
         areas = [
-            {"town": row["town"], "lat": towns[row["town"]].centroid_lat,
-             "lng": towns[row["town"]].centroid_lng, "count": row["count"]}
-            for row in counts if row["town"] in towns
+            {"town": town, "lat": towns[town].centroid_lat,
+             "lng": towns[town].centroid_lng, "blocks": count}
+            for town, count in counts.items() if town in towns
         ]
         return sorted(areas, key=lambda a: a["town"])
 

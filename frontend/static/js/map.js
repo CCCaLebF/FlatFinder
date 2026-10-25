@@ -7,7 +7,7 @@
  * is the header's List View link (mapstate.js remembers the choice).
  *
  * The map element's `data-map-mode` picks what is drawn:
- *  - "browse" (Start / Results, Map View): town counts below zoom 14 (FR 2.1.1), matching flats
+ *  - "browse" (Start / Results, Map View): block counts per town below zoom 14 (FR 2.1.1), matching blocks
  *    as pins from zoom 14 (FR 2.1.2), and saved flats as their own pins (UC-03.AC.1).
  *  - "flat" (Details, Map View): the flat, a 1 km circle and amenity pins, one toggleable
  *    layer per category (UC-11, UC-12; toggling never re-fetches); selecting a pin asks
@@ -141,16 +141,6 @@
       if (fit >= cfg.fitBands[i]) return "ff-fit-" + (i + 1);
     }
     return "ff-fit-" + (cfg.fitBands.length + 1);
-  }
-
-  /** A price tag pin for a location with a single flat, as in the Results (Map View) mockup. */
-  function priceTagIcon(classes, text) {
-    var icon = L.divIcon({
-      className: "", iconSize: null, iconAnchor: [0, 0], popupAnchor: [0, -14],
-      html: '<div class="ff-price ' + classes + '"></div>',
-    });
-    icon.label = text;  // filled in with textContent once the marker is on the map
-    return icon;
   }
 
   function addLabelledMarker(latlng, icon, options, layer) {
@@ -358,11 +348,11 @@
     var last = FF.MapState.lastView() || DEFAULT_VIEW;
     displayMap(last.centre[0], last.centre[1], last.zoom);
 
-    /** displayAreaCounts(counts): FR 2.1.1 — matching flats per town, at its centre. */
+    /** displayAreaCounts(counts): FR 2.1.1 — matching blocks per town, at its centre. */
     function displayAreaCounts(data) {
       areaLayer.clearLayers();
       data.areas.forEach(function (area) {
-        var size = Math.min(72, 34 + Math.sqrt(area.count) * 1.1);
+        var size = Math.min(72, 34 + Math.sqrt(area.blocks) * 2);
         var icon = L.divIcon({
           className: "", iconSize: [size, size],
           html: '<div class="ff-area" style="width:' + size + "px;height:" + size + 'px"><div></div></div>',
@@ -370,13 +360,13 @@
         var marker = L.marker([area.lat, area.lng], { icon: icon, title: displayName(area.town), keyboard: true });
         marker.on("add", function () {
           var inner = marker.getElement().querySelector(".ff-area > div");
-          inner.appendChild(document.createTextNode(area.count.toLocaleString("en-SG")));
+          inner.appendChild(document.createTextNode(area.blocks.toLocaleString("en-SG")));
           inner.appendChild(h("small", {}, displayName(area.town)));
         });
         marker.on("click", function () { displayMap(area.lat, area.lng, cfg.pinMinZoom); });
         areaLayer.addLayer(marker);
       });
-      setStatus(data.total.toLocaleString("en-SG") + " matching flats · zoom in or select a town to see flats");
+      setStatus(data.total.toLocaleString("en-SG") + " matching blocks · zoom in or select a town to see them");
     }
 
     // Flat pins on the map, by location: {marker, signature}. A redraw keeps a pin whose
@@ -408,7 +398,7 @@
           var list = h("ul", {});
           data.flats.forEach(function (f) { list.appendChild(flatLine(f, origin)); });
           popup.replaceChildren(
-            h("h3", {}, data.count === 1 ? "1 matching flat" : data.count.toLocaleString("en-SG") + " matching flats here"),
+            h("h3", {}, data.count === 1 ? "1 past sale here" : data.count.toLocaleString("en-SG") + " past sales here"),
             data.approximate ? h("p", { className: "ff-note" }, "Approximate location (town centre)") : "",
             list,
             data.count > data.flats.length
@@ -422,7 +412,11 @@
         .then(function () { marker.getPopup().update(); });  // resize to the new content
     }
 
-    /** displayFlatPins(flats): FR 2.1.2 / 2.2.1 — one pin per location, best Fit Score first. */
+    /**
+     * displayFlatPins(flats): FR 2.1.2 / 2.2.1 — one pin per block location, best Fit Score first.
+     * Pins carry no number or price: they stand for past sales, not flats on the market, so a
+     * label would read as "N flats for sale". The popup says how many past sales there were.
+     */
     function displayFlatPins(data) {
       var next = {};
       data.locations.forEach(function (loc) {
@@ -436,11 +430,9 @@
         }
         var approx = loc.approximate ? " ff-pin--approx" : "";
         var band = " " + fitBandClass(loc.fit);  // the location's best flat
-        var icon = loc.count === 1
-          ? priceTagIcon(approx.replace("ff-pin", "ff-price") + band, shortPrice(loc.price))
-          : pinIcon(approx + band, loc.count > 99 ? "99+" : String(loc.count));
+        var icon = pinIcon(approx + band, "");
         var popup = h("div", { className: "ff-popup" }, h("p", {}, "Loading flats…"));
-        var marker = addLabelledMarker([loc.lat, loc.lng], icon, { title: loc.count + " matching flat(s)" }, pinLayer)
+        var marker = addLabelledMarker([loc.lat, loc.lng], icon, { title: "Matching block" }, pinLayer)
           .bindPopup(popup, { maxWidth: 300 });
         marker.on("popupopen", function () { fillLocationPopup(loc, popup, marker); });
         next[key] = { marker: marker, signature: signature };
@@ -450,11 +442,11 @@
       pinMarkers = next;
       syncSavedOverlap();          // keep saved locations clear after a redraw
       if (focus) focus.refresh();  // keep the focus location hidden after a redraw
-      var shown = data.locations.reduce(function (sum, loc) { return sum + loc.count; }, 0);
+      var blocks = data.locations.length.toLocaleString("en-SG");
       setStatus(data.truncated
-        ? "Showing " + shown.toLocaleString("en-SG") + " of " + data.total.toLocaleString("en-SG") + " flats in view · zoom in for more"
-        : data.total === 0 ? "No matching flats with a location in this area"
-        : data.total.toLocaleString("en-SG") + " matching flats in view");
+        ? "Showing the best " + blocks + " blocks in view · zoom in for more"
+        : data.total === 0 ? "No matching blocks with a location in this area"
+        : blocks + (data.locations.length === 1 ? " matching block" : " matching blocks") + " in view");
     }
 
     /**
