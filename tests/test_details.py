@@ -104,7 +104,8 @@ def test_details_score_matches_results_score(make_flat):
 
 @pytest.mark.django_db
 def test_details_page_shows_all_flat_fields(client, located_flat):
-    content = client.get(details_url(located_flat, "from=results")).content.decode()
+    # A Saved link opens the single-flat view, with every field of that sale.
+    content = client.get(details_url(located_flat, "from=saved")).content.decode()
     for text in ("Blk 1A Ang Mo Kio Ave 3", "Ang Mo Kio Ave 3", "4 Room", "92 m²", "07 to 09",
                  "S$520,000", "1980", "54 yrs", "54 years 02 months at sale", "September 2026"):
         assert text in content, text
@@ -224,6 +225,19 @@ def test_map_view_details_show_past_transactions(client, make_flat):
     flat = make_flat(block="7D", latitude=1.37, longitude=103.85)
     content = client.get(details_url(flat, "from=results&max_budget=800000&view=map")).content.decode()
     assert "data-block-transactions" in content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("origin", ["from=start", "from=results", ""])
+def test_no_search_still_opens_the_block_view(client, make_flat, origin):
+    flat = make_flat(block="7H", flat_type="4 ROOM", resale_price=Decimal("400000"))
+    make_flat(block="7H", flat_type="5 ROOM", resale_price=Decimal("700000"))
+    response = client.get(details_url(flat, origin))
+    assert response.context["block_view"] is True and response.context["fit"] is None
+    assert response.context["shared"]["count"] == 2  # every sale in the block
+    assert [r["flat_type"] for r in response.context["price_by_type"]] == ["4 ROOM", "5 ROOM"]
+    content = response.content.decode()
+    assert "Block details" in content and "Start a search" in content
 
 
 @pytest.mark.django_db
@@ -395,7 +409,7 @@ def test_details_lists_nearby_amenities(client, located_flat):
 def test_location_notices(client, make_flat):
     approx = make_flat(latitude=1.37, longitude=103.85, coords_approximate=True)
     assert "Approximate location (town centre)" in client.get(details_url(approx)).content.decode()
-    missing = make_flat()
+    missing = make_flat(block="99Z")
     assert "Location not available" in client.get(details_url(missing)).content.decode()
 
 

@@ -1,9 +1,9 @@
 """
 «Boundary» FlatDetailsUI — Property Details Page (UC-02): the FR 2.2.3.1 fields, the
-Fit Score breakdown and nearby amenities (UC-11). When opened from Results with a search,
-the page is block-level: shared block fields, a table of (flat_type, storey_range)
-combinations, and the block's best flat's Fit Score with the Price row highlighted as the
-varying part. Back follows the `from` guard (start | results | saved). Selecting an amenity
+Fit Score breakdown and nearby amenities (UC-11). Unless opened from Saved or Compare (which
+point at one sale), the page is block-level: shared block fields and the block's sales. With
+a search, those are the matching sales and the Fit Score is the block's best, with the Price
+row highlighted as the varying part; without one, every sale in the block, unscored. Back follows the `from` guard (start | results | saved). Selecting an amenity
 happens on the map, through MapUI.
 """
 from django.conf import settings
@@ -20,6 +20,7 @@ from .floor_plans import floor_plan
 from .forms import SearchForm, has_search
 
 ORIGINS = ("start", "results", "saved", "compare")
+SINGLE_FLAT_ORIGINS = ("saved", "compare")  # these link to one sale; the rest open the block
 
 
 def flat_details(request, flat_id):
@@ -38,33 +39,45 @@ def flat_details(request, flat_id):
     if has_search(request.GET):
         if form.is_valid():
             query = form.to_query()
-            controller = SearchController()
-            if origin == "results":
-                # Block-level view: every matching flat in this block, scored on the whole
-                # search's thresholds so its Fit Scores match the Results page exactly.
-                matching = controller.filter_flats(query).filter(block=flat.block, street_name=flat.street_name)
-                result = controller.rank_flats(matching, query, bounds=controller.bounds_for(query))
-                flats = ResaleFlat.objects.select_related("proximity").in_bulk(result.flatIds)
-                sorted_flats = [flats[fid] for fid in result.flatIds]
-                if sorted_flats:
-                    variants = _variants(sorted_flats, result.fitScores)
-                    location_flat = next((f for f in sorted_flats if f.has_coords), flat)
-                    shared = _shared(sorted_flats, location_flat, variants)
-                    best_flat = _best_flat(sorted_flats, result.fitScores)
-                    fit = result.fitScores[best_flat.id]
-                    fits = {fid: score.total for fid, score in result.fitScores.items()}
-                    breakdown = breakdown_rows(fit, query, price_range=(shared["min_price"], shared["max_price"]))
-                    block_view = True
-            else:
-                # Saved / direct link that still carries a search in its URL: score this flat.
-                fit = controller.calculate_fit_score(flat, query, controller.bounds_for(query))
-                fits = {flat.id: fit.total}
-                breakdown = breakdown_rows(fit, query)
         else:
             search_error = True
+    controller = SearchController()
 
-    # Without a Results search, the variants (for the price-by-type lines and the building)
-    # are every flat in the block.
+    if origin in SINGLE_FLAT_ORIGINS:
+        # Saved / Compare point at one particular sale: show that flat, scored if the link
+        # still carries a search.
+        if query:
+            fit = controller.calculate_fit_score(flat, query, controller.bounds_for(query))
+            fits = {flat.id: fit.total}
+            breakdown = breakdown_rows(fit, query)
+    else:
+        # Block-level view. With a search: every matching flat in this block, scored on the
+        # whole search's thresholds so its Fit Scores match the Results page exactly. Without
+        # one: every sale in the block, unscored.
+        scores = None
+        if query:
+            matching = controller.filter_flats(query).filter(block=flat.block, street_name=flat.street_name)
+            result = controller.rank_flats(matching, query, bounds=controller.bounds_for(query))
+            flats = ResaleFlat.objects.select_related("proximity").in_bulk(result.flatIds)
+            sorted_flats = [flats[fid] for fid in result.flatIds]
+            scores = result.fitScores
+        else:
+            sorted_flats = list(ResaleFlat.objects.select_related("proximity")
+                                .filter(block=flat.block, street_name=flat.street_name)
+                                .order_by("-month", "-resale_price"))
+        if sorted_flats:
+            variants = _variants(sorted_flats, scores)
+            location_flat = next((f for f in sorted_flats if f.has_coords), flat)
+            shared = _shared(sorted_flats, location_flat, variants)
+            block_view = True
+            if scores:
+                best_flat = _best_flat(sorted_flats, scores)
+                fit = scores[best_flat.id]
+                fits = {fid: score.total for fid, score in scores.items()}
+                breakdown = breakdown_rows(fit, query, price_range=(shared["min_price"], shared["max_price"]))
+
+    # Single-flat view: the variants (for the price-by-type lines, the building and the
+    # layouts) are every flat in the block.
     if not block_view:
         block_flats = ResaleFlat.objects.filter(block=flat.block, street_name=flat.street_name)
         variants = _variants(block_flats)
@@ -265,7 +278,7 @@ def _shared(sorted_flats, location_flat, variants) -> dict:
         "max_area": max(areas),
         "count": len(sorted_flats),
         "variant_count": len(variants),
-        "best_fit": max(v["best_fit"] for v in variants),
+        "best_fit": max((v["best_fit"] for v in variants if v["best_fit"] is not None), default=None),
     }
 
 
