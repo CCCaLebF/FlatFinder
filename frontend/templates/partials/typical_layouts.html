@@ -1,0 +1,38 @@
+{% load humanize flatfinder %}
+{% comment %}
+Typical layout of each flat type sold in this block: a tab per type (CSS-only radio tabs,
+.ff-tabs in app.css) showing a drawn schematic plan, its room mix, and this block's floor
+area and price range for that type. Variables: price_by_type (views.details._price_by_type).
+{% endcomment %}
+{% if price_by_type %}
+<section class="rounded-xl border border-slate-200 bg-white p-5" data-typical-layouts>
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 class="font-semibold text-slate-900">Typical layout</h2>
+    <p class="text-xs text-slate-400">Schematic drawing · actual units vary</p>
+  </div>
+
+  <div class="ff-tabs mt-3">
+    {% for row in price_by_type %}
+      <input type="radio" name="ff-layout" id="ff-layout-{{ row.plan.slug }}" class="ff-tabs__input sr-only" {% if forloop.first %}checked{% endif %}>
+    {% endfor %}
+    <div class="ff-tabs__list {% if price_by_type|length == 1 %}hidden{% endif %}">
+      {% for row in price_by_type %}
+        <label for="ff-layout-{{ row.plan.slug }}" data-layout-tab="{{ row.flat_type }}">{{ row.flat_type|street_title }}</label>
+      {% endfor %}
+    </div>
+    <div class="ff-tabs__panels">
+      {% for row in price_by_type %}
+        <div class="ff-tabs__panel">
+          <p class="text-sm"><span class="font-semibold text-slate-800">{{ row.flat_type|street_title }}</span> <span class="text-slate-500">· {{ row.plan.summary }}</span></p>
+          <div class="mt-2 rounded-lg bg-slate-50 p-2"><div class="mx-auto max-w-[67%]">{% include "partials/floor_plan.html" with plan=row.plan flat_type=row.flat_type %}</div></div>
+          <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs">
+            <div><dt class="inline text-slate-400">Typical size</dt> <dd class="inline font-semibold text-slate-700">{{ row.plan.typical }}</dd></div>
+            <div><dt class="inline text-slate-400">In this block</dt> <dd class="inline font-semibold text-slate-700">{{ row.min_area|floatformat:"-1" }}{% if row.max_area != row.min_area %}–{{ row.max_area|floatformat:"-1" }}{% endif %} m²</dd></div>
+            <div><dt class="inline text-slate-400">Price range</dt> <dd class="inline font-semibold text-brand-700">S${{ row.min_price|floatformat:0|intcomma }}{% if row.max_price != row.min_price %} – S${{ row.max_price|floatformat:0|intcomma }}{% endif %}</dd></div>
+          </dl>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

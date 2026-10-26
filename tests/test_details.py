@@ -1,17 +1,20 @@
 """Phase 5: UC-02 View Flat Details and UC-11 Find Nearest Amenity."""
 
+import re
 from datetime import date
 from decimal import Decimal
 
 import pytest
 from django.http import QueryDict
+from django.template.loader import render_to_string
 from django.urls import reverse
 
+from backend.core.views.floor_plans import floor_plan
 from backend.core.views.forms import SearchForm
 from backend.core.services.amenity import AmenityController
 from backend.core.services.distance import StraightLineDistance
 from backend.core.services.search import SearchController
-from backend.core.models import BusStop, ChasClinic, HawkerCentre, MrtStation, SearchQuery
+from backend.core.models import FLAT_TYPES, BusStop, ChasClinic, HawkerCentre, MrtStation, SearchQuery
 from backend.core.templatetags.flatfinder import display_name
 
 FLAT_AT = (1.3700, 103.8500)
@@ -189,6 +192,31 @@ def test_past_transactions_carry_the_fit_score_of_scored_sales(client, make_flat
     response = client.get(details_url(cheap, "from=results&max_budget=800000&tx_submit=1"))
     fits = {tx.id: tx.fit for tx in response.context["transactions"]}
     assert fits[cheap.id] == response.context["fit"].total and fits[dear.id] is None
+
+
+@pytest.mark.django_db
+def test_typical_layouts_show_a_tab_per_flat_type_sold(client, make_flat):
+    cheap = make_flat(block="7G", flat_type="4 ROOM", resale_price=Decimal("400000"), floor_area_sqm=92.0)
+    make_flat(block="7G", flat_type="4 ROOM", resale_price=Decimal("450000"), floor_area_sqm=96.0)
+    make_flat(block="7G", flat_type="3 ROOM", resale_price=Decimal("300000"), floor_area_sqm=67.0)
+    content = client.get(details_url(cheap, "from=results&max_budget=800000")).content.decode()
+    assert "data-typical-layouts" in content
+    tabs = re.findall(r'data-layout-tab="([^"]+)"', content)
+    assert tabs == ["3 ROOM", "4 ROOM"]  # FLAT_TYPES order
+    assert "92–96 m²" in content and "Typical 4 Room layout" in content
+
+    filtered = client.get(details_url(cheap, "from=results&flat_type=4+ROOM")).content.decode()
+    assert re.findall(r'data-layout-tab="([^"]+)"', filtered) == ["4 ROOM"]
+
+
+def test_every_flat_type_has_a_floor_plan_inside_the_walls():
+    for flat_type in FLAT_TYPES:
+        plan = floor_plan(flat_type)
+        assert plan is not None, flat_type
+        for room in plan["rooms"]:
+            assert 10 <= room["x"] and room["x"] + room["w"] <= 390, (flat_type, room)
+            assert 10 <= room["y"] and room["y"] + room["h"] <= 250, (flat_type, room)
+        render_to_string("partials/floor_plan.html", {"plan": plan, "flat_type": flat_type})
 
 
 @pytest.mark.django_db

@@ -1,36 +1,35 @@
 {% load humanize flatfinder %}
-{% comment %} Fit Score and its breakdown (FR 2.2.2, FR 2.2.3.1.9). Variables: fit, breakdown, search_error, radius_m, unit ("flat"|"block"). {% endcomment %}
-<section class="rounded-xl border border-slate-200 bg-white p-4" data-fit-score>
-  <h2 class="font-semibold text-slate-900">Fit Score</h2>
+{% comment %}
+Fit Score and its breakdown (FR 2.2.2, FR 2.2.3.1.9), compact: one line per part (label, bar,
+points it adds); the sub-score and weight are in each row's tooltip. Variables: fit, breakdown,
+search_error, unit ("flat"|"block").
+{% endcomment %}
+<section class="rounded-xl border border-slate-200 bg-white p-5" data-fit-score>
   {% if fit %}
-    <p class="mt-1 text-4xl font-bold tabular-nums text-brand-700">{{ fit.total|floatformat:1 }}<span class="text-base font-medium text-slate-400"> / 100</span></p>
-    <p class="text-xs text-slate-500">How well this {{ unit|default:"flat" }} matches your current search.</p>
+    <div class="flex items-baseline justify-between gap-2">
+      <h2 class="font-semibold text-slate-900">Fit Score</h2>
+      <p class="text-3xl font-bold tabular-nums text-brand-700" title="How well this {{ unit|default:'flat' }} matches your current search">{{ fit.total|floatformat:1 }}<span class="text-sm font-medium text-slate-400"> / 100</span></p>
+    </div>
     <ul class="mt-3 flex flex-col gap-2.5 text-sm">
       {% for row in breakdown %}
-        <li class="{% if row.varying %}rounded-md bg-brand-50 px-2 py-1 ring-1 ring-inset ring-brand-100{% endif %}{% if row.ignored %} text-slate-400{% endif %}">
-          <div class="flex items-baseline justify-between gap-2">
-            <span class="truncate font-medium {% if not row.ignored %}text-slate-700{% endif %}">
-              {{ row.label }}{% if row.varying %}<span class="ml-1 rounded bg-brand-100 px-1 py-0.5 align-middle text-[10px] font-semibold text-brand-700">varies by price</span>{% endif %}
-            </span>
-            {% if row.ignored %}
-              <span class="text-xs">Ignored</span>
-            {% else %}
-              <span class="shrink-0 text-xs tabular-nums text-slate-500">{{ row.score|percent }} · w{{ row.weight }}{% if row.fixed %} fixed{% endif %} · <span class="font-semibold text-slate-800">+{{ row.points|floatformat:1 }}</span></span>
-            {% endif %}
-          </div>
-          {% if not row.ignored %}
-            <div class="mt-1 h-1.5 rounded-full bg-slate-100"><div class="h-1.5 rounded-full bg-brand-500" style="width: {% widthratio row.score 1 100 %}%"></div></div>
-          {% endif %}
-          {% if row.varying %}
-            <p class="mt-0.5 text-[11px] text-slate-500">S${{ row.min_price|floatformat:0|intcomma }}{% if row.max_price != row.min_price %} – S${{ row.max_price|floatformat:0|intcomma }}{% endif %}</p>
+        <li class="grid grid-cols-[minmax(0,8.5rem)_1fr_3rem] items-center gap-3{% if row.ignored %} text-slate-400{% endif %}"
+            {% if not row.ignored %}title="{{ row.label }}: {{ row.score|percent }} · weight {{ row.weight }}{% if row.fixed %} (fixed){% endif %}{% if row.varying %} · varies by price across this block{% endif %}"{% endif %}>
+          <span class="truncate font-medium {% if not row.ignored %}text-slate-700{% endif %}">{{ row.label }}{% if row.varying %}<span class="ml-1 align-middle text-[10px] font-semibold text-brand-600" title="varies by price">*</span>{% endif %}</span>
+          {% if row.ignored %}
+            <span class="text-xs">Ignored</span><span></span>
+          {% else %}
+            <div class="h-1.5 rounded-full bg-slate-100"><div class="h-1.5 rounded-full bg-brand-500" style="width: {% widthratio row.score 1 100 %}%"></div></div>
+            <span class="text-right text-xs font-semibold tabular-nums text-slate-800">+{{ row.points|floatformat:1 }}</span>
           {% endif %}
         </li>
       {% endfor %}
     </ul>
-    <p class="mt-3 text-xs text-slate-400">Each row adds weight × score ÷ total weight. Amenities score 100% next door and 0% at {{ radius_m|intcomma }} m or more.</p>
+    {% if unit == "block" %}<p class="mt-3 text-[11px] text-slate-400"><span class="font-semibold text-brand-600">*</span> varies by price; shown for the block's best match.</p>{% endif %}
   {% elif search_error %}
+    <h2 class="font-semibold text-slate-900">Fit Score</h2>
     <p class="mt-2 text-sm text-slate-600">The search in this link isn't valid, so no Fit Score can be shown.</p>
   {% else %}
+    <h2 class="font-semibold text-slate-900">Fit Score</h2>
     <p class="mt-2 text-sm text-slate-600">The Fit Score depends on your requirements.</p>
     <a href="{% url 'core:start' %}" class="mt-3 inline-block rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">Start a search</a>
   {% endif %}

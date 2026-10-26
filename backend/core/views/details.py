@@ -16,6 +16,7 @@ from backend.core.services.search import SearchController
 from backend.core.models import CATEGORIES, FLAT_TYPES, ResaleFlat
 from backend.core.templatetags.flatfinder import display_name
 
+from .floor_plans import floor_plan
 from .forms import SearchForm, has_search
 
 ORIGINS = ("start", "results", "saved", "compare")
@@ -217,21 +218,27 @@ def _building(flat, variants) -> dict:
         "block": flat.block,
         "top": top,
         "floors": [{"storey": n, "sold": n in sold} for n in range(top, 0, -1)],
-        "floor_px": max(4, min(9, 230 // top)),  # keeps the drawing about 230 px tall
+        "floor_px": max(3, min(7, 150 // top)),  # keeps the drawing about 150 px tall
         "legend": sorted(legend.values(), key=lambda e: -e["low"]),
     }
 
 
 def _price_by_type(variants) -> list:
-    """The resale price range of each flat type in the variants table, in FLAT_TYPES order."""
+    """
+    The resale price and floor-area range of each flat type among the variants, with its
+    typical-layout floor plan, in FLAT_TYPES order.
+    """
     groups = {}
     for variant in variants:
         group = groups.setdefault(variant["flat_type"], {
             "flat_type": variant["flat_type"], "min_price": variant["min_price"],
-            "max_price": variant["max_price"], "count": 0,
+            "max_price": variant["max_price"], "min_area": variant["min_area"],
+            "max_area": variant["max_area"], "count": 0, "plan": floor_plan(variant["flat_type"]),
         })
         group["min_price"] = min(group["min_price"], variant["min_price"])
         group["max_price"] = max(group["max_price"], variant["max_price"])
+        group["min_area"] = min(group["min_area"], variant["min_area"])
+        group["max_area"] = max(group["max_area"], variant["max_area"])
         group["count"] += variant["count"]
     order = {t: i for i, t in enumerate(FLAT_TYPES)}
     return sorted(groups.values(), key=lambda g: (order.get(g["flat_type"], len(order)), g["flat_type"]))

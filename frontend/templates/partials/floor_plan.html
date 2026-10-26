@@ -1,0 +1,18 @@
+{% comment %}
+One schematic floor plan (views/floor_plans.py), drawn on a 400 x 270 canvas: rooms as tinted
+rectangles, the outer wall on top, and the entrance as a gap in the bottom wall with an arrow.
+Variables: plan, flat_type.
+{% endcomment %}
+{% load flatfinder %}
+<svg viewBox="0 0 400 270" class="ff-plan h-auto w-full" role="img"
+     aria-label="Typical {{ flat_type|street_title }} layout: {{ plan.aria }}">
+  {% for room in plan.rooms %}
+    <rect class="ff-plan__{{ room.kind }}" x="{{ room.x }}" y="{{ room.y }}" width="{{ room.w }}" height="{{ room.h }}"/>
+  {% endfor %}
+  <rect class="ff-plan__wall" x="10" y="10" width="380" height="240"/>
+  <line class="ff-plan__door" x1="{{ plan.door|add:-14 }}" y1="250" x2="{{ plan.door|add:14 }}" y2="250"/>
+  <path class="ff-plan__entry" d="M{{ plan.door|add:-6 }} 268 L{{ plan.door|add:6 }} 268 L{{ plan.door }} 257 Z"/>
+  {% for room in plan.rooms %}
+    <text x="{{ room.cx|stringformat:'g' }}" y="{{ room.cy|stringformat:'g' }}" class="{% if room.small %}ff-plan__label--small{% endif %}">{{ room.label }}</text>
+  {% endfor %}
+</svg>
