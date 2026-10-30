@@ -27,3 +27,24 @@ def make_flat(db):
         FlatProximity.objects.create(flat=flat, **(proximity or {}))
         return flat
     return _make
+
+
+@pytest.fixture
+def lab4_flats(make_flat):
+    """
+    Lab 4 shared fixture (docs/testing/Lab4_Test_Design.md). Against the baseline search
+    (min $350k, max $700k, [4 ROOM], lease >= 80) only A matches; B-E each fail one criterion.
+    """
+    near = {"nearest_bus_stop_m": 80, "nearest_mrt_station_m": 500}
+    spec = {
+        "A": ("4 ROOM", "600000", 90.0),
+        "B": ("4 ROOM", "250000", 85.0),  # fails min budget only
+        "C": ("4 ROOM", "900000", 95.0),  # fails max budget only
+        "D": ("5 ROOM", "500000", 85.0),  # fails flat type only
+        "E": ("4 ROOM", "400000", 70.0),  # fails min lease only
+    }
+    return {
+        name: make_flat(proximity=near, block=f"10{i}", flat_type=flat_type, resale_price=Decimal(price),
+                        remaining_lease=lease, latitude=1.35 + i / 1000, longitude=103.85)
+        for i, (name, (flat_type, price, lease)) in enumerate(spec.items())
+    }
