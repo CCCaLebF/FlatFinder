@@ -1,3 +1,5 @@
+import math
+
 from django.db.models import Count
 
 from backend.core.services.search import SearchController
@@ -31,44 +33,43 @@ class MapController:
         ]
         return sorted(areas, key=lambda a: a["town"])
 
-    def get_pins_in_view(self, bounds, query: SearchQuery, limit: int = 500, with_scores: bool = True) -> dict:
+    def get_pins_in_tiles(self, zoom: int, tiles, query: SearchQuery, per_tile: int = 10,
+                          with_scores: bool = True) -> list:
         """
-        FR 2.1.2: matching flats with coordinates inside `bounds` (south, west, north, east).
+        FR 2.1.2: matching flats with coordinates inside the given map tiles (Leaflet's
+        256 px grid at `zoom`), as `[{x, y, locations, total}]`, one entry per requested
+        tile, even when empty.
 
         Flats at the same coordinates (several sales in one block, or every flat in a
-        town while coordinates are approximate) share one location pin. Locations are
-        ordered by their best Fit Score and capped at `limit`. Each pin carries only what
-        drawing it needs (count, best Fit Score and that flat's price); its popup list comes
-        from get_flats_at_location when opened, which keeps this response small and fast.
+        town while coordinates are approximate) share one location pin. Each tile keeps its
+        `per_tile` locations with the best Fit Score. The cap is per tile, not per view, so
+        which pins a tile shows depends only on the tile: panning never drops a pin that is
+        still on screen, and the browser can cache tiles. Each pin carries only what drawing
+        it needs (count, best Fit Score and that flat's price); its popup list comes from
+        get_flats_at_location when opened, which keeps this response small and fast.
         Scores use the whole filtered set's thresholds, so they match the results list.
         """
-        south, west, north, east = bounds
+        wanted = {tuple(tile): {"x": tile[0], "y": tile[1], "locations": {}, "total": 0} for tile in tiles}
+        xs = [x for x, _ in wanted]
+        ys = [y for _, y in wanted]
+        south, west, _, _ = tile_bounds(min(xs), max(ys), zoom)
+        _, _, north, east = tile_bounds(max(xs), min(ys), zoom)
+
         filtered = self.search.filter_flats(query)
         in_view = filtered.filter(latitude__gte=south, latitude__lte=north,
                                   longitude__gte=west, longitude__lte=east)
         result = self.search.rank_flats(in_view, query, bounds=self.search.bounds_for(query))
+        rows = _pin_rows(in_view)
 
-        rows = {row[0]: row[1:] for row in in_view.values_list(
-            "id", "latitude", "longitude", "coords_approximate", "resale_price")}
-
-        locations = {}
         for flat_id in result.flatIds:  # best Fit Score first
-            lat, lng, approximate, price = rows[flat_id]
-            key = (round(lat, 6), round(lng, 6))
-            location = locations.get(key)
-            if location is None:
-                if len(locations) >= limit:
-                    continue
-                location = locations[key] = {
-                    "id": flat_id,  # the best flat here; its details page shows the whole block
-                    "lat": lat, "lng": lng, "approximate": approximate, "count": 0,
-                    "fit": result.fitScores[flat_id].total if with_scores else None,  # the best flat's
-                    "price": float(price),
-                }
-            location["count"] += 1
+            row = rows[flat_id]
+            tile = wanted.get(tile_of(row[0], row[1], zoom))
+            if tile is None:  # inside the bounding box, but in a tile the browser already has
+                continue
+            tile["total"] += 1
+            _add_to_location(tile["locations"], flat_id, row, result, per_tile, with_scores)
 
-        shown = sum(loc["count"] for loc in locations.values())
-        return {"locations": list(locations.values()), "total": result.count, "truncated": shown < result.count}
+        return [dict(tile, locations=list(tile["locations"].values())) for tile in wanted.values()]
 
     def get_flats_at_location(self, lat: float, lng: float, query: SearchQuery, with_scores: bool = True) -> dict:
         """
@@ -87,6 +88,47 @@ class MapController:
             "approximate": bool(listed) and rows[listed[0]]["coords_approximate"],
             "flats": [_pin_flat(rows[fid], result.fitScores[fid].total if with_scores else None) for fid in listed],
         }
+
+
+def tile_of(lat: float, lng: float, zoom: int) -> tuple:
+    """The (x, y) of the Web Mercator map tile holding (lat, lng) at `zoom`, as Leaflet numbers them."""
+    n = 2 ** zoom
+    x = int((lng + 180) / 360 * n)
+    y = int((1 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2 * n)
+    return x, y
+
+
+def tile_bounds(x: int, y: int, zoom: int) -> tuple:
+    """A map tile's (south, west, north, east) in degrees."""
+    n = 2 ** zoom
+
+    def lat(edge):
+        return math.degrees(math.atan(math.sinh(math.pi * (1 - 2 * edge / n))))
+
+    return lat(y + 1), x / n * 360 - 180, lat(y), (x + 1) / n * 360 - 180
+
+
+def _pin_rows(qs) -> dict:
+    """flat id -> (lat, lng, approximate, price), what drawing a pin needs."""
+    return {row[0]: row[1:] for row in qs.values_list(
+        "id", "latitude", "longitude", "coords_approximate", "resale_price")}
+
+
+def _add_to_location(locations: dict, flat_id, row, result, limit: int, with_scores: bool):
+    """Count a flat at its location's pin, starting the pin if there is room for one more."""
+    lat, lng, approximate, price = row
+    key = (round(lat, 6), round(lng, 6))
+    location = locations.get(key)
+    if location is None:
+        if len(locations) >= limit:
+            return
+        location = locations[key] = {
+            "id": flat_id,  # the best flat here; its details page shows the whole block
+            "lat": lat, "lng": lng, "approximate": approximate, "count": 0,
+            "fit": result.fitScores[flat_id].total if with_scores else None,  # the best flat's
+            "price": float(price),
+        }
+    location["count"] += 1
 
 
 def _pin_flat(row, fit):

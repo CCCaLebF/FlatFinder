@@ -205,7 +205,7 @@ tests/
 | Endpoint | What it returns |
 |---|---|
 | `GET /api/flats/area-counts` | Matching flats per town |
-| `GET /api/flats/in-bounds` | One pin per location in the visible map area: count, best Fit Score and price (gzip-compressed) |
+| `GET /api/flats/in-tiles` | One pin per location in the requested map tiles (`z`, `tiles=x:y,...`), up to 10 per tile: count, best Fit Score and price. The map caches each tile (gzip-compressed) |
 | `GET /api/flats/at-location` | A pin's popup list: the matching flats at one location, best first |
 | `GET /api/flats/<id>/amenities` | Everything within 1 km of a flat |
 | `GET /api/walking-distance` | Walking distance from a flat to a point |

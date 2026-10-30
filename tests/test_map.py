@@ -6,13 +6,13 @@ import pytest
 from django.conf import settings
 from django.urls import reverse
 
-from backend.core.services.map import MapController
+from backend.core.services.map import MapController, tile_bounds, tile_of
 from backend.core.services.search import SearchController
 from backend.core.models import BusStop, SearchQuery, Town
 
 JSON = {"HTTP_ACCEPT": "application/json"}
 STATIC_JS = Path(__file__).resolve().parent.parent / "frontend" / "static" / "js"
-VIEW = {"south": 1.30, "west": 103.80, "north": 1.40, "east": 103.90}
+TILE_Z12 = (3229, 2032)  # the zoom-12 map tile holding (1.35, 103.85) and (1.36, 103.86)
 
 
 @pytest.fixture
@@ -39,16 +39,16 @@ def test_area_counts_follow_the_filters(towns, make_flat):
 
 
 @pytest.mark.django_db
-def test_pins_in_view_group_flats_at_the_same_point(make_flat):
+def test_pins_in_a_tile_group_flats_at_the_same_point(make_flat):
     shared = dict(latitude=1.35, longitude=103.85)
     best = make_flat(resale_price=Decimal("300000"), remaining_lease=95, block="1", **shared)
     make_flat(resale_price=Decimal("600000"), remaining_lease=60, block="2", **shared)
     make_flat(resale_price=Decimal("450000"), remaining_lease=80, block="3", latitude=1.36, longitude=103.86)
-    make_flat(latitude=1.45, longitude=103.85)  # outside the view
+    make_flat(latitude=1.45, longitude=103.85)  # in the tile above
     make_flat()  # no coordinates: never a pin
 
-    pins = MapController().get_pins_in_view((1.30, 103.80, 1.40, 103.90), SearchQuery())
-    assert pins["total"] == 3 and not pins["truncated"]
+    pins = MapController().get_pins_in_tiles(12, [TILE_Z12], SearchQuery())[0]
+    assert pins["total"] == 3
     first = pins["locations"][0]
     assert (first["lat"], first["lng"], first["count"]) == (1.35, 103.85, 2)
     assert first["price"] == 300000.0  # the best flat's price, for a price tag
@@ -69,17 +69,36 @@ def test_pin_scores_match_the_results_list(make_flat):
     query = SearchQuery(mrtStationWeight=7)
     controller = SearchController()
     result = controller.rank_flats(controller.filter_flats(query), query)
-    pin = MapController().get_pins_in_view((1.30, 103.80, 1.40, 103.90), query)["locations"][0]
+    pin = MapController().get_pins_in_tiles(12, [TILE_Z12], query)[0]["locations"][0]
     popup_flat = MapController().get_flats_at_location(1.35, 103.85, query)["flats"][0]
     assert pin["fit"] == popup_flat["fit"] == result.fitScores[popup_flat["id"]].total
 
 
+def test_tile_math_matches_leaflet():
+    # Leaflet puts (1.35, 103.85) in tile 12918:8130 at zoom 14 (EPSG:3857, 256 px tiles).
+    assert tile_of(1.35, 103.85, 14) == (12918, 8130)
+    south, west, north, east = tile_bounds(12918, 8130, 14)
+    assert south <= 1.35 <= north and west <= 103.85 <= east
+    assert tile_of((south + north) / 2, (west + east) / 2, 14) == (12918, 8130)
+
+
 @pytest.mark.django_db
-def test_pin_limit_marks_truncation(make_flat):
-    for i in range(5):
-        make_flat(latitude=1.31 + i / 100, longitude=103.85)
-    pins = MapController().get_pins_in_view((1.30, 103.80, 1.40, 103.90), SearchQuery(), limit=3)
-    assert len(pins["locations"]) == 3 and pins["truncated"] and pins["total"] == 5
+def test_pins_in_tiles_cap_each_tile_on_its_own(make_flat):
+    for i in range(5):  # one crowded tile...
+        make_flat(latitude=1.3500 + i / 10000, longitude=103.8500)
+    make_flat(latitude=1.3500, longitude=103.8800)  # ...and a quiet one next door
+    dense, quiet = tile_of(1.35, 103.85, 14), tile_of(1.35, 103.88, 14)
+    empty = (dense[0], dense[1] + 3)
+
+    tiles = MapController().get_pins_in_tiles(14, [dense, quiet, empty], SearchQuery(), per_tile=3)
+    by_tile = {(t["x"], t["y"]): t for t in tiles}
+    assert len(by_tile[dense]["locations"]) == 3 and by_tile[dense]["total"] == 5
+    assert len(by_tile[quiet]["locations"]) == 1  # not crowded out by the busy tile
+    assert by_tile[empty] == {"x": empty[0], "y": empty[1], "locations": [], "total": 0}
+
+    # A tile's pins don't depend on which other tiles are asked for, so panning keeps them.
+    alone = MapController().get_pins_in_tiles(14, [dense], SearchQuery(), per_tile=3)[0]
+    assert alone["locations"] == by_tile[dense]["locations"]
 
 
 # --- JSON endpoints -----------------------------------------------------------------------
@@ -90,16 +109,6 @@ def test_area_counts_api(client, towns, make_flat):
     make_flat(town="BEDOK", resale_price=Decimal("900000"))
     data = client.get(reverse("core:api_area_counts"), {"max_budget": 500000}, **JSON).json()
     assert data == {"areas": [{"town": "BEDOK", "lat": 1.33, "lng": 103.93, "count": 1}], "total": 1}
-
-
-@pytest.mark.django_db
-def test_in_bounds_api_and_fit_only_with_a_search(client, make_flat):
-    make_flat(latitude=1.35, longitude=103.85, coords_approximate=True)
-    no_search = client.get(reverse("core:api_flats_in_bounds"), VIEW).json()
-    assert no_search["locations"][0]["approximate"] is True
-    assert no_search["locations"][0]["fit"] is None
-    with_search = client.get(reverse("core:api_flats_in_bounds"), {**VIEW, "w_bus_stop": 5}).json()
-    assert with_search["locations"][0]["fit"] is not None
 
 
 @pytest.mark.django_db
@@ -115,22 +124,40 @@ def test_at_location_api(client, make_flat):
 
 
 @pytest.mark.django_db
-def test_in_bounds_api_is_compressed(client, make_flat):
+def test_in_tiles_api_is_compressed(client, make_flat):
     for i in range(30):
-        make_flat(latitude=1.31 + i / 1000, longitude=103.85)
-    response = client.get(reverse("core:api_flats_in_bounds"), VIEW, HTTP_ACCEPT_ENCODING="gzip")
+        make_flat(latitude=1.35 + i / 10000, longitude=103.85)
+    x, y = tile_of(1.35, 103.85, 14)
+    response = client.get(reverse("core:api_flats_in_tiles"), {"z": 14, "tiles": f"{x}:{y}"},
+                          HTTP_ACCEPT_ENCODING="gzip")
     assert response["Content-Encoding"] == "gzip"
 
 
 @pytest.mark.django_db
+def test_in_tiles_api(client, make_flat):
+    make_flat(latitude=1.35, longitude=103.85, coords_approximate=True)
+    x, y = tile_of(1.35, 103.85, 14)
+    url = reverse("core:api_flats_in_tiles")
+    data = client.get(url, {"z": 14, "tiles": f"{x}:{y},{x + 1}:{y}"}).json()
+    assert [(t["x"], t["y"], t["total"]) for t in data["tiles"]] == [(x, y, 1), (x + 1, y, 0)]
+    assert data["tiles"][0]["locations"][0]["fit"] is None
+    assert data["tiles"][0]["locations"][0]["approximate"] is True
+    with_search = client.get(url, {"z": 14, "tiles": f"{x}:{y}", "w_bus_stop": 5}).json()
+    assert with_search["tiles"][0]["locations"][0]["fit"] is not None
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("params", [
-    {},  # no bounds
-    {"south": "x", "west": 103.8, "north": 1.4, "east": 103.9},
-    {"south": 1.4, "west": 103.8, "north": 1.3, "east": 103.9},  # south > north
-    {**VIEW, "w_bus_stop": 40},  # invalid search
+    {},  # no tiles
+    {"z": 14, "tiles": "1:x"},
+    {"z": 14, "tiles": "1:2:3"},
+    {"z": 12, "tiles": "1:2"},  # below the pin zoom
+    {"z": 14, "tiles": f"{2 ** 14}:0"},  # off the map
+    {"z": 14, "tiles": ",".join(f"{i}:0" for i in range(settings.MAP_MAX_TILES + 1))},
+    {"z": 14, "tiles": "1:2", "w_bus_stop": 40},  # invalid search
 ])
-def test_in_bounds_api_rejects_bad_input(client, params):
-    response = client.get(reverse("core:api_flats_in_bounds"), params)
+def test_in_tiles_api_rejects_bad_input(client, params):
+    response = client.get(reverse("core:api_flats_in_tiles"), params)
     assert response.status_code == 400 and "error" in response.json()
 
 
@@ -163,7 +190,7 @@ def test_bookmarks_api_lists_saved_flats_with_a_location(client, make_flat):
 @pytest.mark.django_db
 def test_map_endpoints_are_get_only(client, make_flat):
     flat = make_flat()
-    for url in (reverse("core:api_area_counts"), reverse("core:api_flats_in_bounds"),
+    for url in (reverse("core:api_area_counts"), reverse("core:api_flats_in_tiles"),
                 reverse("core:api_flat_amenities", args=[flat.id]), reverse("core:api_bookmarks")):
         assert client.post(url).status_code == 405
 
@@ -237,7 +264,9 @@ def test_map_config_reaches_the_page(client):
 def test_map_js_contracts():
     source = (STATIC_JS / "map.js").read_text(encoding="utf-8")
     assert "cfg.pinMinZoom" in source                                 # FR 2.1.1 / 2.1.2 switch
-    assert "/api/flats/area-counts?" in source and "/api/flats/in-bounds?" in source
+    assert "/api/flats/area-counts?" in source and "/api/flats/in-tiles?" in source
+    assert "tileCache[key]" in source                                  # loaded tiles are never re-fetched
+    assert '"+" + count + " more"' in source and "map.getZoom() + 1" in source  # capped tiles say so; click zooms in
     assert "/api/bookmarks" in source                                  # UC-03.AC.1
     assert "map.removeLayer(layers[type])" in source                   # UC-12: hide without re-fetching
     assert "MapState.save" in source                                   # UC-13

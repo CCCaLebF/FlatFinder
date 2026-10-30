@@ -95,6 +95,17 @@ html[data-panels-hidden] .ff-panel-toggle__icon { transform: translateX(-2px) ro
 .ff-price--approx { border-style: dashed; border-color: #0f172a; }
 .ff-pin--saved { --ff-fit: var(--ff-saved); --ff-fit-text: #fde047; }
 
+/* A map tile with more flats than pins (MAP_PINS_PER_TILE): "+N more", which zooms in when
+   clicked. A white pill with a zoom-in magnifier: not a pin's teardrop nor a town count's green circle. */
+.ff-more {
+  position: absolute; transform: translate(-50%, -50%); white-space: nowrap; cursor: zoom-in;
+  display: flex; align-items: center; gap: 4px; padding: 3px 9px 3px 6px; border-radius: 9999px;
+  background: #fff; color: #0f172a; border: 2px solid #0f172a; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  font: 700 12px/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.ff-more svg { width: 13px; height: 13px; flex: none; }
+.ff-more:hover { background: #0f172a; color: #fff; }
+
 /* The flat or block picked with "Show on map": bigger, violet, with a pulsing ring, above every other pin. */
 .ff-focus { position: relative; width: 40px; height: 40px; }
 .ff-focus::before {

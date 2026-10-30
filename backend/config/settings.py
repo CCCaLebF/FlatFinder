@@ -110,7 +110,8 @@ COMPARE_PRICE_REF_MAX = 1_500_000.0   # price score reaches 0.0 at this price (c
 
 RESULTS_PER_PAGE = 20            # decision 12
 MAP_PIN_MIN_ZOOM = 14            # area counts below, flat pins from here up (decision 12)
-MAP_PIN_LIMIT = 250               # pins per view; more made zoom 14 laggy and too crowded to read
+MAP_PINS_PER_TILE = 10            # pins per 256 px map tile; a zoom-14 view is ~24-35 tiles, ~250 pins (more was laggy)
+MAP_MAX_TILES = 256               # tiles per /api/flats/in-tiles request; a 4K screen needs ~150
 # Flat pins are coloured by their best Fit Score: dark green from 85, then green, light green,
 # yellow, orange, and red below the last threshold. Each value is a band's lower bound.
 MAP_FIT_COLOUR_BANDS = (85, 75, 65, 55, 45)

@@ -39,24 +39,29 @@ def area_counts_api(request):
 
 @require_GET
 @gzip_page  # the biggest response the map fetches; it holds no secrets, so compressing is safe
-def flats_in_bounds_api(request):
+def flats_in_tiles_api(request):
     """
-    GET /api/flats/in-bounds?south=&west=&north=&east=&<query> — FR 2.1.2, FR 2.2.1.
-    Fit Scores are included only when the URL carries a search. Each pin's flat list comes
-    from flats_at_location_api when its popup opens.
+    GET /api/flats/in-tiles?z=&tiles=x:y,x:y&<query> — FR 2.1.2, FR 2.2.1: the map's pins,
+    capped per map tile so panning keeps the pins already on screen. The browser asks only
+    for tiles it hasn't loaded yet. Fit Scores only when the URL carries a search. Each
+    pin's flat list comes from flats_at_location_api when its popup opens.
     """
     query, error = _query_or_error(request)
     if error:
         return error
     try:
-        bounds = tuple(float(request.GET[k]) for k in ("south", "west", "north", "east"))
+        zoom = int(request.GET["z"])
+        tiles = [tuple(int(v) for v in tile.split(":")) for tile in request.GET["tiles"].split(",")]
     except (KeyError, ValueError):
-        return JsonResponse({"error": "south, west, north and east are required numbers."}, status=400)
-    if bounds[0] > bounds[2] or bounds[1] > bounds[3]:
-        return JsonResponse({"error": "Bounds must have south <= north and west <= east."}, status=400)
-    pins = MapController().get_pins_in_view(bounds, query, limit=settings.MAP_PIN_LIMIT,
-                                            with_scores=has_search(request.GET))
-    return JsonResponse(pins)
+        return JsonResponse({"error": "z and tiles (x:y,x:y) are required numbers."}, status=400)
+    if not settings.MAP_PIN_MIN_ZOOM <= zoom <= settings.MAP_MAX_ZOOM:
+        return JsonResponse({"error": "z is outside the zoom levels that show pins."}, status=400)
+    if not 1 <= len(tiles) <= settings.MAP_MAX_TILES or any(
+            len(t) != 2 or not (0 <= t[0] < 2 ** zoom and 0 <= t[1] < 2 ** zoom) for t in tiles):
+        return JsonResponse({"error": f"tiles must be 1 to {settings.MAP_MAX_TILES} tiles at zoom z."}, status=400)
+    pins = MapController().get_pins_in_tiles(zoom, tiles, query, per_tile=settings.MAP_PINS_PER_TILE,
+                                             with_scores=has_search(request.GET))
+    return JsonResponse({"tiles": pins})
 
 
 @require_GET

@@ -164,6 +164,17 @@
     return icon;
   }
 
+  var ZOOM_IN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true">'
+    + '<circle cx="10" cy="10" r="7"/><path d="M15 15l6 6M10 7v6M7 10h6"/></svg>';
+
+  /** A "+N more" badge for a map tile with more flats than pins. Anchored at its centre; its text goes in the span. */
+  function moreIcon() {
+    return L.divIcon({
+      className: "", iconSize: null, iconAnchor: [0, 0],
+      html: '<div class="ff-more">' + ZOOM_IN_SVG + "<span></span></div>",
+    });
+  }
+
   function addLabelledMarker(latlng, icon, options, layer) {
     var marker = L.marker(latlng, Object.assign({ icon: icon }, options));
     if (icon.label) {
@@ -361,8 +372,11 @@
     var search = searchParams();
     var areaLayer = L.layerGroup().addTo(map);
     var pinLayer = L.layerGroup().addTo(map);
+    var moreLayer = L.layerGroup().addTo(map);
     var savedLayer = L.layerGroup().addTo(map);
     var areaCache = null;
+    var tileCache = {};            // "z/x/y" -> {locations, total}; the search is fixed per page
+    var tilesLoading = new Set();  // tiles requested but not back yet
     var pending = null;
     var timer = null;
 
@@ -394,7 +408,8 @@
     // location and flats haven't changed and only touches the rest, so panning stays smooth
     // (redrawing every pin froze the page for 80–150 ms at the pin limit).
     var pinMarkers = {};
-    var savedMarkers = {};       // saved flat id -> {marker, lat, lng, hidden}
+    var moreMarkers = {};        // "z/x/y" -> {marker, hidden}, the "+N more" badges
+    var savedMarkers = {};      // saved flat id -> {marker, lat, lng, hidden}
     var hiddenPins = new Set();  // locations hidden under the focus pin
     var hiddenSaved = new Set(); // saved flat ids hidden under the focus pin
     var focusKey = null;         // the focused location, kept so redraws can re-hide it
@@ -403,6 +418,8 @@
     function clearFlatPins() {
       pinLayer.clearLayers();
       pinMarkers = {};
+      moreLayer.clearLayers();
+      moreMarkers = {};
     }
 
     /**
@@ -469,13 +486,46 @@
       // Pins that left the view, or whose flats changed (their replacement was added above).
       Object.keys(pinMarkers).forEach(function (key) { pinLayer.removeLayer(pinMarkers[key].marker); });
       pinMarkers = next;
+      displayMoreBadges(data.tiles);
       syncSavedOverlap();          // keep saved locations clear after a redraw
       if (focus) focus.refresh();  // keep the focus location hidden after a redraw
+      // Totals cover the whole tiles under the view, so they can run a little past its edges.
       var shown = data.locations.reduce(function (sum, loc) { return sum + loc.count; }, 0);
-      setStatus(data.truncated
-        ? "Showing " + shown.toLocaleString("en-SG") + " of " + data.total.toLocaleString("en-SG") + " past sales in view · zoom in for more"
+      setStatus(shown < data.total
+        ? "Showing " + shown.toLocaleString("en-SG") + " of " + data.total.toLocaleString("en-SG") + " past sales in this area · zoom in for more"
         : data.total === 0 ? "No matching past sales with a location in this area"
-        : data.total.toLocaleString("en-SG") + " past sales in view");
+        : data.total.toLocaleString("en-SG") + " past sales in this area");
+    }
+
+    /**
+     * A tile with more flats than MAP_PINS_PER_TILE gets a "+N more" badge at its centre, so
+     * the hidden flats read as "zoom in", not as gone. Clicking it zooms in one level, where
+     * the tile splits into four with room for more pins. Unchanged badges are kept, like pins.
+     */
+    function displayMoreBadges(tiles) {
+      var next = {};
+      tiles.forEach(function (tile) {
+        if (tile.hidden <= 0) return;
+        var current = moreMarkers[tile.key];
+        if (current && current.hidden === tile.hidden) {
+          next[tile.key] = current;
+          delete moreMarkers[tile.key];  // whatever is left in moreMarkers afterwards is removed
+          return;
+        }
+        var zxy = tile.key.split("/").map(Number);
+        var centre = map.unproject(L.point((zxy[1] + 0.5) * 256, (zxy[2] + 0.5) * 256), zxy[0]);
+        var count = tile.hidden.toLocaleString("en-SG");
+        var marker = L.marker(centre, {
+          icon: moreIcon(), title: count + " more past sales in this area · zoom in to see them", keyboard: true,
+          zIndexOffset: 400,  // above the flat pins so a busy estate doesn't bury it; below saved (500) and focus pins
+        });
+        marker.on("add", function () { marker.getElement().querySelector(".ff-more span").textContent = "+" + count + " more"; });
+        marker.on("click", function () { map.setView(centre, map.getZoom() + 1); });
+        marker.addTo(moreLayer);
+        next[tile.key] = { marker: marker, hidden: tile.hidden };
+      });
+      Object.keys(moreMarkers).forEach(function (key) { moreLayer.removeLayer(moreMarkers[key].marker); });
+      moreMarkers = next;
     }
 
     /**
@@ -516,28 +566,70 @@
       if (focus) focus.refresh();  // the focused saved pin stays hidden after a reload
     }
 
+    /** The pin tiles covering the view: Leaflet's own 256 px tile grid at the current zoom. */
+    function visibleTiles() {
+      var z = map.getZoom();
+      var px = map.getPixelBounds();
+      var min = px.min.divideBy(256).floor();
+      var max = px.max.divideBy(256).floor();
+      var keys = [];
+      for (var x = min.x; x <= max.x; x++) {
+        for (var y = min.y; y <= max.y; y++) keys.push(z + "/" + x + "/" + y);
+      }
+      return keys;
+    }
+
+    /**
+     * Pins are capped per map tile, not per view, so a pan keeps every pin still on screen
+     * and only asks for the tiles that came into view. Redraws once all of them are in.
+     */
+    function showPins() {
+      var keys = visibleTiles();
+      var missing = keys.filter(function (key) { return !tileCache[key] && !tilesLoading.has(key); });
+      if (missing.length) fetchTiles(missing);
+      if (!keys.every(function (key) { return tileCache[key]; })) return;
+      var data = { locations: [], total: 0, tiles: [] };
+      keys.forEach(function (key) {
+        var tile = tileCache[key];
+        var shown = tile.locations.reduce(function (sum, loc) { return sum + loc.count; }, 0);
+        data.locations = data.locations.concat(tile.locations);
+        data.total += tile.total;
+        data.tiles.push({ key: key, hidden: tile.total - shown });
+      });
+      displayFlatPins(data);
+    }
+
+    function fetchTiles(keys) {
+      var z = keys[0].split("/")[0];
+      var params = new URLSearchParams(search);
+      params.set("z", z);
+      params.set("tiles", keys.map(function (key) { return key.split("/").slice(1).join(":"); }).join(","));
+      keys.forEach(function (key) { tilesLoading.add(key); });
+      getJSON("/api/flats/in-tiles?" + params)
+        .then(function (data) {
+          data.tiles.forEach(function (tile) { tileCache[z + "/" + tile.x + "/" + tile.y] = tile; });
+          keys.forEach(function (key) { tilesLoading.delete(key); });
+          if (map.getZoom() >= cfg.pinMinZoom) showPins();
+        }, function () {
+          keys.forEach(function (key) { tilesLoading.delete(key); });
+          setStatus("Couldn't load flats for the map. Try moving the map again.");
+        });
+    }
+
     function load() {
       if (pending) pending.abort();
-      pending = new AbortController();
-      var signal = pending.signal;
-      var done;
-      if (map.getZoom() < cfg.pinMinZoom) {
-        clearFlatPins();
-        done = (areaCache ? Promise.resolve(areaCache) : getJSON("/api/flats/area-counts?" + search, signal))
-          .then(function (data) { areaCache = data; displayAreaCounts(data); });
-      } else {
+      if (map.getZoom() >= cfg.pinMinZoom) {
         areaLayer.clearLayers();
-        var b = map.getBounds();
-        var params = new URLSearchParams(search);
-        params.set("south", b.getSouth().toFixed(6));
-        params.set("west", b.getWest().toFixed(6));
-        params.set("north", b.getNorth().toFixed(6));
-        params.set("east", b.getEast().toFixed(6));
-        done = getJSON("/api/flats/in-bounds?" + params, signal).then(displayFlatPins);
+        showPins();
+        return;
       }
-      done.catch(function (err) {
-        if (err.name !== "AbortError") setStatus("Couldn't load flats for the map. Try moving the map again.");
-      });
+      clearFlatPins();
+      pending = new AbortController();
+      (areaCache ? Promise.resolve(areaCache) : getJSON("/api/flats/area-counts?" + search, pending.signal))
+        .then(function (data) { areaCache = data; displayAreaCounts(data); })
+        .catch(function (err) {
+          if (err.name !== "AbortError") setStatus("Couldn't load flats for the map. Try moving the map again.");
+        });
     }
 
     function loadSaved() {
