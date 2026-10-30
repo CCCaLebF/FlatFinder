@@ -87,6 +87,6 @@
  {
   "id": "s18_outro",
   "uc": "Summary",
-  "text": "That's FlatFinder. Filter and rank flats by what matters to you, explore them on the map, check real walking routes, then save and compare your shortlist. It's built with Django, PostgreSQL, Leaflet and OneMap, and backed by one hundred and sixty automated tests. Thanks for watching."
+  "text": "That's FlatFinder. Filter and rank flats by what matters to you, explore them on the map, check real walking routes, then save and compare your shortlist. It's built with Django, PostgreSQL, Leaflet and OneMap, and backed by two hundred and seventy-five automated tests. Thanks for watching."
  }
 ]
