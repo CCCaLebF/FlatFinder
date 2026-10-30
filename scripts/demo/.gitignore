@@ -1,0 +1,9 @@
+tts/
+vo/
+out/
+build/
+dev/cdn/
+*.mp4
+*.wav
+*.srt
+__pycache__/

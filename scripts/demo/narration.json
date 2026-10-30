@@ -1,0 +1,92 @@
+[
+ {
+  "id": "s01_intro",
+  "uc": "Overview",
+  "text": "Buying a resale flat in Singapore means juggling a budget, the remaining lease, and how close you'll be to the places you use every day. FlatFinder brings all of that into one search. It uses the last twelve months of HDB resale transactions from data dot gov dot S G, and it needs no account and no personal details. You just open it and start."
+ },
+ {
+  "id": "s02_filters",
+  "uc": "UC-08 Filter Search Results",
+  "text": "Everything is set from the sidebar. I'll cap my budget at six hundred and fifty thousand dollars, pick four-room and five-room flats, and ask for at least seventy years of remaining lease. I can also limit how far I'm willing to walk. Here, the MRT must be within eight hundred metres."
+ },
+ {
+  "id": "s03_weights",
+  "uc": "UC-01 Search Resale Flats",
+  "text": "Next are the priority weights. Each amenity gets a score from one to ten for how much being close to it matters. MRT stations and hawker centres matter most to me, and child care barely matters, so I'll turn it down. Then, Find Matching Flats."
+ },
+ {
+  "id": "s04_results",
+  "uc": "UC-09 Rank Search Results",
+  "text": "In well under a second, FlatFinder filters every matching transaction and ranks them by a Fit Score out of one hundred. The score blends price, remaining lease, and the distance to each amenity, weighted by the priorities I just set. Results are grouped by block, and each card shows the price, floor area, storey, lease, and the distance to the nearest bus stop, MRT, child care centre, hawker centre and CHAS clinic."
+ },
+ {
+  "id": "s05_sort",
+  "uc": "UC-10 Sort Search Results",
+  "text": "If I'd rather see the cheapest flats first, the sort menu reorders the same results by price, lease, or floor area, without changing what matched. I'll switch back to Fit Score."
+ },
+ {
+  "id": "s06_searchbar",
+  "uc": "UC-07 Search via Search Bar",
+  "text": "The search bar ranks results by distance to a place that matters to me, like my workplace or my parents' home. I'll type Bishan MRT. OneMap finds the location, a chip confirms it, and a new Near location weight appears in the sidebar. Flats closer to Bishan now move up the list."
+ },
+ {
+  "id": "s07_details",
+  "uc": "UC-02 View Flat Details",
+  "text": "Selecting a card opens the block's details. On the left is the block, with the storeys that have sold highlighted. On the right, the Fit Score breakdown shows exactly how many points each factor contributed, so the ranking is never a black box."
+ },
+ {
+  "id": "s08_details_more",
+  "uc": "UC-11 Find Nearest Amenity",
+  "text": "Further down, there's a typical layout for the flat type, every past transaction in the block, and the amenities within one kilometre, grouped by category and sorted by distance."
+ },
+ {
+  "id": "s09_bookmark",
+  "uc": "UC-05 Bookmark Resale Flat",
+  "text": "I like this one, so I'll bookmark it. The Saved counter in the header updates straight away."
+ },
+ {
+  "id": "s10_flatmap",
+  "uc": "UC-03 Display Interactive Map",
+  "text": "Opening this block in Map View centres the OneMap base map on the flat, with a one kilometre circle around it. Every bus stop, MRT exit, child care centre, hawker centre and CHAS clinic inside the circle is plotted in its own colour."
+ },
+ {
+  "id": "s11_layers",
+  "uc": "UC-12 Toggle Amenity Layers",
+  "text": "These layer toggles show or hide each category instantly, without asking the server again. I'll hide bus stops and child care centres to clear up the map."
+ },
+ {
+  "id": "s12_walking",
+  "uc": "UC-04 Calculate Walking Distance",
+  "text": "Selecting an amenity asks the OneMap routing service for the real walking route. Here's the walk to the MRT station. The distance and time appear in the popup, and the route is drawn on the map, because a straight line can be misleading. Let's check the nearest hawker centre too."
+ },
+ {
+  "id": "s13_browse",
+  "uc": "UC-03 Display Interactive Map",
+  "text": "Map View also works for the whole result set. Zoomed out, each town shows how many flats match. Select a town, and its blocks appear as pins coloured by their best Fit Score, from dark green for the best fits down to red. Show on map highlights a result from the list, the arrow on the edge hides the side panels for a full-screen map, and clicking any pin opens that block's details."
+ },
+ {
+  "id": "s14_saved",
+  "uc": "UC-14 View Bookmarked Flats",
+  "text": "Back in the list, I'll bookmark two more flats. The Saved page collects everything I've bookmarked in this session. Selecting the bookmark again removes a flat, so the list stays tidy."
+ },
+ {
+  "id": "s15_compare",
+  "uc": "UC-15 Compare Flats",
+  "text": "To decide between finalists, I add up to three flats to the compare tray at the bottom of the screen, then open Compare. The flats sit side by side, factor by factor, and FlatFinder names the winner. These weights can be adjusted too. If price matters more to me, I'll raise it and update, and the comparison is recalculated."
+ },
+ {
+  "id": "s16_noresults",
+  "uc": "UC-01 Exception: no results",
+  "text": "If a search is too strict, say a budget of two hundred thousand dollars for a five-room flat, FlatFinder doesn't just show an empty page. It explains that nothing matched and suggests which requirements to relax."
+ },
+ {
+  "id": "s17_failure",
+  "uc": "UC-06 Handle API Failure / UC-13 Render Last Saved Map State",
+  "text": "Finally, what happens when OneMap goes down? For this demo, we block OneMap in the browser. A banner tells the user the service is unavailable, the map falls back to the last view that rendered successfully, and walking distances show as unavailable. Search, details, bookmarks and compare all keep working."
+ },
+ {
+  "id": "s18_outro",
+  "uc": "Summary",
+  "text": "That's FlatFinder. Filter and rank flats by what matters to you, explore them on the map, check real walking routes, then save and compare your shortlist. It's built with Django, PostgreSQL, Leaflet and OneMap, and backed by one hundred and sixty automated tests. Thanks for watching."
+ }
+]
