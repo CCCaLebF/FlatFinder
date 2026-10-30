@@ -27,7 +27,7 @@
  {
   "id": "s06_searchbar",
   "uc": "UC-07 Search via Search Bar",
-  "text": "The search bar ranks results by distance to a place that matters to me, like my workplace or my parents' home. I'll type Bishan MRT. OneMap finds the location, a chip confirms it, and a new Near location weight appears in the sidebar. Flats closer to Bishan now move up the list."
+  "text": "The search bar ranks results by distance to a place that matters to me, like my workplace or my parents' home. I'll type Bishan MRT. OneMap finds the location, a chip confirms it, and a new Near location weight appears in the sidebar. Every Fit Score now also counts how close the flat is to Bishan, alongside my other priorities."
  },
  {
   "id": "s07_details",

@@ -212,6 +212,32 @@ class Demo:
         self.page.mouse.down(); self.wait(0.06); self.page.mouse.up()
         self.wait(settle)
 
+    def click_pin(self, cat, duration=1.0):
+        """Click the amenity pin of a category nearest the map centre (the flat) that no other pin
+        covers. Close amenities can sit under the flat's own pin; if every pin of the category is
+        covered, the cursor still moves there and the click goes straight to the pin's element."""
+        pins = self.page.locator(f".leaflet-marker-icon:has(.ff-cat-{cat})")
+        if not pins.count():
+            return False
+        order = pins.evaluate_all("""els => {
+            const m = document.querySelector('.leaflet-container').getBoundingClientRect();
+            const cx = m.left + m.width / 2, cy = m.top + m.height / 2;
+            return els.map((el, i) => {
+                const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height * 0.4;
+                return {i, free: el.contains(document.elementFromPoint(x, y)), d: Math.hypot(x - cx, y - cy)};
+            }).sort((a, b) => (b.free - a.free) || (a.d - b.d));
+        }""")
+        best = order[0]
+        pin = pins.nth(best["i"])
+        if best["free"]:
+            self.click(pin, dy=0.4, duration=duration)   # the point checked above
+        else:
+            self.hover(pin, duration=duration)
+            self.wait(0.12)
+            pin.dispatch_event("click")
+            self.wait(0.25)
+        return True
+
     def click_nav(self, loc, timeout=20000, **kw):
         with self.page.expect_navigation(wait_until="load", timeout=timeout):
             self.click(loc, **kw)
@@ -449,9 +475,12 @@ def run():
 
         # 12 — Walking distance (UC-04)
         def s12():
-            d.wait(1.0)
-            mrt = pg.locator(".leaflet-marker-icon:has(.ff-cat-mrt_station)").first
-            d.click(mrt, duration=1.0)
+            # Zoom in so the short walking routes are long enough to see beside the popup.
+            for _ in range(2):
+                d.click(pg.locator(".leaflet-control-zoom-in"), duration=0.6)
+                d.wait(0.5)
+            pg.wait_for_timeout(600)
+            d.click_pin("mrt_station")
             try:
                 pg.wait_for_function("() => { const w = document.querySelector('.leaflet-popup .ff-walk');"
                                      " return w && /done|failed/.test(w.dataset.state || ''); }", timeout=10000)
@@ -459,9 +488,7 @@ def run():
                 pass
             d.wait(4.5)
             pg.keyboard.press("Escape"); d.wait(0.4)
-            hawker = pg.locator(".leaflet-marker-icon:has(.ff-cat-hawker_centre)").first
-            if hawker.count():
-                d.click(hawker, duration=1.0)
+            if d.click_pin("hawker_centre"):
                 try:
                     pg.wait_for_function("() => { const w = document.querySelector('.leaflet-popup .ff-walk');"
                                          " return w && /done|failed/.test(w.dataset.state || ''); }", timeout=10000)
@@ -595,9 +622,7 @@ def run():
             if d.saved.get("flatmap"):
                 pg.goto(d.saved["flatmap"], wait_until="load"); d.settle()
                 d.wait(1.5)
-                mrt = pg.locator(".leaflet-marker-icon:has(.ff-cat-mrt_station)").first
-                if mrt.count():
-                    d.click(mrt, duration=1.0)
+                d.click_pin("mrt_station")
                 d.wait(3.5)
             d.click_nav(pg.locator("header a[href$='/saved/']"), dx=0.4)
         d.scene("s17_failure", s17)
