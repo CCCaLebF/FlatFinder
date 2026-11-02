@@ -101,6 +101,7 @@ FIT_SCORE_FIXED_WEIGHTS = {"price": 5, "lease": 5}
 ANCHOR_RADIUS_M = 3000           # anchor sub-score falls to 0 at this distance (decision 4)
 AMENITY_RADIUS_M = 1000          # "nearest amenities within 1 km" (FR 2.3)
 WEIGHT_MIN, WEIGHT_MAX = 1, 10   # importance scale (decision 1)
+MAX_LEASE_YEARS = 99             # HDB leases run 99 years
 DEFAULT_ANCHOR_WEIGHT = 5
 
 # Compare Score (Phase H): absolute reference scales for the numeric factors, so a small

@@ -219,12 +219,13 @@ class SearchController:
 
         scores = {
             "price": _ratio(bounds.maxPrice - prices, bounds.maxPrice - bounds.minPrice),
-            "lease": _ratio(leases - bounds.minLease, 99 - bounds.minLease),
+            "lease": _ratio(leases - bounds.minLease, settings.MAX_LEASE_YEARS - bounds.minLease),
         }
         weights = {"price": fixed["price"], "lease": fixed["lease"]}
 
+        has_coords = ~(np.isnan(lats) | np.isnan(lngs))
         for key, weight in query.categoryWeights().items():
-            scores[key] = _proximity(distances[key], radius)
+            scores[key] = np.where(has_coords, _proximity(distances[key], radius), 0.0)
             weights[key] = weight
 
         if query.hasAnchor:
@@ -279,3 +280,8 @@ def _ratio(numerator, denominator):
 def _proximity(distance_m, radius_m):
     """max(0, 1 − d / radius); NaN (no coordinates / no node) scores 0."""
     return np.nan_to_num(np.clip(1 - distance_m / radius_m, 0, 1), nan=0.0)
+
+
+def best_fit_flat(flats, fit_scores) -> ResaleFlat:
+    """The flat with the highest Fit Score; ties go to the cheaper flat (like sort_results)."""
+    return max(flats, key=lambda f: (fit_scores[f.id].total, -float(f.resale_price)))

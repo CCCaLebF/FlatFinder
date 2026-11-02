@@ -371,3 +371,13 @@ def test_off_sliders_are_not_server_disabled(client):
     content = client.get(reverse("core:start")).content.decode()
     assert 'name="min_lease"' in content
     assert " disabled" not in content
+
+
+@pytest.mark.django_db
+def test_flat_without_coordinates_ignores_stale_proximity(make_flat):
+    """Issue A2: no coordinates means every proximity category scores 0 (README §4)."""
+    flat = make_flat(proximity={"nearest_mrt_station_m": 100})
+    query = SearchQuery(mrtStationWeight=10)
+    assert fit(flat, query).mrtStationScore == 0
+    result = controller.rank_flats(ResaleFlat.objects.all(), query)
+    assert result.fitScores[flat.id].mrtStationScore == 0

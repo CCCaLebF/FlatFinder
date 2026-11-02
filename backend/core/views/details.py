@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
 from backend.core.services.amenity import AmenityController
-from backend.core.services.search import SearchController
+from backend.core.services.search import SearchController, best_fit_flat
 from backend.core.models import CATEGORIES, FLAT_TYPES, ResaleFlat
 from backend.core.templatetags.flatfinder import display_name
 
@@ -71,7 +71,7 @@ def flat_details(request, flat_id):
             shared = _shared(sorted_flats, location_flat, variants)
             block_view = True
             if scores:
-                best_flat = _best_flat(sorted_flats, scores)
+                best_flat = best_fit_flat(sorted_flats, scores)
                 fit = scores[best_flat.id]
                 fits = {fid: score.total for fid, score in scores.items()}
                 breakdown = breakdown_rows(fit, query, price_range=(shared["min_price"], shared["max_price"]))
@@ -280,11 +280,6 @@ def _shared(sorted_flats, location_flat, variants) -> dict:
         "variant_count": len(variants),
         "best_fit": max((v["best_fit"] for v in variants if v["best_fit"] is not None), default=None),
     }
-
-
-def _best_flat(sorted_flats, fit_scores) -> ResaleFlat:
-    """The block's highest-Fit flat; ties break to the cheaper flat (like sort_results)."""
-    return max(sorted_flats, key=lambda f: (fit_scores[f.id].total, -float(f.resale_price)))
 
 
 def breakdown_rows(fit, query, price_range=None) -> list:

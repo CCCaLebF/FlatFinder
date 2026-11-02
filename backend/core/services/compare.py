@@ -97,7 +97,7 @@ def parse_weights(params, query) -> dict:
                 value = int(params.get(param))
             except (TypeError, ValueError):
                 continue
-            weights[key] = max(1, min(10, value))
+            weights[key] = max(settings.WEIGHT_MIN, min(settings.WEIGHT_MAX, value))
     return weights
 
 
@@ -127,15 +127,15 @@ def compare_homes(flats, query=None, bounds=None, weights=None) -> dict:
 
     def score_lease(flat):
         if has_search:
-            denom = 99 - bounds.minLease
+            denom = settings.MAX_LEASE_YEARS - bounds.minLease
             return 1.0 if denom <= 0 else clamp01((float(flat.remaining_lease) - bounds.minLease) / denom)
-        return clamp01(float(flat.remaining_lease) / 99)
+        return clamp01(float(flat.remaining_lease) / settings.MAX_LEASE_YEARS)
 
     def score_area(flat):
         return clamp01(float(flat.floor_area_sqm) / settings.COMPARE_AREA_REF_MAX_M2)
 
     def score_amenity(flat, field):
-        metres = getattr(flat.proximity, field, None)
+        metres = getattr(getattr(flat, "proximity", None), field, None)
         if metres is None:
             return 0.0
         return clamp01(1 - metres / settings.AMENITY_RADIUS_M)

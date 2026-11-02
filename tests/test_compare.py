@@ -4,9 +4,11 @@ from decimal import Decimal
 import pytest
 from django.urls import reverse
 
-from backend.core.models import SearchQuery
+from backend.core.models import ResaleFlat, SearchQuery
 from backend.core.services.compare import CompareController, compare_homes, default_weights, parse_weights
 from backend.core.services.search import SearchController
+
+from .conftest import build_flat
 
 
 def _toggle_url(flat_id):
@@ -161,3 +163,14 @@ def test_reset_to_start_clears_active_search(client, make_flat):
     client.get(reverse("core:start"))
     assert "active_search" not in client.session
     assert client.get(reverse("core:saved")).context["compare_query"] == "from=saved"
+
+
+@pytest.mark.django_db
+def test_compare_flat_without_proximity_row_scores_zero():
+    """Issue A1: a flat with no FlatProximity row must score 0, not crash Compare."""
+    build_flat(block="1A").save()
+    build_flat(block="2B", resale_price=Decimal("480000")).save()
+    flats = list(ResaleFlat.objects.select_related("proximity"))
+    result = compare_homes(flats)
+    assert all(home["scores"]["bus_stop"] == 0.0 for home in result["homes"])
+    assert result["winner"] is not None

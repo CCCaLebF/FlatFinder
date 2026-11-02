@@ -12,7 +12,7 @@ from django.urls import reverse
 
 from backend.core.integrations.onemap import OneMapError
 from backend.core.services.errors import ErrorHandler
-from backend.core.services.search import SearchController
+from backend.core.services.search import SearchController, best_fit_flat
 from backend.core.models import CATEGORIES, FLAT_TYPES, ResaleFlat, SearchQuery
 
 from .forms import SORT_OPTIONS, SearchForm, has_search, parse_sort_order, sort_param
@@ -103,7 +103,7 @@ def _card(flats, fit_scores, details_query) -> dict:
     if len(flats) == 1:
         return {"flat": lead, "fit": fit_scores[lead.id]}
 
-    best = max(flats, key=lambda f: (fit_scores[f.id].total, -float(f.resale_price)))
+    best = best_fit_flat(flats, fit_scores)
     prices = [f.resale_price for f in flats]
     areas = [f.floor_area_sqm for f in flats]
     leases = [f.remaining_lease for f in flats]
