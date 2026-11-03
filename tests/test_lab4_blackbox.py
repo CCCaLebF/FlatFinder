@@ -175,6 +175,7 @@ def test_bb_lease_filter_boundaries(make_flat, test_id, lease, included):
     ("BB-F7", 800, True),
     ("BB-F8", 801, False),
     ("BB-F9", None, False),  # no coordinates, so no proximity data
+    ("BB-F10", -1, True),  # invalid class d <= -1: not validated, so it passes the "<= limit" check
 ])
 def test_bb_walk_limit_boundaries(make_flat, test_id, metres, included):
     if metres is None:
@@ -191,6 +192,7 @@ def test_bb_walk_limit_boundaries(make_flat, test_id, metres, included):
     ("BB-S3", 1000, 0.0),
     ("BB-S4", 1001, 0.0),
     ("BB-S5", None, 0.0),
+    ("BB-S6", -1, 1.0),  # invalid class d <= -1: 1 - (-1)/1000 = 1.001, clamped to 1.0
 ])
 def test_bb_mrt_sub_score_boundaries(make_flat, test_id, metres, expected):
     if metres is None:

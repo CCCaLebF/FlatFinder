@@ -146,6 +146,8 @@ class SearchController:
                            "floor_area": areas, "fit_score": scores["total"]}
         result.blockKeys = np.unique(addresses, return_inverse=True)[1]
         result.fitScores = _FitScoreMap(ids, scores, self._fit_score_at)
+        if "anchor" in scores:
+            result.anchorNearby = int(np.count_nonzero(scores["anchor"]))
         return self.sort_results(result, SortOrder())
 
     # --- UC-10 Sort ------------------------------------------------------------------

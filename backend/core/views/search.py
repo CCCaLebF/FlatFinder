@@ -89,6 +89,7 @@ def results(request):
         details_query=details_query,
         sort_options=SORT_OPTIONS,
         current_sort=sort_param(order),
+        anchor_radius_km=f"{settings.ANCHOR_RADIUS_M / 1000:g}",
     )
     return render(request, "results.html", context)
 

@@ -337,6 +337,20 @@ def test_clear_anchor_chip(client, make_flat):
 
 
 @pytest.mark.django_db
+def test_anchor_with_no_flats_nearby_explains_why(client, make_flat):
+    make_flat(latitude=1.352, longitude=103.849)  # Bishan
+    near = client.get(reverse("core:results"), {"anchor_lat": 1.351, "anchor_lng": 103.8485, "anchor_label": "Bishan"})
+    assert near.context["result"].anchorNearby == 1
+    assert "data-anchor-empty" not in near.content.decode()
+
+    far = client.get(reverse("core:results"), {"anchor_lat": 1.44, "anchor_lng": 103.79, "anchor_label": "Woodlands"})
+    content = far.content.decode()
+    assert far.context["result"].anchorNearby == 0
+    assert "data-anchor-empty" in content and "No matching flats within 3 km of Woodlands" in content
+    assert "data-anchor-empty" not in client.get(reverse("core:results")).content.decode()  # no anchor set
+
+
+@pytest.mark.django_db
 def test_no_banner_when_nothing_failed(client):
     content = client.get(reverse("core:start")).content.decode()
     assert 'class="hidden flex items-start' in content

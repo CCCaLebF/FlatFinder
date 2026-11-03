@@ -40,6 +40,8 @@ class SearchResult:
       the results page shows one card per group (PLAN §11)
     - baseIds / sortKeys / blockKeys: the unsorted ids and the parallel numpy arrays used
       to sort and to group
+    - anchorNearby: flats within ANCHOR_RADIUS_M of the search-bar anchor (UC-07), None
+      when no anchor is set; 0 means the anchor cannot change the ranking
     """
 
     query: SearchQuery
@@ -51,6 +53,7 @@ class SearchResult:
     baseIds: Optional[object] = field(default=None, repr=False)
     sortKeys: dict = field(default_factory=dict, repr=False)
     blockKeys: Optional[object] = field(default=None, repr=False)
+    anchorNearby: Optional[int] = None
 
     @property
     def count(self) -> int:

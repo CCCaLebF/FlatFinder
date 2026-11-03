@@ -19,4 +19,10 @@ so the chip reads it from the request rather than from a page-specific context v
     <a href="{% url_replace anchor_lat=None anchor_lng=None anchor_label=None w_anchor=None page=None %}"
        class="grid h-5 w-5 shrink-0 place-items-center rounded-full hover:bg-brand-100" aria-label="Clear search location" title="Clear search location">×</a>
   </p>
+  {% if result.anchorNearby == 0 %}
+    {# No matching flat is close enough to score, so the anchor changes nothing: say so. #}
+    <p class="mt-1 text-xs text-amber-700" role="status" data-anchor-empty>
+      No matching flats within {{ anchor_radius_km }} km of {{ request.GET.anchor_label|default:"this location"|display_name }}, flat ranking unchanged. Try widening your budget, lease or walking limits.
+    </p>
+  {% endif %}
 {% endif %}
