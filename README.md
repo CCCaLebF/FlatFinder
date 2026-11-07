@@ -223,7 +223,7 @@ tests/
 
 ## 8. Design changes
 
-These differ from the original class diagram. The current diagram is [docs/ClassDiagram_final.drawio](docs/ClassDiagram_final.drawio).
+These differ from the original class diagram. The current diagram is [docs/Diagrams/ClassDiagram_final.drawio](docs/Diagrams/ClassDiagram_final.drawio).
 
 **Planned changes:**
 - new classes `Town`, `FlatProximity`, `DistanceStrategy` and `DataLoader`
