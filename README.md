@@ -26,9 +26,9 @@ cd FlatFinder
 copy .env.example .env        # macOS/Linux: cp .env.example .env
 ```
 
-Edit `.env`:
+`.env.example` is only a template. The `copy` command above creates your own `.env` from it, so make your changes in `.env`:
 - Set `POSTGRES_PASSWORD` and `DJANGO_SECRET_KEY` to any values.
-- Add the team's OneMap account (`ONEMAP_EMAIL`, `ONEMAP_PASSWORD`) if you need walking distances and place search. Register at https://www.onemap.gov.sg/apidocs/register.
+- Add your own OneMap account as `ONEMAP_EMAIL` and `ONEMAP_PASSWORD`. Register at https://www.onemap.gov.sg/apidocs/register. You only need this for walking distances: the map and place search work without it.
 
 > **If a value contains `$`, wrap it in single quotes**, e.g. `ONEMAP_PASSWORD='pa$$word'`. Without the quotes, Docker Compose reads `$name` as a variable and silently changes the value.
 
@@ -62,6 +62,8 @@ python manage.py load_all --coords database/data/flat_coordinates.csv
 python manage.py runserver      # http://127.0.0.1:8000
 pytest
 ```
+
+`.env.example` is only a template, so make your changes in the `.env` you just created. For walking distances, add your own OneMap account there (see §1).
 
 To use your own PostgreSQL instead of SQLite, set `DATABASE_URL=postgres://user:password@localhost:5432/flatfinder` in `.env`.
 
