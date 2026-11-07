@@ -1,11 +1,12 @@
 # FlatFinder
 
-FlatFinder helps buyers find HDB resale flats that fit them. You set a budget, flat types, a minimum remaining lease, walking-distance limits and how much each nearby amenity matters (1–10). FlatFinder then ranks the last 12 months of resale transactions by a **Fit Score** and shows them as a list or on a map. For any flat you can:
+FlatFinder helps buyers find HDB resale flats that fit them. You set a budget, flat types, a minimum remaining lease, distance limits to bus stops and MRT stations, and how much each nearby amenity matters (1–10). FlatFinder then ranks the last 12 months of resale transactions by a **Fit Score** and shows them as a list or on a map. For any flat you can:
 
 - see the amenities within 1 km
 - get the walking distance to one of them (via OneMap)
 - rank the results by distance to a place you search for
 - save the flat for the session
+- compare two or three homes side by side
 
 The amenity categories are **Bus Stops, MRT Stations, Child Care Centres, Hawker Centres and CHAS Clinics**.
 
@@ -127,11 +128,11 @@ block,street_name,latitude,longitude
 
 **Development fallback:** `assign_approximate_coords` places every flat without coordinates at its town's centre, with no random offsets. The UI labels these flats "Approximate location (town centre)". Every flat in a town then has the same distances, so use it only when the CSV isn't available. Loading the CSV afterwards replaces these placeholders.
 
-Flats without coordinates still appear in list results, with proximity scores of 0. They don't appear on the map, and a walking-distance limit filters them out.
+Flats without coordinates still appear in list results, with proximity scores of 0. They don't appear on the map, and a distance limit filters them out.
 
 ## 5. How results are ranked (Fit Score)
 
-Every part of the score is between 0 and 1. `d` is a straight-line distance in metres.
+Every part of the score is between 0 and 1, and the total is between 0 and 100. `d` is a straight-line distance in metres.
 
 ```
 proximity = max(0, 1 − d / 1000)         per category; 0 if nothing is within 1 km or the flat has no location
@@ -152,7 +153,7 @@ pytest                                # SQLite, outside Docker
 docker compose exec web pytest        # PostgreSQL, inside Docker
 ```
 
-Both runs have the same 160 tests:
+Both runs have the same 280 tests:
 - **OneMap is always mocked** with `responses`, so the tests never call the real API.
 - **NFR 1:** a timing test ranks 25,000 flats in under a second.
 
@@ -171,17 +172,18 @@ backend/
   config/              Django project: settings.py, urls.py, wsgi.py
   core/                the Django app (app label "core")
     models/            ResaleFlat, TransportNode→BusStop/MrtStation, Amenity→ChildCareCentre/HawkerCentre/ChasClinic,
-                       Town, FlatProximity (Django models); SearchQuery, SortOrder, FitScore, SearchResult, Bookmark (dataclasses)
-    services/          SearchController, MapController, AmenityController, BookmarkController, ErrorHandler,
+                       Town, FlatProximity (Django models); SearchQuery, SortOrder, FitScore, SearchResult, Bookmark, Category (dataclasses)
+    services/          SearchController, MapController, AmenityController, BookmarkController, CompareController, ErrorHandler,
                        DistanceStrategy → StraightLineDistance / WalkingDistance
     views/             SearchUI (search.py, forms.py), FlatDetailsUI (details.py), BookmarkUI (bookmarks.py),
+                       CompareUI (compare.py),
                        MapUI server side (map.py: the JSON endpoints)
     integrations/      onemap.py: OneMapSearchGateway, OneMapRoutingGateway, token handling, OneMapError
     management/        DataLoader (the §3 commands)
     templatetags/, urls.py, apps.py
 frontend/
   templates/           pages + partials/ (one file per reusable piece: card, sidebar, slider…)
-  static/js/           map.js (MapUI), mapstate.js (MapState), bookmarks.js (BookmarkUI),
+  static/js/           map.js (MapUI), mapstate.js (MapState), bookmarks.js (BookmarkUI), compare.js (CompareUI),
                        search.js (SearchUI), errors.js (the UC-06 banner)
   static/css/          app.css (sliders), map.css (map look: pins, colours, legend)
 database/
@@ -211,28 +213,28 @@ tests/
 | `GET /api/walking-distance` | Walking distance from a flat to a point |
 | `GET /api/bookmarks` | The session's saved flats |
 | `POST /api/bookmarks/<id>/toggle` | Saves or unsaves a flat |
+| `POST /api/compare/<id>/toggle` | Adds a home to the compare tray, or removes it |
+| `POST /api/compare/clear` | Empties the compare tray |
 
 **Changing the look:**
 - **Colours:** the whole palette is one `tailwind.config` block in `frontend/templates/base.html` (`brand-*`), plus the matching `--ff-*` variables at the top of `frontend/static/css/map.css`.
 - **Page pieces:** the reusable parts are in `frontend/templates/partials/`.
 - **Pin colours by Fit Score:** a pin takes the colour of its best flat's score. The thresholds are `MAP_FIT_COLOUR_BANDS` in `backend/config/settings.py` (85, 75, 65, 55, 45: dark green, green, light green, yellow, orange, then red), and the map legend follows them. The colours themselves are the `.ff-fit-1` to `.ff-fit-6` rules in `frontend/static/css/map.css`. Pins are grey when there's no search, saved flats are near-black with a star, and approximate locations have a dashed outline.
 
-## 8. Design changes (for updating the class diagram)
+## 8. Design changes
 
-These differ from the original class diagram. **[docs/CROSS_CHECK.md](docs/CROSS_CHECK.md) has the full checklist**: every difference from the diagram and the SRS, and a coverage table for every FR, NFR and use case.
+These differ from the original class diagram. The current diagram is [docs/ClassDiagram_final.drawio](docs/ClassDiagram_final.drawio).
 
-**Approved in `PLAN.md` §8:**
+**Planned changes:**
 - new classes `Town`, `FlatProximity`, `DistanceStrategy` and `DataLoader`
 - five separate weights in `SearchQuery`, plus `anchorLabel`, `anchorWeight` and `FitScore.anchorScore`
 - `Bookmark.session_id` instead of `user_id`
 - `MapController` has no rendering methods
 
 **Added while building:**
-- **Results grouped by block (`PLAN.md` §11).** Each data row is one resale transaction, so the results show one card per block (20 blocks per page). Block cards (and single-flat cards) open the flat details page, which shows the whole block — shared block fields, a read-only `(flat_type, storey_range)` table, and the block's best Fit Score. No new classes:
+- **Results grouped by block.** Each data row is one resale transaction, so the results show one card per block (20 blocks per page). Block cards (and single-flat cards) open the flat details page, which shows the whole block — shared block fields, a read-only `(flat_type, storey_range)` table, and the block's best Fit Score. No new classes:
   - new operations `SearchController.group_by_block`
   - new attributes `SearchResult.blockGroups` and `blockCount`
-  - `MapUI.selectFlatPin` can highlight a block
-  - the diagram checklist is in `docs/CROSS_CHECK.md` §3.6
 - **`OneMapTokenProvider` and `OneMapError`.** Only routing needs a OneMap token; search and map tiles don't. That's tested against the live API.
 - **`ScoreBounds`:** the price and lease thresholds, so a flat scores the same on the details page as in the list.
 - **`NearbyAmenity`:** an amenity plus its distance from the flat.
@@ -242,17 +244,13 @@ These differ from the original class diagram. **[docs/CROSS_CHECK.md](docs/CROSS
 - **Map pins load their popup lists on demand.** `MapController.get_flats_at_location` (`GET /api/flats/at-location`) is a new operation. The pins response carries no flat lists, which cut it from 175 KB to 6 KB at zoom 14.
 - **Collapsible side panels in Map View.** A "Hide panels" button on the map hides the filters and the results, saved or details panel, so the map fills the window. The choice is kept in `MapState.panelsHidden` and applies on every Map View page.
 - **`search.js` and `errors.js`,** client-side pieces of `SearchUI` and `ErrorHandler`.
+- **Compare page.** `CompareUI` and `CompareController` hold up to three homes in a session tray and score them with adjustable weights (the Compare Score).
 
-## 9. Open decisions and known limits
+## 9. Known limits
 
-- **Walking-distance sliders (FR 1.1.3), an open decision:** for now they're a hard filter on straight-line distance, in `SearchController.apply_walk_limits`, marked `OPEN DECISION (FR 1.1.3)`.
-- **Waiting on the team** (see `docs/CROSS_CHECK.md` §2):
-  - C3: what Fit Score to show with no search
-  - C4: a budget range slider or number boxes
-  - C5: drawing town borders on the map
+- **Distance limits (FR 1.1.3):** the sidebar's "Max. walking distance" sliders are a hard filter on stored straight-line distance, in `SearchController.apply_walk_limits`. They don't use walking routes.
 - **Data notes:**
   - The bus stop dataset has no names, so stops show as "Bus Stop 54621".
   - LRT stations count as MRT Stations.
-  - CHAS clinics include dental clinics.
 - **Bookmarks last for the browser session.** Re-running `import_flats` also clears them, because flat ids change.
-- **The Tailwind Play CDN and Google Fonts need an internet connection.** That's fine for the demo; a real deployment would bundle them.
+- **Tailwind, Leaflet and Google Fonts load from public CDNs, so they need an internet connection.** That's fine for the demo; a real deployment would bundle them.

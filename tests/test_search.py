@@ -141,7 +141,7 @@ def test_hard_filters(make_flat):
 
 
 @pytest.mark.django_db
-def test_walk_limits_are_a_provisional_hard_filter(make_flat):
+def test_walk_limits_are_a_hard_filter(make_flat):
     near = make_flat(proximity={"nearest_bus_stop_m": 150, "nearest_mrt_station_m": 300}, latitude=1.3, longitude=103.8)
     far = make_flat(proximity={"nearest_bus_stop_m": 150, "nearest_mrt_station_m": 1200}, latitude=1.3, longitude=103.8)
     no_coords = make_flat()

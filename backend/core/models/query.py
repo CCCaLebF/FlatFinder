@@ -22,7 +22,7 @@ class SearchQuery:
     - minBudget / maxBudget: SGD budget range (FR 1.1.1)
     - flatTypes: selected flat types; empty means all (FR 1.1.2)
     - maxWalkBus / maxWalkMrt: walking-distance sliders in metres (FR 1.1.3.1, 1.1.3.2).
-      How they apply is an OPEN DECISION (decision 3); see SearchController.apply_walk_limits.
+      Applied as a hard filter; see SearchController.apply_walk_limits.
     - minRemainingLease: years (FR 1.1.5)
     - five 1–10 importance weights, None = ignored (FR 1.1.4, decision 1)
     - anchorLat / anchorLng / anchorLabel / anchorWeight: search-bar proximity anchor

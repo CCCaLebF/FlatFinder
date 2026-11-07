@@ -66,8 +66,8 @@ class SearchController:
         """
         FR 1.1.3: apply the bus and MRT walking-distance sliders.
 
-        OPEN DECISION (FR 1.1.3) — provisional (decision 3): a hard filter on the
-        pre-computed straight-line distance to the nearest stop/exit in FlatProximity.
+        A hard filter on the pre-computed straight-line distance to the nearest
+        stop/exit in FlatProximity.
         Flats with no coordinates have no distance and are excluded while a limit is set.
         """
         if query.maxWalkBus is not None:

@@ -9,8 +9,8 @@ class FlatProximity(models.Model):
     distances in metres from a flat to the nearest node of each category.
 
     Built by `compute_proximity` with a KD-tree (decision 9). Feeds the proximity
-    sub-scores of the Fit Score (FR 2.2.2, UC-09) and the provisional walk-limit
-    filter (FR 1.1.3). Null means the flat has no coordinates.
+    sub-scores of the Fit Score (FR 2.2.2, UC-09) and the walk-limit filter
+    (FR 1.1.3). Null means the flat has no coordinates.
     """
 
     flat = models.OneToOneField(
