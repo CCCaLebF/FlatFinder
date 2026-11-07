@@ -150,14 +150,32 @@ total     = round(100 × Σ(weight × score) / Σ weight, 1)
 
 ## 6. Tests
 
+The project has 280 automated tests, all in the `tests/` folder. You don't need a OneMap account to run them: OneMap is always mocked with `responses`, so the tests never call the real API.
+
+**To run them,** work from the repo root. Without Docker, activate the virtual environment first (§2). With Docker, start the containers first (§1).
+
 ```powershell
-pytest                                # SQLite, outside Docker
-docker compose exec web pytest        # PostgreSQL, inside Docker
+pytest                                # all tests: SQLite, outside Docker
+docker compose exec web pytest        # all tests: PostgreSQL, inside Docker
+pytest tests/test_search.py           # one test file
 ```
 
-Both runs have the same 280 tests:
-- **OneMap is always mocked** with `responses`, so the tests never call the real API.
-- **NFR 1:** a timing test ranks 25,000 flats in under a second.
+Both full runs use the same tests.
+
+| Test file | What it covers |
+|---|---|
+| `test_search.py` | Search, filters, the Fit Score and ranking (UC-01, UC-08, UC-09), including the NFR 1 timing test, which ranks 25,000 flats in under a second |
+| `test_blocks.py` | Results grouped by block, and the block details page |
+| `test_details.py` | Flat details and nearby amenities (UC-02, UC-11) |
+| `test_map.py` | The map, amenity layers and saved map state (UC-03, UC-12, UC-13) |
+| `test_onemap.py` | Walking distance, the search bar and OneMap failures (UC-04, UC-06, UC-07) |
+| `test_bookmarks_sort.py` | Sorting and bookmarks (UC-05, UC-10, UC-14) |
+| `test_compare.py` | The compare tray, Compare Score and Compare page (UC-15) |
+| `test_import.py` | The data import commands and parsers |
+| `test_geocode.py` | The offline `geocode_flat_addresses` tool |
+| `test_scaffold.py` | The app loads, migrates and serves the Start page |
+| `test_lab4_blackbox.py` | Lab 4 black box tests of `SearchController`: equivalence classes and boundary values |
+| `test_lab4_whitebox.py` | Lab 4 white box tests: basis paths through `filter_flats()` and `parse_weights()` |
 
 **Rehearsing an API failure (UC-06):** start the server with OneMap pointed at an address that doesn't respond. The error banner appears, and the rest of the app keeps working.
 
