@@ -1,0 +1,586 @@
+<mxfile host="Electron">
+  <diagram name="Class Diagram" id="flatfinder-classes">
+    <mxGraphModel dx="4004" dy="2822" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3360" pageHeight="2000" background="light-dark(#FFFFFF,#121212)" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=12;" value="&lt;b style=&quot;&quot;&gt;&lt;font style=&quot;font-size: 24px;&quot;&gt;FlatFinder Class Diagram&lt;/font&gt;&lt;/b&gt;" vertex="1">
+          <mxGeometry height="50" width="390" x="120" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg0" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="«boundary»" vertex="1">
+          <mxGeometry height="26" width="100" x="1000" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="«control»" vertex="1">
+          <mxGeometry height="26" width="100" x="1120" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="«entity»" vertex="1">
+          <mxGeometry height="26" width="100" x="1240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="rounded=0;html=1;fontSize=10;fillColor=#e1d5e7;strokeColor=#9673a6;" value="«interface»" vertex="1">
+          <mxGeometry height="26" width="100" x="1360" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="User" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="User" vertex="1">
+          <mxGeometry height="60" width="30" x="40" y="14" as="geometry" />
+        </mxCell>
+        <mxCell id="OneMapAPI" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="OneMap API" vertex="1">
+          <mxGeometry height="60" width="30" x="2770" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="SearchUI" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;SearchUI&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+displaySearchForm(): void&lt;br&gt;+submitQuery(query: SearchQuery): void&lt;br&gt;+submitSearchBar(text: String): void&lt;br&gt;+selectSortOrder(order: SortOrder): void&lt;br&gt;+displayResults(result: SearchResult): void&lt;br&gt;+displayBlockCards(groups: List&amp;lt;Map&amp;gt;): void&lt;br&gt;+displayNoResults(): void&lt;br&gt;+rememberBrowsingPage(): void&lt;/p&gt;" vertex="1">
+          <mxGeometry height="168" width="273" x="120" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="FlatDetailsUI" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;FlatDetailsUI&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+displayFlatDetails(flat: ResaleFlat, score: FitScore): void&lt;br&gt;+displayBlockDetails(flat: ResaleFlat, variants: List&amp;lt;Map&amp;gt;): void&lt;br&gt;+displayNearestAmenities(amenities: Map&amp;lt;String, List&amp;lt;NearbyAmenity&amp;gt;&amp;gt;): void&lt;br&gt;+displayFitBreakdown(score: FitScore): void&lt;br&gt;+displayPastTransactions(filters: Map, page: int): void&lt;br&gt;+displayTypicalLayouts(flatTypes: List&amp;lt;String&amp;gt;): void&lt;br&gt;+getBackUrl(origin: String): String&lt;/p&gt;" vertex="1">
+          <mxGeometry height="155" width="462" x="460" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="BookmarkUI" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;BookmarkUI&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+toggleBookmark(flatId: int): void&lt;br&gt;+displayBookmarkState(flatId: int, saved: boolean): void&lt;br&gt;+displayBookmarks(flats: List&amp;lt;ResaleFlat&amp;gt;): void&lt;br&gt;+displayEmptyBookmarks(): void&lt;br&gt;+getBackUrl(): String&lt;/p&gt;" vertex="1">
+          <mxGeometry height="129" width="350" x="990" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="MapUI" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;MapUI&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+displayMap(centreLat: float, centreLng: float, zoom: int): void&lt;br&gt;+displayAreaCounts(data: List&amp;lt;Map&amp;gt;): void&lt;br&gt;+displayFlatPins(data: Map): void&lt;br&gt;+displayMoreBadges(tiles: List&amp;lt;Map&amp;gt;): void&lt;br&gt;+displayBookmarkPins(flats: List&amp;lt;Map&amp;gt;): void&lt;br&gt;+displayAmenityPins(categories: List, flat: Map, visible: List): void&lt;br&gt;+fillLocationPopup(loc: Map, popup: Element, marker: Marker): void&lt;br&gt;+selectAmenityPin(item: Map, line: Element, flat: Map): void&lt;br&gt;+displayWalkingDistance(line: Element, res: Map): void&lt;br&gt;+drawWalkingRoute(encoded: String): void&lt;br&gt;+clearWalkingRoute(): void&lt;br&gt;+toggleLayer(type: String, visible: boolean): void&lt;br&gt;+setPanelsHidden(hidden: boolean): void&lt;br&gt;+displayErrorMessage(message: String): void&lt;br&gt;+displayBlankMap(): void&lt;/p&gt;" vertex="1">
+          <mxGeometry height="259" width="397" x="1410" y="107" as="geometry" />
+        </mxCell>
+        <mxCell id="MapState" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;MapState&lt;/b&gt;&lt;br&gt;(browser localStorage)&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-centre: (lat, lng)&lt;br&gt;-zoom: int&lt;br&gt;-visibleLayers: List&amp;lt;String&amp;gt;&lt;br&gt;-viewMode: String&lt;br&gt;-panelsHidden: boolean&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+load(): MapState&lt;br&gt;+save(changes: Map): MapState&lt;br&gt;+lastView(): (centre, zoom)&lt;br&gt;+visibleLayers(fallback: List): List&lt;br&gt;+viewMode(): String&lt;br&gt;+panelsHidden(): boolean&lt;/p&gt;" vertex="1">
+          <mxGeometry height="220" width="191" x="1880" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="SearchController" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control»&lt;br&gt;&lt;b&gt;SearchController&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-distance: StraightLineDistance&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+filterFlats(query: SearchQuery): List&amp;lt;ResaleFlat&amp;gt;&lt;br&gt;+applyWalkLimits(flats: List&amp;lt;ResaleFlat&amp;gt;, query: SearchQuery): List&amp;lt;ResaleFlat&amp;gt;&lt;br&gt;+computeBounds(query: SearchQuery, prices: List&amp;lt;float&amp;gt;, leases: List&amp;lt;float&amp;gt;): ScoreBounds&lt;br&gt;+boundsFor(query: SearchQuery): ScoreBounds&lt;br&gt;+calculateFitScore(flat: ResaleFlat, query: SearchQuery, bounds: ScoreBounds): FitScore&lt;br&gt;+rankFlats(flats: List&amp;lt;ResaleFlat&amp;gt;, query: SearchQuery, bounds: ScoreBounds): SearchResult&lt;br&gt;+sortResults(result: SearchResult, order: SortOrder): SearchResult&lt;br&gt;+groupByBlock(result: SearchResult): SearchResult&lt;br&gt;+setProximityAnchor(query: SearchQuery, text: String): boolean&lt;br&gt;+bestFitFlat(flats: List&amp;lt;ResaleFlat&amp;gt;, fitScores: Map): ResaleFlat&lt;/p&gt;" vertex="1">
+          <mxGeometry height="207" width="551" x="120" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="MapController" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control»&lt;br&gt;&lt;b&gt;MapController&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-search: SearchController&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+getAreaCounts(query: SearchQuery): List&amp;lt;Map&amp;gt;&lt;br&gt;+getPinsInTiles(zoom: int, tiles: List, query: SearchQuery, perTile: int, withScores: boolean): List&amp;lt;Map&amp;gt;&lt;br&gt;+getFlatsAtLocation(lat: float, lng: float, query: SearchQuery, withScores: boolean): Map&lt;br&gt;+flatsAsPins(flats: List&amp;lt;ResaleFlat&amp;gt;): List&amp;lt;Map&amp;gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="142" width="445" x="740" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="AmenityController" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control»&lt;br&gt;&lt;b&gt;AmenityController&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-distance: StraightLineDistance&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+findNearestAmenities(flat: ResaleFlat, radiusM: int = 1000): Map&amp;lt;String, List&amp;lt;NearbyAmenity&amp;gt;&amp;gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="90" width="574" x="1610" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="BookmarkController" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control»&lt;br&gt;&lt;b&gt;BookmarkController&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-SESSION_KEY: String = &quot;bookmarks&quot;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+toggleBookmark(session: Session, flatId: int): boolean&lt;br&gt;+isBookmarked(session: Session, flatId: int): boolean&lt;br&gt;+getBookmarks(session: Session): List&amp;lt;Bookmark&amp;gt;&lt;br&gt;+bookmarkedIds(session: Session): Set&amp;lt;int&amp;gt;&lt;br&gt;+forget(session: Session, flatIds: List&amp;lt;int&amp;gt;): void&lt;/p&gt;" vertex="1">
+          <mxGeometry height="142" width="344" x="1200" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="ErrorHandler" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control»&lt;br&gt;&lt;b&gt;ErrorHandler&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-USER_MESSAGE: String&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+logError(endpoint: String, timestamp: DateTime, code: int | String): void&lt;br&gt;+handle(error: OneMapError): String&lt;br&gt;+toResponse(error: OneMapError): JsonResponse&lt;/p&gt;" vertex="1">
+          <mxGeometry height="116" width="403" x="2250" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="DataLoader" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control» «startup»&lt;br&gt;&lt;b&gt;DataLoader&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+loadAll(coords: String, approximate: boolean, noDownload: boolean): void&lt;br&gt;+downloadDatasets(keys: List&amp;lt;String&amp;gt;, force: boolean): void&lt;br&gt;+importTowns(): void&lt;br&gt;+importFlats(): void&lt;br&gt;+importTransport(): void&lt;br&gt;+importAmenities(): void&lt;br&gt;+importFlatCoordinates(csvPath: String): void&lt;br&gt;+assignApproximateCoords(): void&lt;br&gt;+computeProximity(): void&lt;br&gt;+geocodeFlatAddresses(out: String, rate: float, limit: int, retryUnmatched: boolean): void&lt;/p&gt;" vertex="1">
+          <mxGeometry height="207" width="420" x="1200" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="DistanceStrategy" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#e1d5e7;strokeColor=#9673a6;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«interface»&lt;br&gt;&lt;b&gt;DistanceStrategy&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&lt;i&gt;+distanceM(origin: (lat, lng), target: (lat, lng)): float&lt;/i&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="77" width="356" x="1320" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="StraightLineDistance" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control»&lt;br&gt;&lt;b&gt;StraightLineDistance&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+distanceM(origin: (lat, lng), target: (lat, lng)): float&lt;br&gt;+distancesM(lats: List&amp;lt;float&amp;gt;, lngs: List&amp;lt;float&amp;gt;, target: (lat, lng)): List&amp;lt;float&amp;gt;&lt;br&gt;+nearestM(origins: List&amp;lt;(lat, lng)&amp;gt;, targets: List&amp;lt;(lat, lng)&amp;gt;): List&amp;lt;float&amp;gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="103" width="503" x="740" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="WalkingDistance" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control»&lt;br&gt;&lt;b&gt;WalkingDistance&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-gateway: OneMapRoutingGateway&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+distanceM(origin: (lat, lng), target: (lat, lng)): float&lt;br&gt;+route(origin: (lat, lng), target: (lat, lng)): Map&lt;/p&gt;" vertex="1">
+          <mxGeometry height="103" width="356" x="1750" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="OneMapSearchGateway" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;OneMapSearchGateway&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+geocode(text: String): (lat, lng, label)&lt;br&gt;+searchAddresses(text: String): List&amp;lt;Map&amp;gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="90" width="261" x="2220" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="OneMapRoutingGateway" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;OneMapRoutingGateway&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-tokens: OneMapTokenProvider&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+walkingRoute(origin: (lat, lng), destination: (lat, lng)): Map&lt;br&gt;+walkingDistanceM(origin: (lat, lng), destination: (lat, lng)): float&lt;/p&gt;" vertex="1">
+          <mxGeometry height="103" width="427" x="2220" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="OneMapTokenProvider" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;OneMapTokenProvider&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-token: String&lt;br&gt;-expiresAt: float&lt;br&gt;-lock: Lock&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+getToken(): String&lt;br&gt;+invalidate(): void&lt;/p&gt;" vertex="1">
+          <mxGeometry height="129" width="155" x="2710" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="MapGateway" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;MapGateway&lt;/b&gt;&lt;br&gt;(settings only)&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-tileUrl: String&lt;br&gt;-attribution: String&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="103" width="273" x="2220" y="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="OneMapError" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;OneMapError&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-endpoint: String&lt;br&gt;-code: int | String&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="90" width="149" x="2720" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="SearchQuery" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;SearchQuery&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-minBudget: int&lt;br&gt;-maxBudget: int&lt;br&gt;-flatTypes: List&amp;lt;String&amp;gt;&lt;br&gt;-maxWalkBus: int&lt;br&gt;-maxWalkMrt: int&lt;br&gt;-minRemainingLease: float&lt;br&gt;-busStopWeight: int&lt;br&gt;-mrtStationWeight: int&lt;br&gt;-childCareCentreWeight: int&lt;br&gt;-hawkerCentreWeight: int&lt;br&gt;-chasClinicWeight: int&lt;br&gt;-anchorLat: float&lt;br&gt;-anchorLng: float&lt;br&gt;-anchorLabel: String&lt;br&gt;-anchorWeight: int&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+isUnconstrained(field: String): boolean&lt;br&gt;+setAnchor(lat: float, lng: float, label: String): void&lt;br&gt;+hasAnchor(): boolean&lt;br&gt;+categoryWeights(): Map&amp;lt;String, int&amp;gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="311" width="344" x="120" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="SortOrder" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;SortOrder&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-FIELDS: List&amp;lt;String&amp;gt;&lt;br&gt;-DIRECTIONS: List&amp;lt;String&amp;gt;&lt;br&gt;-field: String = &quot;fit_score&quot;&lt;br&gt;-direction: String = &quot;desc&quot;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="116" width="185" x="330" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="SearchResult" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;SearchResult&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-query: SearchQuery&lt;br&gt;-flatIds: List&amp;lt;int&amp;gt;&lt;br&gt;-fitScores: Map&amp;lt;int, FitScore&amp;gt;&lt;br&gt;-sortOrder: SortOrder&lt;br&gt;-bounds: ScoreBounds&lt;br&gt;-blockGroups: List&amp;lt;List&amp;lt;int&amp;gt;&amp;gt;&lt;br&gt;-baseIds: Array&amp;lt;int&amp;gt;&lt;br&gt;-sortKeys: Map&lt;br&gt;-blockKeys: Array&amp;lt;int&amp;gt;&lt;br&gt;-anchorNearby: int&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+count(): int&lt;br&gt;+blockCount(): int&lt;br&gt;+isEmpty(): boolean&lt;/p&gt;" vertex="1">
+          <mxGeometry height="233" width="197" x="530" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="ScoreBounds" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;ScoreBounds&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-minPrice: float&lt;br&gt;-maxPrice: float&lt;br&gt;-minLease: float&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="103" width="149" x="535" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="FitScore" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;FitScore&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-total: float&lt;br&gt;-priceScore: float&lt;br&gt;-leaseScore: float&lt;br&gt;-busStopScore: float&lt;br&gt;-mrtStationScore: float&lt;br&gt;-childCareCentreScore: float&lt;br&gt;-hawkerCentreScore: float&lt;br&gt;-chasClinicScore: float&lt;br&gt;-anchorScore: float&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="181" width="185" x="720" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="Bookmark" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;Bookmark&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-session_id: String&lt;br&gt;-flat_id: int&lt;br&gt;-timestamp: DateTime&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+toSession(): Map&lt;br&gt;&lt;u&gt;+fromSession(data: Map): Bookmark&lt;/u&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="129" width="214" x="1340" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="NearbyAmenity" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;NearbyAmenity&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-category: String&lt;br&gt;-id: int&lt;br&gt;-name: String&lt;br&gt;-latitude: float&lt;br&gt;-longitude: float&lt;br&gt;-distance_m: float&lt;br&gt;-detail: String&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="155" width="149" x="1600" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="Town" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity» «persistent»&lt;br&gt;&lt;b&gt;Town&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-name: String&lt;br&gt;-centroid_lat: float&lt;br&gt;-centroid_lng: float&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="103" width="150" x="960" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="ResaleFlat" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity» «persistent»&lt;br&gt;&lt;b&gt;ResaleFlat&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-id: int&lt;br&gt;-month: Date&lt;br&gt;-town: String&lt;br&gt;-flat_type: String&lt;br&gt;-block: String&lt;br&gt;-street_name: String&lt;br&gt;-storey_range: String&lt;br&gt;-floor_area_sqm: float&lt;br&gt;-flat_model: String&lt;br&gt;-lease_commence_date: int&lt;br&gt;-remaining_lease: float&lt;br&gt;-remaining_lease_raw: String&lt;br&gt;-resale_price: Decimal&lt;br&gt;-latitude: float&lt;br&gt;-longitude: float&lt;br&gt;-coords_approximate: boolean&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+hasCoords(): boolean&lt;/p&gt;" vertex="1">
+          <mxGeometry height="285" width="185" x="800" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="FlatProximity" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity» «persistent»&lt;br&gt;&lt;b&gt;FlatProximity&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-flat: ResaleFlat&lt;br&gt;-nearest_bus_stop_m: float&lt;br&gt;-nearest_mrt_station_m: float&lt;br&gt;-nearest_child_care_centre_m: float&lt;br&gt;-nearest_hawker_centre_m: float&lt;br&gt;-nearest_chas_clinic_m: float&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="142" width="226" x="1050" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="TransportNode" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;i&gt;&lt;b&gt;TransportNode&lt;/b&gt;&lt;/i&gt;&lt;br&gt;{abstract}&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-id: int&lt;br&gt;-name: String&lt;br&gt;-type: String&lt;br&gt;-latitude: float&lt;br&gt;-longitude: float&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="142" width="149" x="1800" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="BusStop" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity» «persistent»&lt;br&gt;&lt;b&gt;BusStop&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-stop_code: String&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="77" width="150" x="1720" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="MrtStation" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity» «persistent»&lt;br&gt;&lt;b&gt;MrtStation&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-exit_code: String&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="77" width="150" x="1880" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="Amenity" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;i&gt;&lt;b&gt;Amenity&lt;/b&gt;&lt;/i&gt;&lt;br&gt;{abstract}&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-id: int&lt;br&gt;-name: String&lt;br&gt;-type: String&lt;br&gt;-postal_code: String&lt;br&gt;-address: String&lt;br&gt;-latitude: float&lt;br&gt;-longitude: float&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="168" width="149" x="2000" y="1260" as="geometry" />
+        </mxCell>
+        <mxCell id="ChildCareCentre" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity» «persistent»&lt;br&gt;&lt;b&gt;ChildCareCentre&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="64" width="150" x="2040" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="HawkerCentre" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity» «persistent»&lt;br&gt;&lt;b&gt;HawkerCentre&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="64" width="150" x="2200" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="ChasClinic" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity» «persistent»&lt;br&gt;&lt;b&gt;ChasClinic&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="64" width="150" x="2360" y="1620" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="User" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.067;exitY=1;exitDx=0;exitDy=0;entryX=0.0810;entryY=0;entryDx=0;entryDy=0;" target="SearchUI" value="«call»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="42" y="134" />
+              <mxPoint x="142" y="134" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="User" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.333;exitY=1;exitDx=0;exitDy=0;entryX=0.0800;entryY=0;entryDx=0;entryDy=0;" target="FlatDetailsUI" value="«call»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="50" y="120" />
+              <mxPoint x="497" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="User" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.600;exitY=1;exitDx=0;exitDy=0;entryX=0.0800;entryY=0;entryDx=0;entryDy=0;" target="BookmarkUI" value="«call»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="58" y="106" />
+              <mxPoint x="1018" y="106" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="User" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.867;exitY=1;exitDx=0;exitDy=0;entryX=0.0810;entryY=0;entryDx=0;entryDy=0;" target="MapUI" value="«call»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="66" y="92" />
+              <mxPoint x="1442" y="92" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="SearchUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5270;exitY=1;exitDx=0;exitDy=0;entryX=0.2610;entryY=0;entryDx=0;entryDy=0;" target="SearchController" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="SearchUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.9160;exitY=1;exitDx=0;exitDy=0;entryX=0.1090;entryY=0;entryDx=0;entryDy=0;" target="ErrorHandler" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="370" y="413" />
+              <mxPoint x="2294" y="413" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="FlatDetailsUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.9110;exitY=1;exitDx=0;exitDy=0;entryX=0.101;entryY=0;entryDx=0;entryDy=0;" target="AmenityController" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="881" y="387" />
+              <mxPoint x="1668" y="387" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="FlatDetailsUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.2100;exitY=1;exitDx=0;exitDy=0;entryX=0.7930;entryY=0;entryDx=0;entryDy=0;" target="SearchController" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="BookmarkUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.7940;exitY=1;exitDx=0;exitDy=0;entryX=0.1980;entryY=0;entryDx=0;entryDy=0;" target="BookmarkController" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="MapUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.0810;exitY=1;exitDx=0;exitDy=0;entryX=0.8002;entryY=0;entryDx=0;entryDy=0;" target="MapController" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1442" y="433" />
+              <mxPoint x="1096" y="433" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="MapUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.7710;exitY=1;exitDx=0;exitDy=0;entryX=0.185;entryY=0;entryDx=0;entryDy=0;" target="AmenityController" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="MapUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.1810;exitY=1;exitDx=0;exitDy=0;entryX=0.8200;entryY=0;entryDx=0;entryDy=0;" target="BookmarkController" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="MapUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.4740;exitY=1;exitDx=0;exitDy=0;entryX=0.079;entryY=0;entryDx=0;entryDy=0;" target="WalkingDistance" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1598" y="598" />
+              <mxPoint x="1778" y="598" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="MapUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.8970;exitY=1;exitDx=0;exitDy=0;entryX=0.0790;entryY=0;entryDx=0;entryDy=0;" target="ErrorHandler" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1766" y="433" />
+              <mxPoint x="2282" y="433" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="MapUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5040;exitY=1;exitDx=0;exitDy=0;entryX=0.5200;entryY=0;entryDx=0;entryDy=0;" target="MapGateway" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1610" y="401" />
+              <mxPoint x="2190" y="401" />
+              <mxPoint x="2190" y="1084" />
+              <mxPoint x="2362" y="1084" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="MapUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5211;exitDx=0;exitDy=0;entryX=0;entryY=0.3727;entryDx=0;entryDy=0;" target="MapState" value="«read/write»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="SearchController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.9070;exitY=1;exitDx=0;exitDy=0;entryX=0.080;entryY=0;entryDx=0;entryDy=0;" target="StraightLineDistance" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="742" />
+              <mxPoint x="780" y="742" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="SearchController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.4940;exitY=1;exitDx=0;exitDy=0;entryX=0.4940;entryY=0;entryDx=0;entryDy=0;" target="OneMapSearchGateway" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="392" y="720" />
+              <mxPoint x="1690" y="720" />
+              <mxPoint x="1690" y="944" />
+              <mxPoint x="2349" y="944" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e19" edge="1" parent="1" source="SearchController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.3340;exitY=1;exitDx=0;exitDy=0;entryX=0.535;entryY=0;entryDx=0;entryDy=0;" target="SearchQuery" value="«read»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="SearchController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.8860;exitY=1;exitDx=0;exitDy=0;entryX=0.081;entryY=0;entryDx=0;entryDy=0;" target="ResaleFlat" value="«read»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="608" y="972" />
+              <mxPoint x="815" y="972" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e21" edge="1" parent="1" source="SearchController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.8200;exitY=1;exitDx=0;exitDy=0;entryX=0.0800;entryY=0;entryDx=0;entryDy=0;" target="FlatProximity" value="«read»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="572" y="962" />
+              <mxPoint x="1068" y="962" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e22" edge="1" parent="1" source="SearchController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.8460;exitY=1;exitDx=0;exitDy=0;entryX=0.2840;entryY=0;entryDx=0;entryDy=0;" target="SearchResult" value="«write»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e23" edge="1" parent="1" source="SearchController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.7550;exitY=1;exitDx=0;exitDy=0;entryX=0.146;entryY=0;entryDx=0;entryDy=0;" target="FitScore" value="«write»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="536" y="1152" />
+              <mxPoint x="747" y="1152" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e24" edge="1" parent="1" source="MapController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0;exitY=0.3518;exitDx=0;exitDy=0;entryX=1;entryY=0.2413;entryDx=0;entryDy=0;" target="SearchController" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e25" edge="1" parent="1" source="MapController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.4496;exitY=1;exitDx=0;exitDy=0;entryX=0.480;entryY=0;entryDx=0;entryDy=0;" target="Town" value="«read»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="940" y="655" />
+              <mxPoint x="1290" y="655" />
+              <mxPoint x="1290" y="1604" />
+              <mxPoint x="1032" y="1604" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e26" edge="1" parent="1" source="AmenityController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.080;exitY=1;exitDx=0;exitDy=0;entryX=0.891;entryY=0;entryDx=0;entryDy=0;" target="StraightLineDistance" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1656" y="696" />
+              <mxPoint x="1188" y="696" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e27" edge="1" parent="1" source="AmenityController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.226;exitY=1;exitDx=0;exitDy=0;entryX=0.081;entryY=0;entryDx=0;entryDy=0;" target="TransportNode" value="«read»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1740" y="926" />
+              <mxPoint x="1812" y="926" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e28" edge="1" parent="1" source="AmenityController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.875;exitY=1;exitDx=0;exitDy=0;entryX=0.752;entryY=0;entryDx=0;entryDy=0;" target="Amenity" value="«read»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e29" edge="1" parent="1" source="AmenityController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.150;exitY=1;exitDx=0;exitDy=0;entryX=0.644;entryY=0;entryDx=0;entryDy=0;" target="NearbyAmenity" value="«create»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e30" edge="1" parent="1" source="BookmarkController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.3260;exitY=1;exitDx=0;exitDy=0;entryX=0.079;entryY=0;entryDx=0;entryDy=0;" target="Bookmark" value="«read/write»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1312" y="1236" />
+              <mxPoint x="1357" y="1236" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e31" edge="1" parent="1" source="ErrorHandler" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.3623;exitDx=0;exitDy=0;entryX=0;entryY=0.4670;entryDx=0;entryDy=0;" target="OneMapError" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e32" edge="1" parent="1" source="WalkingDistance" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.718;exitDx=0;exitDy=0;entryX=0;entryY=0.7185;entryDx=0;entryDy=0;" target="OneMapRoutingGateway" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e33" edge="1" parent="1" source="OneMapRoutingGateway" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5631;exitDx=0;exitDy=0;entryX=0;entryY=0.4496;entryDx=0;entryDy=0;" target="OneMapTokenProvider" value="«use»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e34" edge="1" parent="1" source="OneMapRoutingGateway" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.8950;exitY=1;exitDx=0;exitDy=0;entryX=0.867;entryY=0;entryDx=0;entryDy=0;" target="OneMapAPI" value="«call»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2602" y="937" />
+              <mxPoint x="2796" y="937" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e35" edge="1" parent="1" source="OneMapSearchGateway" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.3777;exitDx=0;exitDy=0;entryX=0;entryY=0.567;entryDx=0;entryDy=0;" target="OneMapAPI" value="«call»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e36" edge="1" parent="1" source="MapGateway" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" target="OneMapAPI" value="«call»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e37" edge="1" parent="1" source="OneMapTokenProvider" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.4650;exitY=1;exitDx=0;exitDy=0;entryX=0.400;entryY=0;entryDx=0;entryDy=0;" target="OneMapAPI" value="«call»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e38" edge="1" parent="1" source="DataLoader" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.1975;exitY=0;exitDx=0;exitDy=0;entryX=0.915;entryY=1;entryDx=0;entryDy=0;" target="StraightLineDistance" value="«use»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1283" y="1254" />
+              <mxPoint x="1200" y="1254" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e39" edge="1" parent="1" source="DataLoader" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.0550;exitY=0;exitDx=0;exitDy=0;entryX=0.795;entryY=1;entryDx=0;entryDy=0;" target="ResaleFlat" value="«write»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1223" y="1591" />
+              <mxPoint x="947" y="1591" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e40" edge="1" parent="1" source="DataLoader" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0;exitY=0.2413;exitDx=0;exitDy=0;entryX=1;entryY=0.485;entryDx=0;entryDy=0;" target="Town" value="«write»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e41" edge="1" parent="1" source="DataLoader" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.1025;exitY=0;exitDx=0;exitDy=0;entryX=0.8540;entryY=1;entryDx=0;entryDy=0;" target="FlatProximity" value="«write»">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e42" edge="1" parent="1" source="DataLoader" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5978;exitY=0;exitDx=0;exitDy=0;entryX=0.161;entryY=1;entryDx=0;entryDy=0;" target="TransportNode" value="«write»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1451" y="1523" />
+              <mxPoint x="1824" y="1523" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e43" edge="1" parent="1" source="DataLoader" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5693;exitY=0;exitDx=0;exitDy=0;entryX=0.081;entryY=1;entryDx=0;entryDy=0;" target="Amenity" value="«write»">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1439" y="1534" />
+              <mxPoint x="2012" y="1534" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e44" edge="1" parent="1" source="StraightLineDistance" style="html=1;dashed=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.252;exitDx=0;exitDy=0;entryX=0;entryY=0.338;entryDx=0;entryDy=0;" target="DistanceStrategy" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e45" edge="1" parent="1" source="WalkingDistance" style="html=1;dashed=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0;exitY=0.408;exitDx=0;exitDy=0;entryX=1;entryY=0.545;entryDx=0;entryDy=0;" target="DistanceStrategy" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e46" edge="1" parent="1" source="BusStop" style="html=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="TransportNode" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1795" y="1511" />
+              <mxPoint x="1874" y="1511" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e47" edge="1" parent="1" source="MrtStation" style="html=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="TransportNode" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1955" y="1511" />
+              <mxPoint x="1874" y="1511" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e48" edge="1" parent="1" source="ChildCareCentre" style="html=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="Amenity" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2115" y="1524" />
+              <mxPoint x="2074" y="1524" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e49" edge="1" parent="1" source="HawkerCentre" style="html=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="Amenity" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2275" y="1524" />
+              <mxPoint x="2074" y="1524" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e50" edge="1" parent="1" source="ChasClinic" style="html=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="Amenity" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2435" y="1524" />
+              <mxPoint x="2074" y="1524" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e51" edge="1" parent="1" source="SearchQuery" style="html=1;endArrow=none;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.289;exitDx=0;exitDy=0;entryX=0;entryY=0.3865;entryDx=0;entryDy=0;" target="SearchResult" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m52" connectable="0" parent="e51" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.8421" y="10" as="geometry">
+            <mxPoint y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m53" connectable="0" parent="e51" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.8421" y="10" as="geometry">
+            <mxPoint x="-14" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e54" edge="1" parent="1" source="SearchResult" style="html=1;endArrow=none;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.3173;exitDx=0;exitDy=0;entryX=0;entryY=0.260;entryDx=0;entryDy=0;" target="ResaleFlat" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m55" connectable="0" parent="e54" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" y="10" as="geometry">
+            <mxPoint x="-7" y="-16" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m56" connectable="0" parent="e54" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="*" vertex="1">
+          <mxGeometry relative="1" x="0.85" y="10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e57" edge="1" parent="1" source="SearchResult" style="html=1;endArrow=none;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.8730;exitY=1;exitDx=0;exitDy=0;entryX=0.081;entryY=0;entryDx=0;entryDy=0;" target="FitScore" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="702" y="1516" />
+              <mxPoint x="735" y="1516" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m58" connectable="0" parent="e57" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" y="10" as="geometry">
+            <mxPoint y="8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m59" connectable="0" parent="e57" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="*" vertex="1">
+          <mxGeometry relative="1" x="0.85" y="10" as="geometry">
+            <mxPoint y="14" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e60" edge="1" parent="1" source="SearchResult" style="html=1;endArrow=none;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.0810;exitY=1;exitDx=0;exitDy=0;entryX=0.8590;entryY=0;entryDx=0;entryDy=0;" target="SortOrder" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="546" y="1516" />
+              <mxPoint x="489" y="1516" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m61" connectable="0" parent="e60" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" y="10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m62" connectable="0" parent="e60" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" y="10" as="geometry">
+            <mxPoint x="-3" y="-16" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e63" edge="1" parent="1" source="SearchResult" style="html=1;endArrow=none;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.3910;exitY=1;exitDx=0;exitDy=0;entryX=0.483;entryY=0;entryDx=0;entryDy=0;" target="ScoreBounds" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m64" connectable="0" parent="e63" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" y="10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m65" connectable="0" parent="e63" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" y="10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e66" edge="1" parent="1" source="FitScore" style="html=1;endArrow=none;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.730;exitY=0;exitDx=0;exitDy=0;entryX=0.297;entryY=1;entryDx=0;entryDy=0;" target="ResaleFlat" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m67" connectable="0" parent="e66" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.8198" y="10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m68" connectable="0" parent="e66" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.8583" y="10" as="geometry">
+            <mxPoint y="-14" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e69" edge="1" parent="1" source="Bookmark" style="html=1;endArrow=none;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.491;exitY=0;exitDx=0;exitDy=0;entryX=0.486;entryY=0;entryDx=0;entryDy=0;" target="ResaleFlat" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1445" y="1244" />
+              <mxPoint x="890" y="1244" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m70" connectable="0" parent="e69" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" y="10" as="geometry">
+            <mxPoint x="8" y="-23" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m71" connectable="0" parent="e69" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" y="10" as="geometry">
+            <mxPoint x="-16" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e72" edge="1" parent="1" source="FlatProximity" style="html=1;endArrow=diamondThin;endFill=1;endSize=14;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0;exitY=0.4088;exitDx=0;exitDy=0;entryX=1;entryY=0.204;entryDx=0;entryDy=0;" target="ResaleFlat" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m73" connectable="0" parent="e72" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="0..1" vertex="1">
+          <mxGeometry relative="1" x="-0.85" y="10" as="geometry">
+            <mxPoint x="-23" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m74" connectable="0" parent="e72" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.85" y="10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e75" edge="1" parent="1" source="ResaleFlat" style="html=1;endArrow=none;fontSize=10;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.859;exitY=1;exitDx=0;exitDy=0;entryX=0.080;entryY=0;entryDx=0;entryDy=0;" target="Town" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="959" y="1581" />
+              <mxPoint x="972" y="1581" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m76" connectable="0" parent="e75" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="*" vertex="1">
+          <mxGeometry relative="1" x="-0.85" y="10" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m77" connectable="0" parent="e75" style="edgeLabel;html=1;fontSize=11;labelBackgroundColor=none;" value="1" vertex="1">
+          <mxGeometry relative="1" x="0.8383" y="10" as="geometry">
+            <mxPoint x="-3" y="-24" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="n_strategy" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fontSize=10;fillColor=#fdfdfd;strokeColor=#999999;" value="&lt;b&gt;Strategy pattern&lt;/b&gt;&lt;br&gt;Straight-line distance (ranking, amenity lists) and OneMap walking distance (on demand, UC-04) are interchangeable implementations of DistanceStrategy." vertex="1">
+          <mxGeometry height="70" width="330" x="1333" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="n_persist" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fontSize=10;fillColor=#fdfdfd;strokeColor=#999999;" value="&lt;b&gt;Persistent data&lt;/b&gt;&lt;br&gt;«persistent»: database tables (PostgreSQL, or SQLite without Docker), loaded by DataLoader from data.gov.sg.&lt;br&gt;Session: Bookmark and the compare tray (until the browser closes, UC-05, UC-15).&lt;br&gt;Browser localStorage: MapState (UC-13).&lt;br&gt;Per request, not stored: SearchQuery, SearchResult, FitScore, SortOrder, ScoreBounds, NearbyAmenity. Category: five fixed values in code." vertex="1">
+          <mxGeometry height="100" width="560" x="120" y="1860" as="geometry" />
+        </mxCell>
+        <mxCell id="n_access" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=6;fontSize=10;fillColor=#fdfdfd;strokeColor=#999999;" value="&lt;b&gt;Access control&lt;/b&gt;&lt;br&gt;There are no user accounts or logins (NFR 4), so every user has the same access. The only credentials are the team's OneMap account, kept in server-side configuration. OneMapTokenProvider fetches and refreshes the token, which never reaches the browser." vertex="1">
+          <mxGeometry height="100" width="330" x="2960" y="500" as="geometry" />
+        </mxCell>
+      <mxCell id="CompareUI" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;CompareUI&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+displayCompare(result: Map): void&lt;br&gt;+toggleCompare(flatId: int): void&lt;br&gt;+clearCompare(): void&lt;br&gt;+setTray(count: int): void&lt;br&gt;+getBackUrl(origin: String): String&lt;/p&gt;" vertex="1"><mxGeometry x="2140" y="160" width="300" height="129" as="geometry" /></mxCell><mxCell id="CompareController" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«control»&lt;br&gt;&lt;b&gt;CompareController&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-SESSION_KEY: String = &quot;compare_ids&quot;&lt;br&gt;-MAX: int = 3&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+ids(session: Session): List&amp;lt;int&amp;gt;&lt;br&gt;+contains(session: Session, flatId: int): boolean&lt;br&gt;+toggle(session: Session, flatId: int): boolean&lt;br&gt;+clear(session: Session): void&lt;br&gt;+defaultWeights(query: SearchQuery): Map&lt;br&gt;+parseWeights(params: Map, query: SearchQuery): Map&lt;br&gt;+compareHomes(flats: List&amp;lt;ResaleFlat&amp;gt;, query: SearchQuery, bounds: ScoreBounds, weights: Map): Map&lt;/p&gt;" vertex="1"><mxGeometry x="1335" y="985" width="315" height="194" as="geometry" /></mxCell><mxCell id="SearchForm" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«boundary»&lt;br&gt;&lt;b&gt;SearchForm&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-min_budget: int&lt;br&gt;-max_budget: int&lt;br&gt;-flat_type: List&amp;lt;String&amp;gt;&lt;br&gt;-min_lease: float&lt;br&gt;-lease_any: boolean&lt;br&gt;-max_walk_bus: int&lt;br&gt;-bus_any: boolean&lt;br&gt;-max_walk_mrt: int&lt;br&gt;-mrt_any: boolean&lt;br&gt;-anchor_lat: float&lt;br&gt;-anchor_lng: float&lt;br&gt;-anchor_label: String&lt;br&gt;-w_anchor: int&lt;br&gt;-w_&amp;lt;category&amp;gt;: int&lt;br&gt;-ignore_&amp;lt;category&amp;gt;: boolean&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;+clean(): Map&lt;br&gt;+toQuery(): SearchQuery&lt;br&gt;+sidebarState(): Map&lt;/p&gt;" vertex="1"><mxGeometry x="330" y="735" width="195" height="298" as="geometry" /></mxCell><mxCell id="Category" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;p style='margin:0;margin-top:4px;text-align:center'&gt;«entity»&lt;br&gt;&lt;b&gt;Category&lt;/b&gt;&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;-key: String&lt;br&gt;-label: String&lt;br&gt;-model_name: String&lt;br&gt;-proximity_field: String&lt;br&gt;-weight_field: String&lt;br&gt;-score_field: String&lt;br&gt;-short_label: String&lt;/p&gt;&lt;hr size='1'&gt;&lt;p style='margin:0 0 0 6px'&gt;&amp;nbsp;&lt;/p&gt;" vertex="1"><mxGeometry x="120" y="1620" width="190" height="155" as="geometry" /></mxCell><mxCell id="DataGovSg" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;" value="data.gov.sg API" vertex="1"><mxGeometry x="2770" y="1640" width="30" height="60" as="geometry" /></mxCell><mxCell id="e80" edge="1" parent="1" source="User" target="CompareUI" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.9300;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.2500;entryY=0.0000;entryDx=0;entryDy=0;" value="«call»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="68" y="78" /><mxPoint x="2215" y="78" /></Array></mxGeometry></mxCell><mxCell id="e81" edge="1" parent="1" source="CompareUI" target="CompareController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.3200;exitY=1.0000;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.6000;entryDx=0;entryDy=0;" value="«use»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="2236" y="470" /><mxPoint x="2215" y="470" /><mxPoint x="2215" y="700" /><mxPoint x="2160" y="700" /><mxPoint x="2160" y="1100" /></Array></mxGeometry></mxCell><mxCell id="e82" edge="1" parent="1" source="CompareUI" target="SearchController" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5300;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.8710;entryY=0.0000;entryDx=0;entryDy=0;" value="«use»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="2300" y="453" /><mxPoint x="600" y="453" /></Array></mxGeometry></mxCell><mxCell id="e83" edge="1" parent="1" source="CompareController" target="StraightLineDistance" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.0000;exitY=0.1000;exitDx=0;exitDy=0;entryX=0.7760;entryY=1.0000;entryDx=0;entryDy=0;" value="«use»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1130" y="1004" /></Array></mxGeometry></mxCell><mxCell id="e84" edge="1" parent="1" source="CompareController" target="ResaleFlat" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.0000;exitY=0.9200;exitDx=0;exitDy=0;entryX=0.7300;entryY=0.0000;entryDx=0;entryDy=0;" value="«read»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="935" y="1163" /></Array></mxGeometry></mxCell><mxCell id="e85" edge="1" parent="1" source="CompareController" target="FlatProximity" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.2000;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.8000;entryY=0.0000;entryDx=0;entryDy=0;" value="«read»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1398" y="1228" /><mxPoint x="1231" y="1228" /></Array></mxGeometry></mxCell><mxCell id="e86" edge="1" parent="1" source="SearchUI" target="SearchForm" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.0000;exitY=0.5000;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.5000;entryDx=0;entryDy=0;" value="«use»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="100" y="240" /><mxPoint x="100" y="884" /></Array></mxGeometry></mxCell><mxCell id="e87" edge="1" parent="1" source="SearchForm" target="SearchQuery" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5000;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.8924;entryY=0.0000;entryDx=0;entryDy=0;" value="«create»"><mxGeometry relative="1" as="geometry" /></mxCell><mxCell id="e88" edge="1" parent="1" source="SearchQuery" target="Category" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.2760;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.5000;entryY=0.0000;entryDx=0;entryDy=0;" value="«use»"><mxGeometry relative="1" as="geometry" /></mxCell><mxCell id="e89" edge="1" parent="1" source="MapUI" target="StraightLineDistance" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.4280;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.8150;entryY=0.0000;entryDx=0;entryDy=0;" value="«use»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1580" y="760" /><mxPoint x="1150" y="760" /></Array></mxGeometry></mxCell><mxCell id="e90" edge="1" parent="1" source="DataLoader" target="OneMapSearchGateway" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1.0000;exitY=0.8400;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.8000;entryDx=0;entryDy=0;" value="«use»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="2560" y="1780" /><mxPoint x="2560" y="1042" /></Array></mxGeometry></mxCell><mxCell id="e91" edge="1" parent="1" source="DataLoader" target="DataGovSg" style="html=1;dashed=1;endArrow=open;endSize=9;fontSize=10;labelBackgroundColor=#ffffff;strokeColor=#555555;fontColor=#333333;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1.0000;exitY=0.7200;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.5000;entryDx=0;entryDy=0;" value="«call»"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="2700" y="1760" /><mxPoint x="2700" y="1670" /></Array></mxGeometry></mxCell></root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

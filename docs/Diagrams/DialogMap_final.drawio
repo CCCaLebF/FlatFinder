@@ -1,0 +1,246 @@
+<mxfile host="Electron">
+  <diagram name="Dialog Map" id="dialogmap-final">
+    <mxGraphModel dx="1110" dy="782" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontSize=11;fontSize=14;" value="&lt;b&gt;FlatFinder: Dialog Map (state machine)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="28" width="900" x="20" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="FF" parent="1" style="swimlane;rounded=1;arcSize=3;startSize=28;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;align=left;spacingLeft=10;" value="FlatFinder (anonymous session)" vertex="1">
+          <mxGeometry height="1035" width="1500" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="BR" parent="FF" style="swimlane;rounded=1;arcSize=3;startSize=28;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;align=left;spacingLeft=10;" value="Browsing" vertex="1">
+          <mxGeometry height="975" width="820" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SP" parent="BR" style="swimlane;rounded=1;arcSize=3;startSize=28;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;" value="Start Page" vertex="1">
+          <mxGeometry height="130" width="480" x="110" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SP_L" parent="SP" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;" value="List View" vertex="1">
+          <mxGeometry height="50" width="140" x="30" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="SP_M" parent="SP" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;" value="Map View" vertex="1">
+          <mxGeometry height="50" width="140" x="330" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="t_sp" edge="1" parent="SP" source="SP_L" style="html=1;endArrow=open;startArrow=open;endSize=8;startSize=8;fontSize=11;labelBackgroundColor=#ffffff;" target="SP_M" value="Toggle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RP" parent="BR" style="swimlane;rounded=1;arcSize=3;startSize=28;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;" value="Results Page" vertex="1">
+          <mxGeometry height="385" width="520" x="110" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="RP_S" parent="RP" style="swimlane;rounded=1;arcSize=6;startSize=22;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;" value="Results Listed" vertex="1">
+          <mxGeometry height="88" width="490" x="15" y="34" as="geometry" />
+        </mxCell>
+        <mxCell id="RP_L" parent="RP_S" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;" value="List View" vertex="1">
+          <mxGeometry height="50" width="140" x="15" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="RP_M" parent="RP_S" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;" value="Map View" vertex="1">
+          <mxGeometry height="50" width="140" x="315" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="t_rp" edge="1" parent="RP_S" source="RP_L" style="html=1;endArrow=open;startArrow=open;endSize=8;startSize=8;fontSize=11;labelBackgroundColor=#ffffff;" target="RP_M" value="Toggle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="NR" parent="RP" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;verticalAlign=top;align=center;spacingTop=4;" value="&lt;b&gt;No Results&lt;/b&gt;&lt;hr&gt;do/ prompt to adjust search" vertex="1">
+          <mxGeometry height="80" width="230" x="30" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="NML" parent="RP" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;verticalAlign=top;align=center;spacingTop=4;" value="&lt;b&gt;No Matching Location&lt;/b&gt;&lt;hr&gt;do/ show notice" vertex="1">
+          <mxGeometry height="80" width="200" x="300" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="RP_int" parent="RP" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontSize=11;" value="&lt;i&gt;Internal:&lt;/i&gt;&lt;br&gt;sort / reorder (UC-10)&lt;br&gt;search bar [location found] / re-rank, or notice if no flats nearby (UC-07)&lt;br&gt;bookmark / update Saved (n) (UC-05)&lt;br&gt;compare toggle / update tray (UC-15)" vertex="1">
+          <mxGeometry height="100" width="480" x="20" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="DP" parent="BR" style="swimlane;rounded=1;arcSize=3;startSize=28;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;" value="Property Details Page" vertex="1">
+          <mxGeometry height="215" width="480" x="110" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="DP_L" parent="DP" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;" value="List View" vertex="1">
+          <mxGeometry height="50" width="160" x="30" y="67" as="geometry" />
+        </mxCell>
+        <mxCell id="DP_M" parent="DP" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;verticalAlign=top;align=center;spacingTop=4;" value="&lt;b&gt;Map View&lt;/b&gt;&lt;hr&gt;amenity pin / walk distance (UC-04)&lt;br&gt;layer toggle / show or hide (UC-12)" vertex="1">
+          <mxGeometry height="105" width="200" x="260" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t_dp" edge="1" parent="DP" source="DP_L" style="html=1;endArrow=open;startArrow=open;endSize=8;startSize=8;fontSize=11;labelBackgroundColor=#ffffff;" target="DP_M" value="Toggle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DP_int" parent="DP" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontSize=11;" value="&lt;i&gt;Internal:&lt;/i&gt;&lt;br&gt;bookmark / update Saved (n) (UC-05)&lt;br&gt;filter past transactions / update list" vertex="1">
+          <mxGeometry height="60" width="440" x="20" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="CH" parent="BR" style="rhombus;html=1;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="608" y="188" as="geometry" />
+        </mxCell>
+        <mxCell id="SV" parent="FF" style="swimlane;rounded=1;arcSize=3;startSize=28;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;" value="Saved Flats Page" vertex="1">
+          <mxGeometry height="380" width="290" x="920" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SV_S" parent="SV" style="swimlane;rounded=1;arcSize=6;startSize=22;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;" value="Saved Flats Listed" vertex="1">
+          <mxGeometry height="78" width="270" x="10" y="36" as="geometry" />
+        </mxCell>
+        <mxCell id="SV_L" parent="SV_S" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;" value="List View" vertex="1">
+          <mxGeometry height="44" width="95" x="10" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="SV_M" parent="SV_S" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;" value="Map View" vertex="1">
+          <mxGeometry height="44" width="95" x="165" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="t_sv" edge="1" parent="SV_S" source="SV_L" style="html=1;endArrow=open;startArrow=open;endSize=8;startSize=8;fontSize=11;labelBackgroundColor=#ffffff;" target="SV_M" value="Toggle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SV_int" parent="SV" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontSize=11;" value="&lt;i&gt;Internal:&lt;/i&gt;&lt;br&gt;remove flat / remove card (UC-14)&lt;br&gt;compare toggle / update tray (UC-15)" vertex="1">
+          <mxGeometry height="60" width="280" x="10" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="NSF" parent="SV" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;verticalAlign=top;align=center;spacingTop=4;" value="&lt;b&gt;No Saved Flats&lt;/b&gt;&lt;hr&gt;do/ show &quot;No saved flats yet&quot;" vertex="1">
+          <mxGeometry height="90" width="240" x="25" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="HH" parent="FF" style="ellipse;html=1;fontStyle=1;" value="H*" vertex="1">
+          <mxGeometry height="30" width="30" x="1465" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="CP" parent="FF" style="swimlane;rounded=1;arcSize=3;startSize=28;fontStyle=1;html=1;whiteSpace=wrap;collapsible=0;container=1;fillColor=none;swimlaneLine=1;" value="Compare Page" vertex="1">
+          <mxGeometry height="270" width="365" x="1090" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="CP_T" parent="CP" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;verticalAlign=top;align=center;spacingTop=4;fontSize=11;" value="&lt;b&gt;Comparison Table [n ≥ 2]&lt;/b&gt;&lt;hr&gt;do/ show scores and winner" vertex="1">
+          <mxGeometry height="90" width="335" x="15" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="CP_N" parent="CP" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;verticalAlign=top;align=center;spacingTop=4;fontSize=11;" value="&lt;b&gt;Not Enough Homes [n &amp;lt; 2]&lt;/b&gt;&lt;hr&gt;do/ prompt to add homes" vertex="1">
+          <mxGeometry height="65" width="335" x="15" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="CP_int" parent="CP" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;fontSize=11;" value="&lt;i&gt;Internal:&lt;/i&gt; change a weight / recompute (UC-15)" vertex="1">
+          <mxGeometry height="45" width="335" x="15" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="AE" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;verticalAlign=top;align=center;spacingTop=4;" value="&lt;b&gt;OneMap Error Banner&lt;/b&gt;&lt;hr&gt;entry/ [search bar or walking distance] log error&lt;br&gt;entry/ [tiles] restore last map or blank (UC-13)&lt;br&gt;do/ show error message" vertex="1">
+          <mxGeometry height="150" width="290" x="1680" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="init" parent="1" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+          <mxGeometry height="16" width="16" x="592" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="e_init" edge="1" parent="1" source="init" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;entryX=0.9375;entryY=0.0000;entryDx=0;entryDy=0;" target="SP" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_find" edge="1" parent="1" source="SP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.3125;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.2885;entryY=0.0000;entryDx=0;entryDy=0;" target="RP" value="Find Matching Flats [≥ 1 match]&lt;br&gt;or search bar">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_logo" edge="1" parent="1" source="RP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.6346;exitY=0;exitDx=0;exitDy=0;entryX=0.6875;entryY=1;entryDx=0;entryDy=0;" target="SP" value="Logo or Reset">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_find0" edge="1" parent="1" source="SP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.0000;exitY=0.5000;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.5000;entryDx=0;entryDy=0;" target="NR" value="Find Matching Flats&lt;br&gt;[0 matches or invalid]">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="95" y="185" />
+              <mxPoint x="95" y="540" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_nr_in" edge="1" parent="1" source="RP_S" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.1224;exitY=1;exitDx=0;exitDy=0;entryX=0.1957;entryY=0;entryDx=0;entryDy=0;" target="NR" value="Find Matching Flats&lt;br&gt;[0 matches]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_nr_out" edge="1" parent="1" source="NR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.7391;exitY=0;exitDx=0;exitDy=0;entryX=0.3776;entryY=1;entryDx=0;entryDy=0;" target="RP_S" value="Find Matching Flats&lt;br&gt;[≥ 1 match]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_nml_in" edge="1" parent="1" source="RP_S" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.7041;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;" target="NML" value="Search bar&lt;br&gt;[no location found]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_nml_out" edge="1" parent="1" source="NML" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.8;exitY=0;exitDx=0;exitDy=0;entryX=0.9082;entryY=1;entryDx=0;entryDy=0;" target="RP_S" value="Dismiss">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_open" edge="1" parent="1" source="RP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.2885;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.3125;entryY=0.0000;entryDx=0;entryDy=0;" target="DP" value="Result or flat pin">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_back_r" edge="1" parent="1" source="DP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.6250;exitY=0.0000;exitDx=0;exitDy=0;entryX=0.5769;entryY=1.0000;entryDx=0;entryDy=0;" target="RP" value="Back [from = results]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pin" edge="1" parent="1" source="SP_M" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=1.0000;exitY=0.5000;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.5000;entryDx=0;entryDy=0;" target="DP_M" value="Flat pin&lt;br&gt;[zoom ≥ 14]">
+          <mxGeometry relative="1" x="0.5" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="190" />
+              <mxPoint x="700" y="912" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_back_s" edge="1" parent="1" source="DP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=1.0000;exitY=0.0977;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.1538;entryDx=0;entryDy=0;" target="SP" value="Back&lt;br&gt;[from = start]">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="841" />
+              <mxPoint x="800" y="140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_saved" edge="1" parent="1" source="BR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=1.0000;exitY=0.0769;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.5000;entryDx=0;entryDy=0;" target="SV_S" value="Saved (n)&lt;br&gt;[n ≥ 1]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_saved0" edge="1" parent="1" source="BR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=1.0000;exitY=0.2513;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.5000;entryDx=0;entryDy=0;" target="NSF" value="Saved (n)&lt;br&gt;[n = 0]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_last" edge="1" parent="1" source="SV_S" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.2593;exitY=1;exitDx=0;exitDy=0;entryX=0.2292;entryY=0.0000;entryDx=0;entryDy=0;" target="NSF" value="Remove last flat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sv_back" edge="1" parent="1" source="SV" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.0000;exitY=0.5263;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.5000;entryDx=0;entryDy=0;" target="CH" value="Back">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_open_s" edge="1" parent="1" source="SV" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.0000;exitY=0.9474;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.5116;entryDx=0;entryDy=0;" target="DP" value="Saved flat">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="440" />
+              <mxPoint x="900" y="930" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_back_sv" edge="1" parent="1" source="DP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=1.0000;exitY=0.6047;exitDx=0;exitDy=0;entryX=0.4828;entryY=1.0000;entryDx=0;entryDy=0;" target="SV" value="Back [from = saved]">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1080" y="950" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_err" edge="1" parent="1" source="FF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=1.0000;exitY=0.4638;exitDx=0;exitDy=0;entryX=0.0000;entryY=0.2667;entryDx=0;entryDy=0;" target="AE" value="OneMap request fails">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_dismiss" edge="1" parent="1" source="AE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.0000;exitY=0.9000;exitDx=0;exitDy=0;entryX=1.0000;entryY=0.5000;entryDx=0;entryDy=0;" target="HH" value="Dismiss">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cmp_r" edge="1" parent="1" source="RP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.7013;entryX=0;entryY=0.1481;" target="CP" value="Compare [n ≥ 2]">
+          <mxGeometry relative="1" x="0.1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cmp_r_back" edge="1" parent="1" source="CP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.2481;entryX=1;entryY=0.7714;" target="RP" value="Back [from = results]">
+          <mxGeometry relative="1" x="-0.1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_cmp_s" edge="1" parent="1" source="SV" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.65;exitY=1;entryX=0.05;entryY=0;" target="CP" value="Compare&lt;br&gt;[n ≥ 2]">
+          <mxGeometry relative="1" x="-0.55" as="geometry">
+            <Array as="points">
+              <mxPoint x="1128" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_cmp_s_back" edge="1" parent="1" source="CP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.25;exitY=0;entryX=0.95;entryY=1;" target="SV" value="Back [from = saved&lt;br&gt;or not set]">
+          <mxGeometry relative="1" x="-0.55" as="geometry">
+            <Array as="points">
+              <mxPoint x="1216" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_cmp_d" edge="1" parent="1" source="CP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.2;exitY=1;entryX=1;entryY=0.6744;" target="DP" value="View details">
+          <mxGeometry relative="1" x="-0.75" as="geometry">
+            <Array as="points">
+              <mxPoint x="1183" y="965" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_cmp_d_back" edge="1" parent="1" source="DP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.7674;entryX=0.6;entryY=1;" target="CP" value="Back [from = compare]">
+          <mxGeometry relative="1" x="0.75" as="geometry">
+            <Array as="points">
+              <mxPoint x="1329" y="985" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ch_s" edge="1" parent="1" source="CH" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;entryX=1;entryY=0.7385;" target="SP" value="[else]">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="22" y="4" as="offset" />
+            <Array as="points">
+              <mxPoint x="660" y="216" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ch_r" edge="1" parent="1" source="CH" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endSize=10;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.9808;entryY=0;" target="RP" value="[last = Results]">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-48" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
